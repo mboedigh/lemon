@@ -1,0 +1,5 @@
+if WANT_TOOLS
+
+bin_PROGRAMS +=
+
+endif WANT_TOOLS
