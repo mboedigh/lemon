@@ -1,5 +1,6 @@
 EXTRA_DIST += \
-	test/CMakeLists.txt
+	test/CMakeLists.txt \
+        test/min_cost_flow_test.lgf
 
 noinst_HEADERS += \
 	test/graph_test.h \
@@ -19,8 +20,10 @@ check_PROGRAMS += \
 	test/heap_test \
 	test/kruskal_test \
         test/maps_test \
+	test/max_matching_test \
         test/random_test \
         test/path_test \
+        test/suurballe_test \
         test/test_tools_fail \
         test/test_tools_pass \
         test/time_measure_test \
@@ -42,7 +45,9 @@ test_graph_utils_test_SOURCES = test/graph_utils_test.cc
 test_heap_test_SOURCES = test/heap_test.cc
 test_kruskal_test_SOURCES = test/kruskal_test.cc
 test_maps_test_SOURCES = test/maps_test.cc
+test_max_matching_test_SOURCES = test/max_matching_test.cc
 test_path_test_SOURCES = test/path_test.cc
+test_suurballe_test_SOURCES = test/suurballe_test.cc
 test_random_test_SOURCES = test/random_test.cc
 test_test_tools_fail_SOURCES = test/test_tools_fail.cc
 test_test_tools_pass_SOURCES = test/test_tools_pass.cc

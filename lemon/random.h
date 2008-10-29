@@ -540,10 +540,6 @@ namespace lemon {
     ///
     /// @{
 
-    ///\name Initialization
-    ///
-    /// @{
-
     /// \brief Default constructor
     ///
     /// Constructor with constant seeding.
@@ -708,12 +704,6 @@ namespace lemon {
       return real<Number>() * (b - a) + a;
     }
 
-    /// @}
-
-    ///\name Uniform distributions
-    ///
-    /// @{
-
     /// \brief Returns a random real number from the range [0, 1)
     ///
     /// It returns a random double from the range [0, 1).
@@ -771,8 +761,6 @@ namespace lemon {
       return _random_bits::IntConversion<Number, Word>::convert(core);
     }
 
-    /// @}
-
     unsigned int uinteger() {
       return uinteger<unsigned int>();
     }
@@ -806,19 +794,18 @@ namespace lemon {
 
     ///\name Non-uniform distributions
     ///
-
     ///@{
 
-    /// \brief Returns a random bool
+    /// \brief Returns a random bool with given probability of true result.
     ///
     /// It returns a random bool with given probability of true result.
     bool boolean(double p) {
       return operator()() < p;
     }
 
-    /// Standard Gauss distribution
+    /// Standard normal (Gauss) distribution
 
-    /// Standard Gauss distribution.
+    /// Standard normal (Gauss) distribution.
     /// \note The Cartesian form of the Box-Muller
     /// transformation is used to generate a random normal distribution.
     double gauss()
@@ -831,13 +818,53 @@ namespace lemon {
       } while(S>=1);
       return std::sqrt(-2*std::log(S)/S)*V1;
     }
-    /// Gauss distribution with given mean and standard deviation
+    /// Normal (Gauss) distribution with given mean and standard deviation
 
-    /// Gauss distribution with given mean and standard deviation.
+    /// Normal (Gauss) distribution with given mean and standard deviation.
     /// \sa gauss()
     double gauss(double mean,double std_dev)
     {
       return gauss()*std_dev+mean;
+    }
+
+    /// Lognormal distribution
+
+    /// Lognormal distribution. The parameters are the mean and the standard
+    /// deviation of <tt>exp(X)</tt>.
+    ///
+    double lognormal(double n_mean,double n_std_dev)
+    {
+      return std::exp(gauss(n_mean,n_std_dev));
+    }
+    /// Lognormal distribution
+
+    /// Lognormal distribution. The parameter is an <tt>std::pair</tt> of
+    /// the mean and the standard deviation of <tt>exp(X)</tt>.
+    ///
+    double lognormal(const std::pair<double,double> &params)
+    {
+      return std::exp(gauss(params.first,params.second));
+    }
+    /// Compute the lognormal parameters from mean and standard deviation
+
+    /// This function computes the lognormal parameters from mean and
+    /// standard deviation. The return value can direcly be passed to
+    /// lognormal().
+    std::pair<double,double> lognormalParamsFromMD(double mean,
+                                                   double std_dev)
+    {
+      double fr=std_dev/mean;
+      fr*=fr;
+      double lg=std::log(1+fr);
+      return std::pair<double,double>(std::log(mean)-lg/2.0,std::sqrt(lg));
+    }
+    /// Lognormal distribution with given mean and standard deviation
+
+    /// Lognormal distribution with given mean and standard deviation.
+    ///
+    double lognormalMD(double mean,double std_dev)
+    {
+      return lognormal(lognormalParamsFromMD(mean,std_dev));
     }
 
     /// Exponential distribution with given mean
@@ -943,7 +970,6 @@ namespace lemon {
 
     ///\name Two dimensional distributions
     ///
-
     ///@{
 
     /// Uniform distribution on the full unit circle
@@ -960,7 +986,7 @@ namespace lemon {
       } while(V1*V1+V2*V2>=1);
       return dim2::Point<double>(V1,V2);
     }
-    /// A kind of two dimensional Gauss distribution
+    /// A kind of two dimensional normal (Gauss) distribution
 
     /// This function provides a turning symmetric two-dimensional distribution.
     /// Both coordinates are of standard normal distribution, but they are not
