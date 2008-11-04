@@ -20,7 +20,6 @@
 ///\file
 ///\brief Classes for representing paths in digraphs.
 ///
-///\todo Iterators have obsolete style
 
 #ifndef LEMON_CONCEPT_PATH_H
 #define LEMON_CONCEPT_PATH_H
@@ -66,7 +65,10 @@ namespace lemon {
 
       /// \brief Template assigment
       template <typename CPath>
-      Path& operator=(const CPath& cpath) {}
+      Path& operator=(const CPath& cpath) {
+        ignore_unused_variable_warning(cpath);
+        return *this;
+      }
 
       /// Length of the path ie. the number of arcs in the path.
       int length() const { return 0;}

@@ -26,14 +26,14 @@
 #include <lemon/concept_check.h>
 #include <lemon/concepts/maps.h>
 
-///\file
-///\brief Extenders for iterable maps.
+//\file
+//\brief Extenders for iterable maps.
 
 namespace lemon {
 
-  /// \ingroup graphbits
-  ///
-  /// \brief Extender for maps
+  // \ingroup graphbits
+  //
+  // \brief Extender for maps
   template <typename _Map>
   class MapExtender : public _Map {
   public:
@@ -62,6 +62,7 @@ namespace lemon {
     MapExtender(const Graph& graph, const Value& value)
       : Parent(graph, value) {}
 
+  private:
     MapExtender& operator=(const MapExtender& cmap) {
       return operator=<MapExtender>(cmap);
     }
@@ -72,6 +73,7 @@ namespace lemon {
       return *this;
     }
 
+  public:
     class MapIt : public Item {
     public:
 
@@ -169,9 +171,9 @@ namespace lemon {
     };
   };
 
-  /// \ingroup graphbits
-  ///
-  /// \brief Extender for maps which use a subset of the items.
+  // \ingroup graphbits
+  //
+  // \brief Extender for maps which use a subset of the items.
   template <typename _Graph, typename _Map>
   class SubMapExtender : public _Map {
   public:
@@ -200,6 +202,7 @@ namespace lemon {
     SubMapExtender(const Graph& _graph, const Value& _value)
       : Parent(_graph, _value), graph(_graph) {}
 
+  private:
     SubMapExtender& operator=(const SubMapExtender& cmap) {
       return operator=<MapExtender>(cmap);
     }
@@ -214,6 +217,7 @@ namespace lemon {
       return *this;
     }
 
+  public:
     class MapIt : public Item {
     public:
 

@@ -27,14 +27,14 @@
 #include <lemon/concept_check.h>
 #include <lemon/concepts/maps.h>
 
-///\ingroup graphbits
-///\file
-///\brief Extenders for the digraph types
+//\ingroup graphbits
+//\file
+//\brief Extenders for the digraph types
 namespace lemon {
 
-  /// \ingroup graphbits
-  ///
-  /// \brief Extender for the Digraphs
+  // \ingroup graphbits
+  //
+  // \brief Extender for the Digraphs
   template <typename Base>
   class DigraphExtender : public Base {
   public:
@@ -186,30 +186,30 @@ namespace lemon {
 
     };
 
-    /// \brief Base node of the iterator
-    ///
-    /// Returns the base node (i.e. the source in this case) of the iterator
+    // \brief Base node of the iterator
+    //
+    // Returns the base node (i.e. the source in this case) of the iterator
     Node baseNode(const OutArcIt &arc) const {
       return Parent::source(arc);
     }
-    /// \brief Running node of the iterator
-    ///
-    /// Returns the running node (i.e. the target in this case) of the
-    /// iterator
+    // \brief Running node of the iterator
+    //
+    // Returns the running node (i.e. the target in this case) of the
+    // iterator
     Node runningNode(const OutArcIt &arc) const {
       return Parent::target(arc);
     }
 
-    /// \brief Base node of the iterator
-    ///
-    /// Returns the base node (i.e. the target in this case) of the iterator
+    // \brief Base node of the iterator
+    //
+    // Returns the base node (i.e. the target in this case) of the iterator
     Node baseNode(const InArcIt &arc) const {
       return Parent::target(arc);
     }
-    /// \brief Running node of the iterator
-    ///
-    /// Returns the running node (i.e. the source in this case) of the
-    /// iterator
+    // \brief Running node of the iterator
+    //
+    // Returns the running node (i.e. the source in this case) of the
+    // iterator
     Node runningNode(const InArcIt &arc) const {
       return Parent::source(arc);
     }
@@ -227,6 +227,7 @@ namespace lemon {
       NodeMap(const Digraph& digraph, const _Value& value)
         : Parent(digraph, value) {}
 
+    private:
       NodeMap& operator=(const NodeMap& cmap) {
         return operator=<NodeMap>(cmap);
       }
@@ -251,6 +252,7 @@ namespace lemon {
       ArcMap(const Digraph& digraph, const _Value& value)
         : Parent(digraph, value) {}
 
+    private:
       ArcMap& operator=(const ArcMap& cmap) {
         return operator=<ArcMap>(cmap);
       }
@@ -323,9 +325,9 @@ namespace lemon {
     }
   };
 
-  /// \ingroup _graphbits
-  ///
-  /// \brief Extender for the Graphs
+  // \ingroup _graphbits
+  //
+  // \brief Extender for the Graphs
   template <typename Base>
   class GraphExtender : public Base {
   public:
@@ -553,43 +555,43 @@ namespace lemon {
       }
     };
 
-    /// \brief Base node of the iterator
-    ///
-    /// Returns the base node (ie. the source in this case) of the iterator
+    // \brief Base node of the iterator
+    //
+    // Returns the base node (ie. the source in this case) of the iterator
     Node baseNode(const OutArcIt &arc) const {
       return Parent::source(static_cast<const Arc&>(arc));
     }
-    /// \brief Running node of the iterator
-    ///
-    /// Returns the running node (ie. the target in this case) of the
-    /// iterator
+    // \brief Running node of the iterator
+    //
+    // Returns the running node (ie. the target in this case) of the
+    // iterator
     Node runningNode(const OutArcIt &arc) const {
       return Parent::target(static_cast<const Arc&>(arc));
     }
 
-    /// \brief Base node of the iterator
-    ///
-    /// Returns the base node (ie. the target in this case) of the iterator
+    // \brief Base node of the iterator
+    //
+    // Returns the base node (ie. the target in this case) of the iterator
     Node baseNode(const InArcIt &arc) const {
       return Parent::target(static_cast<const Arc&>(arc));
     }
-    /// \brief Running node of the iterator
-    ///
-    /// Returns the running node (ie. the source in this case) of the
-    /// iterator
+    // \brief Running node of the iterator
+    //
+    // Returns the running node (ie. the source in this case) of the
+    // iterator
     Node runningNode(const InArcIt &arc) const {
       return Parent::source(static_cast<const Arc&>(arc));
     }
 
-    /// Base node of the iterator
-    ///
-    /// Returns the base node of the iterator
+    // Base node of the iterator
+    //
+    // Returns the base node of the iterator
     Node baseNode(const IncEdgeIt &edge) const {
       return edge._direction ? u(edge) : v(edge);
     }
-    /// Running node of the iterator
-    ///
-    /// Returns the running node of the iterator
+    // Running node of the iterator
+    //
+    // Returns the running node of the iterator
     Node runningNode(const IncEdgeIt &edge) const {
       return edge._direction ? v(edge) : u(edge);
     }
@@ -608,6 +610,7 @@ namespace lemon {
       NodeMap(const Graph& graph, const _Value& value)
         : Parent(graph, value) {}
 
+    private:
       NodeMap& operator=(const NodeMap& cmap) {
         return operator=<NodeMap>(cmap);
       }
@@ -632,6 +635,7 @@ namespace lemon {
       ArcMap(const Graph& graph, const _Value& value)
         : Parent(graph, value) {}
 
+    private:
       ArcMap& operator=(const ArcMap& cmap) {
         return operator=<ArcMap>(cmap);
       }
@@ -657,6 +661,7 @@ namespace lemon {
       EdgeMap(const Graph& graph, const _Value& value)
         : Parent(graph, value) {}
 
+    private:
       EdgeMap& operator=(const EdgeMap& cmap) {
         return operator=<EdgeMap>(cmap);
       }

@@ -131,7 +131,7 @@ template <typename Heap>
 void dijkstraHeapTest(const Digraph& digraph, const IntArcMap& length,
                       Node source) {
 
-  typename Dijkstra<Digraph, IntArcMap>::template DefStandardHeap<Heap>::
+  typename Dijkstra<Digraph, IntArcMap>::template SetStandardHeap<Heap>::
     Create dijkstra(digraph, length);
 
   dijkstra.run(source);
@@ -167,7 +167,7 @@ int main() {
   Node source;
 
   std::istringstream input(test_lgf);
-  digraphReader(input, digraph).
+  digraphReader(digraph, input).
     arcMap("capacity", length).
     node("source", source).
     run();

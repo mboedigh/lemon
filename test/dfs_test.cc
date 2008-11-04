@@ -20,7 +20,6 @@
 #include <lemon/smart_graph.h>
 #include <lemon/list_graph.h>
 #include <lemon/lgf_reader.h>
-
 #include <lemon/dfs.h>
 #include <lemon/path.h>
 
@@ -57,27 +56,52 @@ void checkDfsCompile()
 {
   typedef concepts::Digraph Digraph;
   typedef Dfs<Digraph> DType;
+  typedef Digraph::Node Node;
+  typedef Digraph::Arc Arc;
 
   Digraph G;
-  Digraph::Node n;
-  Digraph::Arc e;
+  Node s, t;
+  Arc e;
   int l;
   bool b;
   DType::DistMap d(G);
   DType::PredMap p(G);
+  Path<Digraph> pp;
 
-  DType dfs_test(G);
+  {
+    DType dfs_test(G);
 
-  dfs_test.run(n);
+    dfs_test.run(s);
+    dfs_test.run(s,t);
+    dfs_test.run();
 
-  l  = dfs_test.dist(n);
-  e  = dfs_test.predArc(n);
-  n  = dfs_test.predNode(n);
-  d  = dfs_test.distMap();
-  p  = dfs_test.predMap();
-  b  = dfs_test.reached(n);
+    l  = dfs_test.dist(t);
+    e  = dfs_test.predArc(t);
+    s  = dfs_test.predNode(t);
+    b  = dfs_test.reached(t);
+    d  = dfs_test.distMap();
+    p  = dfs_test.predMap();
+    pp = dfs_test.path(t);
+  }
+  {
+    DType
+      ::SetPredMap<concepts::ReadWriteMap<Node,Arc> >
+      ::SetDistMap<concepts::ReadWriteMap<Node,int> >
+      ::SetReachedMap<concepts::ReadWriteMap<Node,bool> >
+      ::SetProcessedMap<concepts::WriteMap<Node,bool> >
+      ::SetStandardProcessedMap
+      ::Create dfs_test(G);
 
-  Path<Digraph> pp = dfs_test.path(n);
+    dfs_test.run(s);
+    dfs_test.run(s,t);
+    dfs_test.run();
+
+    l  = dfs_test.dist(t);
+    e  = dfs_test.predArc(t);
+    s  = dfs_test.predNode(t);
+    b  = dfs_test.reached(t);
+    pp = dfs_test.path(t);
+  }
 }
 
 void checkDfsFunctionCompile()
@@ -88,14 +112,30 @@ void checkDfsFunctionCompile()
   typedef Digraph::Node Node;
 
   Digraph g;
-  dfs(g,Node()).run();
-  dfs(g).source(Node()).run();
+  bool b;
+  dfs(g).run(Node());
+  b=dfs(g).run(Node(),Node());
+  dfs(g).run();
   dfs(g)
-    .predMap(concepts::WriteMap<Node,Arc>())
-    .distMap(concepts::WriteMap<Node,VType>())
+    .predMap(concepts::ReadWriteMap<Node,Arc>())
+    .distMap(concepts::ReadWriteMap<Node,VType>())
     .reachedMap(concepts::ReadWriteMap<Node,bool>())
     .processedMap(concepts::WriteMap<Node,bool>())
     .run(Node());
+  b=dfs(g)
+    .predMap(concepts::ReadWriteMap<Node,Arc>())
+    .distMap(concepts::ReadWriteMap<Node,VType>())
+    .reachedMap(concepts::ReadWriteMap<Node,bool>())
+    .processedMap(concepts::WriteMap<Node,bool>())
+    .path(concepts::Path<Digraph>())
+    .dist(VType())
+    .run(Node(),Node());
+  dfs(g)
+    .predMap(concepts::ReadWriteMap<Node,Arc>())
+    .distMap(concepts::ReadWriteMap<Node,VType>())
+    .reachedMap(concepts::ReadWriteMap<Node,bool>())
+    .processedMap(concepts::WriteMap<Node,bool>())
+    .run();
 }
 
 template <class Digraph>
@@ -106,7 +146,7 @@ void checkDfs() {
   Node s, t;
 
   std::istringstream input(test_lgf);
-  digraphReader(input, G).
+  digraphReader(G, input).
     node("source", s).
     node("target", t).
     run();
@@ -129,9 +169,14 @@ void checkDfs() {
         check(u==dfs_test.predNode(v),"Wrong tree.");
         check(dfs_test.dist(v) - dfs_test.dist(u) == 1,
               "Wrong distance. (" << dfs_test.dist(u) << "->"
-              <<dfs_test.dist(v) << ')');
+              << dfs_test.dist(v) << ")");
       }
     }
+  }
+
+  {
+    NullMap<Node,Arc> myPredMap;
+    dfs(G).predMap(myPredMap).run(s);
   }
 }
 

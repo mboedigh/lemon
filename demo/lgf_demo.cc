@@ -44,12 +44,12 @@ int main() {
   SmartDigraph::Node s, t;
 
   try {
-    digraphReader("digraph.lgf", g). // read the directed graph into g
+    digraphReader(g, "digraph.lgf"). // read the directed graph into g
       arcMap("capacity", cap).       // read the 'capacity' arc map into cap
       node("source", s).             // read 'source' node to s
       node("target", t).             // read 'target' node to t
       run();
-  } catch (DataFormatError& error) { // check if there was any error
+  } catch (Exception& error) { // check if there was any error
     std::cerr << "Error: " << error.what() << std::endl;
     return -1;
   }
@@ -60,7 +60,7 @@ int main() {
 
   std::cout << "We can write it to the standard output:" << std::endl;
 
-  digraphWriter(std::cout, g).     // write g to the standard output
+  digraphWriter(g).                // write g to the standard output
     arcMap("capacity", cap).       // write cap into 'capacity'
     node("source", s).             // write s to 'source'
     node("target", t).             // write t to 'target'

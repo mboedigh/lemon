@@ -16,8 +16,8 @@
  *
  */
 
-#ifndef LEMON_ARG_PARSER
-#define LEMON_ARG_PARSER
+#ifndef LEMON_ARG_PARSER_H
+#define LEMON_ARG_PARSER_H
 
 #include <vector>
 #include <map>
@@ -46,7 +46,7 @@ namespace lemon {
   protected:
 
     int _argc;
-    const char **_argv;
+    const char * const *_argv;
 
     enum OptType { UNKNOWN=0, BOOL=1, STRING=2, DOUBLE=3, INTEGER=4, FUNC=5 };
 
@@ -119,7 +119,7 @@ namespace lemon {
   public:
 
     ///Constructor
-    ArgParser(int argc, const char **argv);
+    ArgParser(int argc, const char * const *argv);
 
     ~ArgParser();
 
@@ -310,8 +310,9 @@ namespace lemon {
 
     ///This is the type of the return value of ArgParser::operator[]().
     ///It automatically converts to \c int, \c double, \c bool or
-    ///\c std::string if the type of the option matches, otherwise it
-    ///throws an exception (i.e. it performs runtime type checking).
+    ///\c std::string if the type of the option matches, which is checked
+    ///with an \ref LEMON_ASSERT "assertion" (i.e. it performs runtime
+    ///type checking).
     class RefType
     {
       const ArgParser &_parser;
@@ -382,4 +383,4 @@ namespace lemon {
   };
 }
 
-#endif // LEMON_ARG_PARSER
+#endif // LEMON_ARG_PARSER_H

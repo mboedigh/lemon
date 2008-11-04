@@ -413,7 +413,7 @@ namespace lemon {
     /// Change the source of \c a to \c n
     ///
     ///\note The <tt>InArcIt</tt>s referencing the changed arc remain
-    ///valid. However the <tt>ArcIt<tt>s and <tt>OutArcIt</tt>s are
+    ///valid. However the <tt>ArcIt</tt>s and <tt>OutArcIt</tt>s are
     ///invalidated.
     ///
     ///\warning This functionality cannot be used together with the Snapshot
@@ -501,10 +501,8 @@ namespace lemon {
     ///valid. However <tt>InArcIt</tt>s and <tt>OutArcIt</tt>s may
     ///be invalidated.
     ///
-    ///\warning This functionality cannot be used together with the
+    ///\warning This functionality cannot be used in conjunction with the
     ///Snapshot feature.
-    ///
-    ///\todo It could be implemented in a bit faster way.
     Node split(Node n, bool connect = true) {
       Node b = addNode();
       for(OutArcIt e(*this,n);e!=INVALID;) {
@@ -842,8 +840,8 @@ namespace lemon {
       explicit Arc(int pid) { id = pid;}
 
     public:
-      operator Edge() const { 
-        return id != -1 ? edgeFromId(id / 2) : INVALID; 
+      operator Edge() const {
+        return id != -1 ? edgeFromId(id / 2) : INVALID;
       }
 
       Arc() {}

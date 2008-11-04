@@ -35,11 +35,7 @@ demo/
 
 test/
 
-   Contains programs to check the integrity and correctness of LEMON.
-
-benchmark/
-  
-   Contains programs for measuring the performance of algorithms.
+   Programs to check the integrity and correctness of LEMON.
 
 tools/
 

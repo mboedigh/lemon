@@ -1,9 +1,15 @@
 dnl Process this file with autoconf to produce a configure script.
 
 dnl Version information.
-m4_define([lemon_version_number], [])
+m4_define([lemon_version_number],
+	[m4_normalize(esyscmd([echo ${LEMON_VERSION}]))])
+dnl m4_define([lemon_version_number], [])
+m4_define([lemon_hg_path], [m4_normalize(esyscmd([./scripts/chg-len.py]))])
 m4_define([lemon_hg_revision], [m4_normalize(esyscmd([hg id -i]))])
-m4_define([lemon_version], [ifelse(lemon_version_number(), [], [lemon_hg_revision()], [lemon_version_number()])])
+m4_define([lemon_version], [ifelse(lemon_version_number(),
+			   [],
+			   [lemon_hg_path().lemon_hg_revision()],
+			   [lemon_version_number()])])
 
 AC_PREREQ([2.59])
 AC_INIT([LEMON], [lemon_version()], [lemon-user@lemon.cs.elte.hu], [lemon])
@@ -15,6 +21,9 @@ AC_CONFIG_HEADERS([config.h lemon/config.h])
 
 lx_cmdline_cxxflags_set=${CXXFLAGS+set}
 
+dnl Do compilation tests using the C++ compiler.
+AC_LANG([C++])
+
 dnl Checks for programs.
 AC_PROG_CXX
 AC_PROG_CXXCPP
@@ -25,15 +34,26 @@ AC_PROG_LIBTOOL
 AC_CHECK_PROG([doxygen_found],[doxygen],[yes],[no])
 AC_CHECK_PROG([gs_found],[gs],[yes],[no])
 
+dnl Detect Intel compiler.
+AC_MSG_CHECKING([whether we are using the Intel C++ compiler])
+AC_COMPILE_IFELSE([#ifndef __INTEL_COMPILER
+choke me
+#endif], [ICC=[yes]], [ICC=[no]])
+if test x"$ICC" = x"yes"; then
+  AC_MSG_RESULT([yes])
+else
+  AC_MSG_RESULT([no])
+fi
+
 dnl Set custom compiler flags when using g++.
-if test x"$lx_cmdline_cxxflags_set" != x"set" -a "$GXX" = yes; then
+if test x"$lx_cmdline_cxxflags_set" != x"set" -a "$GXX" = yes -a "$ICC" = no; then
   CXXFLAGS="$CXXFLAGS -Wall -W -Wall -W -Wunused -Wformat=2 -Wctor-dtor-privacy -Wnon-virtual-dtor -Wno-char-subscripts -Wwrite-strings -Wno-char-subscripts -Wreturn-type -Wcast-qual -Wcast-align -Wsign-promo -Woverloaded-virtual -Woverloaded-virtual -ansi -fno-strict-aliasing -Wold-style-cast -Wno-unknown-pragmas"
 fi
 
 dnl Checks for libraries.
-LX_CHECK_GLPK
-LX_CHECK_CPLEX
-LX_CHECK_SOPLEX
+#LX_CHECK_GLPK
+#LX_CHECK_CPLEX
+#LX_CHECK_SOPLEX
 
 dnl Disable/enable building the demo programs.
 AC_ARG_ENABLE([demo],
@@ -60,19 +80,6 @@ else
   AC_MSG_RESULT([no])
 fi
 AM_CONDITIONAL([WANT_TOOLS], [test x"$enable_tools" != x"no"])
-
-dnl Disable/enable building the benchmarks.
-AC_ARG_ENABLE([benchmark],
-AS_HELP_STRING([--enable-benchmark], [build the benchmarks])
-AS_HELP_STRING([--disable-benchmark], [do not build the benchmarks @<:@default@:>@]),
-              [], [enable_benchmark=no])
-AC_MSG_CHECKING([whether to build the benchmarks])
-if test x"$enable_benchmark" != x"no"; then
-  AC_MSG_RESULT([yes])
-else
-  AC_MSG_RESULT([no])
-fi
-AM_CONDITIONAL([WANT_BENCHMARK], [test x"$enable_benchmark" != x"no"])
 
 dnl Checks for header files.
 AC_CHECK_HEADERS(limits.h sys/time.h sys/times.h unistd.h)
@@ -108,11 +115,10 @@ echo
 echo C++ compiler.................. : $CXX
 echo C++ compiles flags............ : $CXXFLAGS
 echo
-echo GLPK support.................. : $lx_glpk_found
-echo CPLEX support................. : $lx_cplex_found
-echo SOPLEX support................ : $lx_soplex_found
-echo
-echo Build benchmarks.............. : $enable_benchmark
+#echo GLPK support.................. : $lx_glpk_found
+#echo CPLEX support................. : $lx_cplex_found
+#echo SOPLEX support................ : $lx_soplex_found
+#echo
 echo Build demo programs........... : $enable_demo
 echo Build additional tools........ : $enable_tools
 echo

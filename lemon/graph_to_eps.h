@@ -40,6 +40,7 @@
 #include<lemon/maps.h>
 #include<lemon/color.h>
 #include<lemon/bits/bezier.h>
+#include<lemon/error.h>
 
 
 ///\ingroup eps_io
@@ -61,7 +62,7 @@ namespace lemon {
     };
   }
 
-///Default traits class of \ref GraphToEps
+///Default traits class of GraphToEps
 
 ///Default traits class of \ref GraphToEps.
 ///
@@ -666,7 +667,6 @@ public:
   ///this function calls the algorithm itself, i.e. in this case
   ///it draws the graph.
   void run() {
-    //\todo better 'epsilon' would be nice here.
     const double EPSILON=1e-9;
     if(dontPrint) return;
 
@@ -707,7 +707,6 @@ public:
       double max_w=0;
       for(ArcIt e(g);e!=INVALID;++e)
         max_w=std::max(double(_arcWidths[e]),max_w);
-      //\todo better 'epsilon' would be nice here.
       if(max_w>EPSILON) {
         _arcWidthScale/=max_w;
       }
@@ -717,7 +716,6 @@ public:
       double max_s=0;
       for(NodeIt n(g);n!=INVALID;++n)
         max_s=std::max(double(_nodeSizes[n]),max_s);
-      //\todo better 'epsilon' would be nice here.
       if(max_s>EPSILON) {
         _nodeScale/=max_s;
       }
@@ -725,10 +723,10 @@ public:
 
     double diag_len = 1;
     if(!(_absoluteNodeSizes&&_absoluteArcWidths)) {
-      dim2::BoundingBox<double> bb;
+      dim2::Box<double> bb;
       for(NodeIt n(g);n!=INVALID;++n) bb.add(mycoords[n]);
       if (bb.empty()) {
-        bb = dim2::BoundingBox<double>(dim2::Point<double>(0,0));
+        bb = dim2::Box<double>(dim2::Point<double>(0,0));
       }
       diag_len = std::sqrt((bb.bottomLeft()-bb.topRight()).normSquare());
       if(diag_len<EPSILON) diag_len = 1;
@@ -736,7 +734,7 @@ public:
       if(!_absoluteArcWidths) _arcWidthScale*=diag_len;
     }
 
-    dim2::BoundingBox<double> bb;
+    dim2::Box<double> bb;
     for(NodeIt n(g);n!=INVALID;++n) {
       double ns=_nodeSizes[n]*_nodeScale;
       dim2::Point<double> p(ns,ns);
@@ -758,7 +756,7 @@ public:
       }
     }
     if (bb.empty()) {
-      bb = dim2::BoundingBox<double>(dim2::Point<double>(0,0));
+      bb = dim2::Box<double>(dim2::Point<double>(0,0));
     }
 
     if(_scaleToA4)
@@ -873,7 +871,6 @@ public:
            << -bb.left() << ' ' << -bb.bottom() << " translate\n";
       }
       else {
-        //\todo Verify centering
         double sc= std::min((A4HEIGHT-2*A4BORDER)/bb.width(),
                   (A4WIDTH-2*A4BORDER)/bb.height());
         os << ((A4WIDTH -2*A4BORDER)-sc*bb.height())/2 + A4BORDER << ' '
@@ -906,7 +903,6 @@ public:
           dim2::Point<double>
             dvec(mycoords[g.target(*i)]-mycoords[g.source(*i)]);
           double l=std::sqrt(dvec.normSquare());
-          //\todo better 'epsilon' would be nice here.
           dim2::Point<double> d(dvec/std::max(l,EPSILON));
           dim2::Point<double> m;
 //           m=dim2::Point<double>(mycoords[g.target(*i)]+
@@ -1171,8 +1167,13 @@ template<class G>
 GraphToEps<DefaultGraphToEpsTraits<G> >
 graphToEps(G &g,const char *file_name)
 {
+  std::ostream* os = new std::ofstream(file_name);
+  if (!(*os)) {
+    delete os;
+    throw IoError("Cannot write file", file_name);
+  }
   return GraphToEps<DefaultGraphToEpsTraits<G> >
-    (DefaultGraphToEpsTraits<G>(g,*new std::ofstream(file_name),true));
+    (DefaultGraphToEpsTraits<G>(g,*os,true));
 }
 
 ///Generates an EPS file from a graph
@@ -1187,8 +1188,13 @@ template<class G>
 GraphToEps<DefaultGraphToEpsTraits<G> >
 graphToEps(G &g,const std::string& file_name)
 {
+  std::ostream* os = new std::ofstream(file_name.c_str());
+  if (!(*os)) {
+    delete os;
+    throw IoError("Cannot write file", file_name);
+  }
   return GraphToEps<DefaultGraphToEpsTraits<G> >
-    (DefaultGraphToEpsTraits<G>(g,*new std::ofstream(file_name.c_str()),true));
+    (DefaultGraphToEpsTraits<G>(g,*os,true));
 }
 
 } //END OF NAMESPACE LEMON

@@ -31,7 +31,6 @@
 #include <set>
 #include <map>
 
-#include <lemon/assert.h>
 #include <lemon/core.h>
 
 #include <lemon/lgf_writer.h>
@@ -48,11 +47,13 @@ namespace lemon {
       Value operator()(const std::string& str) {
         std::istringstream is(str);
         Value value;
-        is >> value;
+        if (!(is >> value)) {
+          throw FormatError("Cannot read token");
+        }
 
         char c;
         if (is >> std::ws >> c) {
-          throw DataFormatError("Remaining characters in token");
+          throw FormatError("Remaining characters in token");
         }
         return value;
       }
@@ -166,7 +167,7 @@ namespace lemon {
         if (it == _map.end()) {
           std::ostringstream msg;
           msg << "Item not found: " << str;
-          throw DataFormatError(msg.str().c_str());
+          throw FormatError(msg.str());
         }
         return it->second;
       }
@@ -184,12 +185,12 @@ namespace lemon {
 
       typename Graph::Arc operator()(const std::string& str) {
         if (str.empty() || (str[0] != '+' && str[0] != '-')) {
-          throw DataFormatError("Item must start with '+' or '-'");
+          throw FormatError("Item must start with '+' or '-'");
         }
         typename std::map<std::string, typename Graph::Edge>
           ::const_iterator it = _map.find(str.substr(1));
         if (it == _map.end()) {
-          throw DataFormatError("Item not found");
+          throw FormatError("Item not found");
         }
         return _graph.direct(it->second, str[0] == '+');
       }
@@ -235,7 +236,7 @@ namespace lemon {
     inline char readEscape(std::istream& is) {
       char c;
       if (!is.get(c))
-        throw DataFormatError("Escape format error");
+        throw FormatError("Escape format error");
 
       switch (c) {
       case '\\':
@@ -264,7 +265,7 @@ namespace lemon {
         {
           int code;
           if (!is.get(c) || !isHex(c))
-            throw DataFormatError("Escape format error");
+            throw FormatError("Escape format error");
           else if (code = valueHex(c), !is.get(c) || !isHex(c)) is.putback(c);
           else code = code * 16 + valueHex(c);
           return code;
@@ -273,7 +274,7 @@ namespace lemon {
         {
           int code;
           if (!isOct(c))
-            throw DataFormatError("Escape format error");
+            throw FormatError("Escape format error");
           else if (code = valueOct(c), !is.get(c) || !isOct(c))
             is.putback(c);
           else if (code = code * 8 + valueOct(c), !is.get(c) || !isOct(c))
@@ -300,7 +301,7 @@ namespace lemon {
           os << c;
         }
         if (!is)
-          throw DataFormatError("Quoted format error");
+          throw FormatError("Quoted format error");
       } else {
         is.putback(c);
         while (is.get(c) && !isWhiteSpace(c)) {
@@ -389,14 +390,37 @@ namespace lemon {
   template <typename Digraph>
   class DigraphReader;
 
+  /// \brief Return a \ref DigraphReader class
+  ///
+  /// This function just returns a \ref DigraphReader class.
+  /// \relates DigraphReader
   template <typename Digraph>
-  DigraphReader<Digraph> digraphReader(std::istream& is, Digraph& digraph);
+  DigraphReader<Digraph> digraphReader(Digraph& digraph,
+                                       std::istream& is = std::cin) {
+    DigraphReader<Digraph> tmp(digraph, is);
+    return tmp;
+  }
 
+  /// \brief Return a \ref DigraphReader class
+  ///
+  /// This function just returns a \ref DigraphReader class.
+  /// \relates DigraphReader
   template <typename Digraph>
-  DigraphReader<Digraph> digraphReader(const std::string& fn, Digraph& digraph);
+  DigraphReader<Digraph> digraphReader(Digraph& digraph,
+                                       const std::string& fn) {
+    DigraphReader<Digraph> tmp(digraph, fn);
+    return tmp;
+  }
 
+  /// \brief Return a \ref DigraphReader class
+  ///
+  /// This function just returns a \ref DigraphReader class.
+  /// \relates DigraphReader
   template <typename Digraph>
-  DigraphReader<Digraph> digraphReader(const char *fn, Digraph& digraph);
+  DigraphReader<Digraph> digraphReader(Digraph& digraph, const char* fn) {
+    DigraphReader<Digraph> tmp(digraph, fn);
+    return tmp;
+  }
 
   /// \ingroup lemon_io
   ///
@@ -419,7 +443,7 @@ namespace lemon {
   /// rules.
   ///
   ///\code
-  /// DigraphReader<Digraph>(std::cin, digraph).
+  /// DigraphReader<Digraph>(digraph, std::cin).
   ///   nodeMap("coordinates", coord_map).
   ///   arcMap("capacity", cap_map).
   ///   node("source", src).
@@ -460,6 +484,7 @@ namespace lemon {
 
     std::istream* _is;
     bool local_is;
+    std::string _filename;
 
     Digraph& _digraph;
 
@@ -499,7 +524,7 @@ namespace lemon {
     ///
     /// Construct a directed graph reader, which reads from the given
     /// input stream.
-    DigraphReader(std::istream& is, Digraph& digraph)
+    DigraphReader(Digraph& digraph, std::istream& is = std::cin)
       : _is(&is), local_is(false), _digraph(digraph),
         _use_nodes(false), _use_arcs(false),
         _skip_nodes(false), _skip_arcs(false) {}
@@ -508,19 +533,31 @@ namespace lemon {
     ///
     /// Construct a directed graph reader, which reads from the given
     /// file.
-    DigraphReader(const std::string& fn, Digraph& digraph)
-      : _is(new std::ifstream(fn.c_str())), local_is(true), _digraph(digraph),
+    DigraphReader(Digraph& digraph, const std::string& fn)
+      : _is(new std::ifstream(fn.c_str())), local_is(true),
+        _filename(fn), _digraph(digraph),
         _use_nodes(false), _use_arcs(false),
-        _skip_nodes(false), _skip_arcs(false) {}
+        _skip_nodes(false), _skip_arcs(false) {
+      if (!(*_is)) {
+        delete _is;
+        throw IoError("Cannot open file", fn);
+      }
+    }
 
     /// \brief Constructor
     ///
     /// Construct a directed graph reader, which reads from the given
     /// file.
-    DigraphReader(const char* fn, Digraph& digraph)
-      : _is(new std::ifstream(fn)), local_is(true), _digraph(digraph),
+    DigraphReader(Digraph& digraph, const char* fn)
+      : _is(new std::ifstream(fn)), local_is(true),
+        _filename(fn), _digraph(digraph),
         _use_nodes(false), _use_arcs(false),
-        _skip_nodes(false), _skip_arcs(false) {}
+        _skip_nodes(false), _skip_arcs(false) {
+      if (!(*_is)) {
+        delete _is;
+        throw IoError("Cannot open file", fn);
+      }
+    }
 
     /// \brief Destructor
     ~DigraphReader() {
@@ -547,12 +584,12 @@ namespace lemon {
 
   private:
 
-    friend DigraphReader<Digraph> digraphReader<>(std::istream& is,
-                                                  Digraph& digraph);
-    friend DigraphReader<Digraph> digraphReader<>(const std::string& fn,
-                                                  Digraph& digraph);
-    friend DigraphReader<Digraph> digraphReader<>(const char *fn,
-                                                  Digraph& digraph);
+    friend DigraphReader<Digraph> digraphReader<>(Digraph& digraph,
+                                                  std::istream& is);
+    friend DigraphReader<Digraph> digraphReader<>(Digraph& digraph,
+                                                  const std::string& fn);
+    friend DigraphReader<Digraph> digraphReader<>(Digraph& digraph,
+                                                  const char *fn);
 
     DigraphReader(DigraphReader& other)
       : _is(other._is), local_is(other.local_is), _digraph(other._digraph),
@@ -845,7 +882,7 @@ namespace lemon {
       if (!readLine() || !(line >> c) || c == '@') {
         if (readSuccess() && line) line.putback(c);
         if (!_node_maps.empty())
-          throw DataFormatError("Cannot find map names");
+          throw FormatError("Cannot find map names");
         return;
       }
       line.putback(c);
@@ -859,7 +896,7 @@ namespace lemon {
           if (maps.find(map) != maps.end()) {
             std::ostringstream msg;
             msg << "Multiple occurence of node map: " << map;
-            throw DataFormatError(msg.str().c_str());
+            throw FormatError(msg.str());
           }
           maps.insert(std::make_pair(map, index));
           ++index;
@@ -870,8 +907,8 @@ namespace lemon {
             maps.find(_node_maps[i].first);
           if (jt == maps.end()) {
             std::ostringstream msg;
-            msg << "Map not found in file: " << _node_maps[i].first;
-            throw DataFormatError(msg.str().c_str());
+            msg << "Map not found: " << _node_maps[i].first;
+            throw FormatError(msg.str());
           }
           map_index[i] = jt->second;
         }
@@ -895,11 +932,11 @@ namespace lemon {
           if (!_reader_bits::readToken(line, tokens[i])) {
             std::ostringstream msg;
             msg << "Column not found (" << i + 1 << ")";
-            throw DataFormatError(msg.str().c_str());
+            throw FormatError(msg.str());
           }
         }
         if (line >> std::ws >> c)
-          throw DataFormatError("Extra character on the end of line");
+          throw FormatError("Extra character at the end of line");
 
         Node n;
         if (!_use_nodes) {
@@ -908,13 +945,13 @@ namespace lemon {
             _node_index.insert(std::make_pair(tokens[label_index], n));
         } else {
           if (label_index == -1)
-            throw DataFormatError("Label map not found in file");
+            throw FormatError("Label map not found");
           typename std::map<std::string, Node>::iterator it =
             _node_index.find(tokens[label_index]);
           if (it == _node_index.end()) {
             std::ostringstream msg;
             msg << "Node with label not found: " << tokens[label_index];
-            throw DataFormatError(msg.str().c_str());
+            throw FormatError(msg.str());
           }
           n = it->second;
         }
@@ -938,7 +975,7 @@ namespace lemon {
       if (!readLine() || !(line >> c) || c == '@') {
         if (readSuccess() && line) line.putback(c);
         if (!_arc_maps.empty())
-          throw DataFormatError("Cannot find map names");
+          throw FormatError("Cannot find map names");
         return;
       }
       line.putback(c);
@@ -952,7 +989,7 @@ namespace lemon {
           if (maps.find(map) != maps.end()) {
             std::ostringstream msg;
             msg << "Multiple occurence of arc map: " << map;
-            throw DataFormatError(msg.str().c_str());
+            throw FormatError(msg.str());
           }
           maps.insert(std::make_pair(map, index));
           ++index;
@@ -963,8 +1000,8 @@ namespace lemon {
             maps.find(_arc_maps[i].first);
           if (jt == maps.end()) {
             std::ostringstream msg;
-            msg << "Map not found in file: " << _arc_maps[i].first;
-            throw DataFormatError(msg.str().c_str());
+            msg << "Map not found: " << _arc_maps[i].first;
+            throw FormatError(msg.str());
           }
           map_index[i] = jt->second;
         }
@@ -987,21 +1024,21 @@ namespace lemon {
         std::string target_token;
 
         if (!_reader_bits::readToken(line, source_token))
-          throw DataFormatError("Source not found");
+          throw FormatError("Source not found");
 
         if (!_reader_bits::readToken(line, target_token))
-          throw DataFormatError("Target not found");
+          throw FormatError("Target not found");
 
         std::vector<std::string> tokens(map_num);
         for (int i = 0; i < map_num; ++i) {
           if (!_reader_bits::readToken(line, tokens[i])) {
             std::ostringstream msg;
             msg << "Column not found (" << i + 1 << ")";
-            throw DataFormatError(msg.str().c_str());
+            throw FormatError(msg.str());
           }
         }
         if (line >> std::ws >> c)
-          throw DataFormatError("Extra character on the end of line");
+          throw FormatError("Extra character at the end of line");
 
         Arc a;
         if (!_use_arcs) {
@@ -1012,7 +1049,7 @@ namespace lemon {
           if (it == _node_index.end()) {
             std::ostringstream msg;
             msg << "Item not found: " << source_token;
-            throw DataFormatError(msg.str().c_str());
+            throw FormatError(msg.str());
           }
           Node source = it->second;
 
@@ -1020,7 +1057,7 @@ namespace lemon {
           if (it == _node_index.end()) {
             std::ostringstream msg;
             msg << "Item not found: " << target_token;
-            throw DataFormatError(msg.str().c_str());
+            throw FormatError(msg.str());
           }
           Node target = it->second;
 
@@ -1029,13 +1066,13 @@ namespace lemon {
             _arc_index.insert(std::make_pair(tokens[label_index], a));
         } else {
           if (label_index == -1)
-            throw DataFormatError("Label map not found in file");
+            throw FormatError("Label map not found");
           typename std::map<std::string, Arc>::iterator it =
             _arc_index.find(tokens[label_index]);
           if (it == _arc_index.end()) {
             std::ostringstream msg;
             msg << "Arc with label not found: " << tokens[label_index];
-            throw DataFormatError(msg.str().c_str());
+            throw FormatError(msg.str());
           }
           a = it->second;
         }
@@ -1060,18 +1097,18 @@ namespace lemon {
 
         std::string attr, token;
         if (!_reader_bits::readToken(line, attr))
-          throw DataFormatError("Attribute name not found");
+          throw FormatError("Attribute name not found");
         if (!_reader_bits::readToken(line, token))
-          throw DataFormatError("Attribute value not found");
+          throw FormatError("Attribute value not found");
         if (line >> c)
-          throw DataFormatError("Extra character on the end of line");
+          throw FormatError("Extra character at the end of line");
 
         {
           std::set<std::string>::iterator it = read_attr.find(attr);
           if (it != read_attr.end()) {
             std::ostringstream msg;
-            msg << "Multiple occurence of attribute " << attr;
-            throw DataFormatError(msg.str().c_str());
+            msg << "Multiple occurence of attribute: " << attr;
+            throw FormatError(msg.str());
           }
           read_attr.insert(attr);
         }
@@ -1092,8 +1129,8 @@ namespace lemon {
            it != _attributes.end(); ++it) {
         if (read_attr.find(it->first) == read_attr.end()) {
           std::ostringstream msg;
-          msg << "Attribute not found in file: " << it->first;
-          throw DataFormatError(msg.str().c_str());
+          msg << "Attribute not found: " << it->first;
+          throw FormatError(msg.str());
         }
       }
     }
@@ -1108,9 +1145,6 @@ namespace lemon {
     /// This function starts the batch processing
     void run() {
       LEMON_ASSERT(_is != 0, "This reader assigned to an other reader");
-      if (!*_is) {
-        throw DataFormatError("Cannot find file");
-      }
 
       bool nodes_done = _skip_nodes;
       bool arcs_done = _skip_arcs;
@@ -1129,7 +1163,7 @@ namespace lemon {
           _reader_bits::readToken(line, caption);
 
           if (line >> c)
-            throw DataFormatError("Extra character on the end of line");
+            throw FormatError("Extra character at the end of line");
 
           if (section == "nodes" && !nodes_done) {
             if (_nodes_caption.empty() || _nodes_caption == caption) {
@@ -1151,22 +1185,23 @@ namespace lemon {
             readLine();
             skipSection();
           }
-        } catch (DataFormatError& error) {
+        } catch (FormatError& error) {
           error.line(line_num);
+          error.file(_filename);
           throw;
         }
       }
 
       if (!nodes_done) {
-        throw DataFormatError("Section @nodes not found");
+        throw FormatError("Section @nodes not found");
       }
 
       if (!arcs_done) {
-        throw DataFormatError("Section @arcs not found");
+        throw FormatError("Section @arcs not found");
       }
 
       if (!attributes_done && !_attributes.empty()) {
-        throw DataFormatError("Section @attributes not found");
+        throw FormatError("Section @attributes not found");
       }
 
     }
@@ -1175,48 +1210,38 @@ namespace lemon {
 
   };
 
-  /// \brief Return a \ref DigraphReader class
-  ///
-  /// This function just returns a \ref DigraphReader class.
-  /// \relates DigraphReader
-  template <typename Digraph>
-  DigraphReader<Digraph> digraphReader(std::istream& is, Digraph& digraph) {
-    DigraphReader<Digraph> tmp(is, digraph);
-    return tmp;
-  }
-
-  /// \brief Return a \ref DigraphReader class
-  ///
-  /// This function just returns a \ref DigraphReader class.
-  /// \relates DigraphReader
-  template <typename Digraph>
-  DigraphReader<Digraph> digraphReader(const std::string& fn,
-                                       Digraph& digraph) {
-    DigraphReader<Digraph> tmp(fn, digraph);
-    return tmp;
-  }
-
-  /// \brief Return a \ref DigraphReader class
-  ///
-  /// This function just returns a \ref DigraphReader class.
-  /// \relates DigraphReader
-  template <typename Digraph>
-  DigraphReader<Digraph> digraphReader(const char* fn, Digraph& digraph) {
-    DigraphReader<Digraph> tmp(fn, digraph);
-    return tmp;
-  }
-
   template <typename Graph>
   class GraphReader;
 
+  /// \brief Return a \ref GraphReader class
+  ///
+  /// This function just returns a \ref GraphReader class.
+  /// \relates GraphReader
   template <typename Graph>
-  GraphReader<Graph> graphReader(std::istream& is, Graph& graph);
+  GraphReader<Graph> graphReader(Graph& graph, std::istream& is = std::cin) {
+    GraphReader<Graph> tmp(graph, is);
+    return tmp;
+  }
 
+  /// \brief Return a \ref GraphReader class
+  ///
+  /// This function just returns a \ref GraphReader class.
+  /// \relates GraphReader
   template <typename Graph>
-  GraphReader<Graph> graphReader(const std::string& fn, Graph& graph);
+  GraphReader<Graph> graphReader(Graph& graph, const std::string& fn) {
+    GraphReader<Graph> tmp(graph, fn);
+    return tmp;
+  }
 
+  /// \brief Return a \ref GraphReader class
+  ///
+  /// This function just returns a \ref GraphReader class.
+  /// \relates GraphReader
   template <typename Graph>
-  GraphReader<Graph> graphReader(const char *fn, Graph& graph);
+  GraphReader<Graph> graphReader(Graph& graph, const char* fn) {
+    GraphReader<Graph> tmp(graph, fn);
+    return tmp;
+  }
 
   /// \ingroup lemon_io
   ///
@@ -1244,6 +1269,7 @@ namespace lemon {
 
     std::istream* _is;
     bool local_is;
+    std::string _filename;
 
     Graph& _graph;
 
@@ -1283,7 +1309,7 @@ namespace lemon {
     ///
     /// Construct an undirected graph reader, which reads from the given
     /// input stream.
-    GraphReader(std::istream& is, Graph& graph)
+    GraphReader(Graph& graph, std::istream& is = std::cin)
       : _is(&is), local_is(false), _graph(graph),
         _use_nodes(false), _use_edges(false),
         _skip_nodes(false), _skip_edges(false) {}
@@ -1292,19 +1318,31 @@ namespace lemon {
     ///
     /// Construct an undirected graph reader, which reads from the given
     /// file.
-    GraphReader(const std::string& fn, Graph& graph)
-      : _is(new std::ifstream(fn.c_str())), local_is(true), _graph(graph),
+    GraphReader(Graph& graph, const std::string& fn)
+      : _is(new std::ifstream(fn.c_str())), local_is(true),
+        _filename(fn), _graph(graph),
         _use_nodes(false), _use_edges(false),
-        _skip_nodes(false), _skip_edges(false) {}
+        _skip_nodes(false), _skip_edges(false) {
+      if (!(*_is)) {
+        delete _is;
+        throw IoError("Cannot open file", fn);
+      }
+    }
 
     /// \brief Constructor
     ///
     /// Construct an undirected graph reader, which reads from the given
     /// file.
-    GraphReader(const char* fn, Graph& graph)
-      : _is(new std::ifstream(fn)), local_is(true), _graph(graph),
+    GraphReader(Graph& graph, const char* fn)
+      : _is(new std::ifstream(fn)), local_is(true),
+        _filename(fn), _graph(graph),
         _use_nodes(false), _use_edges(false),
-        _skip_nodes(false), _skip_edges(false) {}
+        _skip_nodes(false), _skip_edges(false) {
+      if (!(*_is)) {
+        delete _is;
+        throw IoError("Cannot open file", fn);
+      }
+    }
 
     /// \brief Destructor
     ~GraphReader() {
@@ -1330,10 +1368,10 @@ namespace lemon {
     }
 
   private:
-    friend GraphReader<Graph> graphReader<>(std::istream& is, Graph& graph);
-    friend GraphReader<Graph> graphReader<>(const std::string& fn,
-                                            Graph& graph);
-    friend GraphReader<Graph> graphReader<>(const char *fn, Graph& graph);
+    friend GraphReader<Graph> graphReader<>(Graph& graph, std::istream& is);
+    friend GraphReader<Graph> graphReader<>(Graph& graph,
+                                            const std::string& fn);
+    friend GraphReader<Graph> graphReader<>(Graph& graph, const char *fn);
 
     GraphReader(GraphReader& other)
       : _is(other._is), local_is(other.local_is), _graph(other._graph),
@@ -1673,7 +1711,7 @@ namespace lemon {
       if (!readLine() || !(line >> c) || c == '@') {
         if (readSuccess() && line) line.putback(c);
         if (!_node_maps.empty())
-          throw DataFormatError("Cannot find map names");
+          throw FormatError("Cannot find map names");
         return;
       }
       line.putback(c);
@@ -1687,7 +1725,7 @@ namespace lemon {
           if (maps.find(map) != maps.end()) {
             std::ostringstream msg;
             msg << "Multiple occurence of node map: " << map;
-            throw DataFormatError(msg.str().c_str());
+            throw FormatError(msg.str());
           }
           maps.insert(std::make_pair(map, index));
           ++index;
@@ -1698,8 +1736,8 @@ namespace lemon {
             maps.find(_node_maps[i].first);
           if (jt == maps.end()) {
             std::ostringstream msg;
-            msg << "Map not found in file: " << _node_maps[i].first;
-            throw DataFormatError(msg.str().c_str());
+            msg << "Map not found: " << _node_maps[i].first;
+            throw FormatError(msg.str());
           }
           map_index[i] = jt->second;
         }
@@ -1723,11 +1761,11 @@ namespace lemon {
           if (!_reader_bits::readToken(line, tokens[i])) {
             std::ostringstream msg;
             msg << "Column not found (" << i + 1 << ")";
-            throw DataFormatError(msg.str().c_str());
+            throw FormatError(msg.str());
           }
         }
         if (line >> std::ws >> c)
-          throw DataFormatError("Extra character on the end of line");
+          throw FormatError("Extra character at the end of line");
 
         Node n;
         if (!_use_nodes) {
@@ -1736,13 +1774,13 @@ namespace lemon {
             _node_index.insert(std::make_pair(tokens[label_index], n));
         } else {
           if (label_index == -1)
-            throw DataFormatError("Label map not found in file");
+            throw FormatError("Label map not found");
           typename std::map<std::string, Node>::iterator it =
             _node_index.find(tokens[label_index]);
           if (it == _node_index.end()) {
             std::ostringstream msg;
             msg << "Node with label not found: " << tokens[label_index];
-            throw DataFormatError(msg.str().c_str());
+            throw FormatError(msg.str());
           }
           n = it->second;
         }
@@ -1766,7 +1804,7 @@ namespace lemon {
       if (!readLine() || !(line >> c) || c == '@') {
         if (readSuccess() && line) line.putback(c);
         if (!_edge_maps.empty())
-          throw DataFormatError("Cannot find map names");
+          throw FormatError("Cannot find map names");
         return;
       }
       line.putback(c);
@@ -1780,7 +1818,7 @@ namespace lemon {
           if (maps.find(map) != maps.end()) {
             std::ostringstream msg;
             msg << "Multiple occurence of edge map: " << map;
-            throw DataFormatError(msg.str().c_str());
+            throw FormatError(msg.str());
           }
           maps.insert(std::make_pair(map, index));
           ++index;
@@ -1791,8 +1829,8 @@ namespace lemon {
             maps.find(_edge_maps[i].first);
           if (jt == maps.end()) {
             std::ostringstream msg;
-            msg << "Map not found in file: " << _edge_maps[i].first;
-            throw DataFormatError(msg.str().c_str());
+            msg << "Map not found: " << _edge_maps[i].first;
+            throw FormatError(msg.str());
           }
           map_index[i] = jt->second;
         }
@@ -1815,21 +1853,21 @@ namespace lemon {
         std::string target_token;
 
         if (!_reader_bits::readToken(line, source_token))
-          throw DataFormatError("Node u not found");
+          throw FormatError("Node u not found");
 
         if (!_reader_bits::readToken(line, target_token))
-          throw DataFormatError("Node v not found");
+          throw FormatError("Node v not found");
 
         std::vector<std::string> tokens(map_num);
         for (int i = 0; i < map_num; ++i) {
           if (!_reader_bits::readToken(line, tokens[i])) {
             std::ostringstream msg;
             msg << "Column not found (" << i + 1 << ")";
-            throw DataFormatError(msg.str().c_str());
+            throw FormatError(msg.str());
           }
         }
         if (line >> std::ws >> c)
-          throw DataFormatError("Extra character on the end of line");
+          throw FormatError("Extra character at the end of line");
 
         Edge e;
         if (!_use_edges) {
@@ -1840,7 +1878,7 @@ namespace lemon {
           if (it == _node_index.end()) {
             std::ostringstream msg;
             msg << "Item not found: " << source_token;
-            throw DataFormatError(msg.str().c_str());
+            throw FormatError(msg.str());
           }
           Node source = it->second;
 
@@ -1848,7 +1886,7 @@ namespace lemon {
           if (it == _node_index.end()) {
             std::ostringstream msg;
             msg << "Item not found: " << target_token;
-            throw DataFormatError(msg.str().c_str());
+            throw FormatError(msg.str());
           }
           Node target = it->second;
 
@@ -1857,13 +1895,13 @@ namespace lemon {
             _edge_index.insert(std::make_pair(tokens[label_index], e));
         } else {
           if (label_index == -1)
-            throw DataFormatError("Label map not found in file");
+            throw FormatError("Label map not found");
           typename std::map<std::string, Edge>::iterator it =
             _edge_index.find(tokens[label_index]);
           if (it == _edge_index.end()) {
             std::ostringstream msg;
             msg << "Edge with label not found: " << tokens[label_index];
-            throw DataFormatError(msg.str().c_str());
+            throw FormatError(msg.str());
           }
           e = it->second;
         }
@@ -1888,18 +1926,18 @@ namespace lemon {
 
         std::string attr, token;
         if (!_reader_bits::readToken(line, attr))
-          throw DataFormatError("Attribute name not found");
+          throw FormatError("Attribute name not found");
         if (!_reader_bits::readToken(line, token))
-          throw DataFormatError("Attribute value not found");
+          throw FormatError("Attribute value not found");
         if (line >> c)
-          throw DataFormatError("Extra character on the end of line");
+          throw FormatError("Extra character at the end of line");
 
         {
           std::set<std::string>::iterator it = read_attr.find(attr);
           if (it != read_attr.end()) {
             std::ostringstream msg;
-            msg << "Multiple occurence of attribute " << attr;
-            throw DataFormatError(msg.str().c_str());
+            msg << "Multiple occurence of attribute: " << attr;
+            throw FormatError(msg.str());
           }
           read_attr.insert(attr);
         }
@@ -1920,8 +1958,8 @@ namespace lemon {
            it != _attributes.end(); ++it) {
         if (read_attr.find(it->first) == read_attr.end()) {
           std::ostringstream msg;
-          msg << "Attribute not found in file: " << it->first;
-          throw DataFormatError(msg.str().c_str());
+          msg << "Attribute not found: " << it->first;
+          throw FormatError(msg.str());
         }
       }
     }
@@ -1955,7 +1993,7 @@ namespace lemon {
           _reader_bits::readToken(line, caption);
 
           if (line >> c)
-            throw DataFormatError("Extra character on the end of line");
+            throw FormatError("Extra character at the end of line");
 
           if (section == "nodes" && !nodes_done) {
             if (_nodes_caption.empty() || _nodes_caption == caption) {
@@ -1977,22 +2015,23 @@ namespace lemon {
             readLine();
             skipSection();
           }
-        } catch (DataFormatError& error) {
+        } catch (FormatError& error) {
           error.line(line_num);
+          error.file(_filename);
           throw;
         }
       }
 
       if (!nodes_done) {
-        throw DataFormatError("Section @nodes not found");
+        throw FormatError("Section @nodes not found");
       }
 
       if (!edges_done) {
-        throw DataFormatError("Section @edges not found");
+        throw FormatError("Section @edges not found");
       }
 
       if (!attributes_done && !_attributes.empty()) {
-        throw DataFormatError("Section @attributes not found");
+        throw FormatError("Section @attributes not found");
       }
 
     }
@@ -2000,37 +2039,6 @@ namespace lemon {
     /// @}
 
   };
-
-  /// \brief Return a \ref GraphReader class
-  ///
-  /// This function just returns a \ref GraphReader class.
-  /// \relates GraphReader
-  template <typename Graph>
-  GraphReader<Graph> graphReader(std::istream& is, Graph& graph) {
-    GraphReader<Graph> tmp(is, graph);
-    return tmp;
-  }
-
-  /// \brief Return a \ref GraphReader class
-  ///
-  /// This function just returns a \ref GraphReader class.
-  /// \relates GraphReader
-  template <typename Graph>
-  GraphReader<Graph> graphReader(const std::string& fn,
-                                       Graph& graph) {
-    GraphReader<Graph> tmp(fn, graph);
-    return tmp;
-  }
-
-  /// \brief Return a \ref GraphReader class
-  ///
-  /// This function just returns a \ref GraphReader class.
-  /// \relates GraphReader
-  template <typename Graph>
-  GraphReader<Graph> graphReader(const char* fn, Graph& graph) {
-    GraphReader<Graph> tmp(fn, graph);
-    return tmp;
-  }
 
   class SectionReader;
 
@@ -2054,6 +2062,7 @@ namespace lemon {
 
     std::istream* _is;
     bool local_is;
+    std::string _filename;
 
     typedef std::map<std::string, _reader_bits::Section*> Sections;
     Sections _sections;
@@ -2074,13 +2083,25 @@ namespace lemon {
     ///
     /// Construct a section reader, which reads from the given file.
     SectionReader(const std::string& fn)
-      : _is(new std::ifstream(fn.c_str())), local_is(true) {}
+      : _is(new std::ifstream(fn.c_str())), local_is(true),
+        _filename(fn) {
+      if (!(*_is)) {
+        delete _is;
+        throw IoError("Cannot open file", fn);
+      }
+    }
 
     /// \brief Constructor
     ///
     /// Construct a section reader, which reads from the given file.
     SectionReader(const char* fn)
-      : _is(new std::ifstream(fn)), local_is(true) {}
+      : _is(new std::ifstream(fn)), local_is(true),
+        _filename(fn) {
+      if (!(*_is)) {
+        delete _is;
+        throw IoError("Cannot open file", fn);
+      }
+    }
 
     /// \brief Destructor
     ~SectionReader() {
@@ -2236,12 +2257,12 @@ namespace lemon {
           _reader_bits::readToken(line, caption);
 
           if (line >> c)
-            throw DataFormatError("Extra character on the end of line");
+            throw FormatError("Extra character at the end of line");
 
           if (extra_sections.find(section) != extra_sections.end()) {
             std::ostringstream msg;
-            msg << "Multiple occurence of section " << section;
-            throw DataFormatError(msg.str().c_str());
+            msg << "Multiple occurence of section: " << section;
+            throw FormatError(msg.str());
           }
           Sections::iterator it = _sections.find(section);
           if (it != _sections.end()) {
@@ -2250,8 +2271,9 @@ namespace lemon {
           }
           readLine();
           skipSection();
-        } catch (DataFormatError& error) {
+        } catch (FormatError& error) {
           error.line(line_num);
+          error.file(_filename);
           throw;
         }
       }
@@ -2260,7 +2282,7 @@ namespace lemon {
         if (extra_sections.find(it->first) == extra_sections.end()) {
           std::ostringstream os;
           os << "Cannot find section: " << it->first;
-          throw DataFormatError(os.str().c_str());
+          throw FormatError(os.str());
         }
       }
     }
@@ -2360,14 +2382,24 @@ namespace lemon {
     /// Construct an \e LGF contents reader, which reads from the given
     /// file.
     LgfContents(const std::string& fn)
-      : _is(new std::ifstream(fn.c_str())), local_is(true) {}
+      : _is(new std::ifstream(fn.c_str())), local_is(true) {
+      if (!(*_is)) {
+        delete _is;
+        throw IoError("Cannot open file", fn);
+      }
+    }
 
     /// \brief Constructor
     ///
     /// Construct an \e LGF contents reader, which reads from the given
     /// file.
     LgfContents(const char* fn)
-      : _is(new std::ifstream(fn)), local_is(true) {}
+      : _is(new std::ifstream(fn)), local_is(true) {
+      if (!(*_is)) {
+        delete _is;
+        throw IoError("Cannot open file", fn);
+      }
+    }
 
     /// \brief Destructor
     ~LgfContents() {

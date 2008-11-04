@@ -300,7 +300,6 @@ namespace lemon {
     ///may be invalidated.
     ///\warning This functionality cannot be used together with the Snapshot
     ///feature.
-    ///\todo It could be implemented in a bit faster way.
     Node split(Node n, bool connect = true)
     {
       Node b = addNode();
@@ -366,7 +365,7 @@ namespace lemon {
       ///Constructor that immediately makes a snapshot
 
       ///This constructor immediately makes a snapshot of the digraph.
-      ///\param _g The digraph we make a snapshot of.
+      ///\param graph The digraph we make a snapshot of.
       Snapshot(SmartDigraph &graph) : _graph(&graph) {
         node_num=_graph->nodes.size();
         arc_num=_graph->arcs.size();
@@ -378,7 +377,7 @@ namespace lemon {
       ///
       ///This function can be called more than once. In case of a repeated
       ///call, the previous snapshot gets lost.
-      ///\param _g The digraph we make the snapshot of.
+      ///\param graph The digraph we make the snapshot of.
       void save(SmartDigraph &graph)
       {
         _graph=&graph;
@@ -465,8 +464,8 @@ namespace lemon {
       explicit Arc(int id) { _id = id;}
 
     public:
-      operator Edge() const { 
-        return _id != -1 ? edgeFromId(_id / 2) : INVALID; 
+      operator Edge() const {
+        return _id != -1 ? edgeFromId(_id / 2) : INVALID;
       }
 
       Arc() {}
@@ -776,7 +775,7 @@ namespace lemon {
       ///Constructor that immediately makes a snapshot
 
       ///This constructor immediately makes a snapshot of the digraph.
-      ///\param g The digraph we make a snapshot of.
+      ///\param graph The digraph we make a snapshot of.
       Snapshot(SmartGraph &graph) {
         graph.saveSnapshot(*this);
       }
@@ -787,7 +786,7 @@ namespace lemon {
       ///
       ///This function can be called more than once. In case of a repeated
       ///call, the previous snapshot gets lost.
-      ///\param g The digraph we make the snapshot of.
+      ///\param graph The digraph we make the snapshot of.
       void save(SmartGraph &graph)
       {
         graph.saveSnapshot(*this);

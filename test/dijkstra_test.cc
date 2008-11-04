@@ -20,9 +20,9 @@
 #include <lemon/smart_graph.h>
 #include <lemon/list_graph.h>
 #include <lemon/lgf_reader.h>
-
 #include <lemon/dijkstra.h>
 #include <lemon/path.h>
+#include <lemon/bin_heap.h>
 
 #include "graph_test.h"
 #include "test_tools.h"
@@ -56,30 +56,54 @@ void checkDijkstraCompile()
   typedef concepts::Digraph Digraph;
   typedef concepts::ReadMap<Digraph::Arc,VType> LengthMap;
   typedef Dijkstra<Digraph, LengthMap> DType;
+  typedef Digraph::Node Node;
+  typedef Digraph::Arc Arc;
 
   Digraph G;
-  Digraph::Node n;
-  Digraph::Arc e;
+  Node s, t;
+  Arc e;
   VType l;
   bool b;
   DType::DistMap d(G);
   DType::PredMap p(G);
-  //  DType::PredNodeMap pn(G);
   LengthMap length;
+  Path<Digraph> pp;
 
-  DType dijkstra_test(G,length);
+  {
+    DType dijkstra_test(G,length);
 
-  dijkstra_test.run(n);
+    dijkstra_test.run(s);
+    dijkstra_test.run(s,t);
 
-  l  = dijkstra_test.dist(n);
-  e  = dijkstra_test.predArc(n);
-  n  = dijkstra_test.predNode(n);
-  d  = dijkstra_test.distMap();
-  p  = dijkstra_test.predMap();
-  //  pn = dijkstra_test.predNodeMap();
-  b  = dijkstra_test.reached(n);
+    l  = dijkstra_test.dist(t);
+    e  = dijkstra_test.predArc(t);
+    s  = dijkstra_test.predNode(t);
+    b  = dijkstra_test.reached(t);
+    d  = dijkstra_test.distMap();
+    p  = dijkstra_test.predMap();
+    pp = dijkstra_test.path(t);
+  }
+  {
+    DType
+      ::SetPredMap<concepts::ReadWriteMap<Node,Arc> >
+      ::SetDistMap<concepts::ReadWriteMap<Node,VType> >
+      ::SetProcessedMap<concepts::WriteMap<Node,bool> >
+      ::SetStandardProcessedMap
+      ::SetOperationTraits<DijkstraWidestPathOperationTraits<VType> >
+      ::SetHeap<BinHeap<VType, concepts::ReadWriteMap<Node,int> > >
+      ::SetStandardHeap<BinHeap<VType, concepts::ReadWriteMap<Node,int> > >
+      ::Create dijkstra_test(G,length);
 
-  Path<Digraph> pp = dijkstra_test.path(n);
+    dijkstra_test.run(s);
+    dijkstra_test.run(s,t);
+
+    l  = dijkstra_test.dist(t);
+    e  = dijkstra_test.predArc(t);
+    s  = dijkstra_test.predNode(t);
+    b  = dijkstra_test.reached(t);
+    pp = dijkstra_test.path(t);
+  }
+
 }
 
 void checkDijkstraFunctionCompile()
@@ -91,12 +115,21 @@ void checkDijkstraFunctionCompile()
   typedef concepts::ReadMap<Digraph::Arc,VType> LengthMap;
 
   Digraph g;
-  dijkstra(g,LengthMap(),Node()).run();
-  dijkstra(g,LengthMap()).source(Node()).run();
+  bool b;
+  dijkstra(g,LengthMap()).run(Node());
+  b=dijkstra(g,LengthMap()).run(Node(),Node());
   dijkstra(g,LengthMap())
-    .predMap(concepts::WriteMap<Node,Arc>())
-    .distMap(concepts::WriteMap<Node,VType>())
+    .predMap(concepts::ReadWriteMap<Node,Arc>())
+    .distMap(concepts::ReadWriteMap<Node,VType>())
+    .processedMap(concepts::WriteMap<Node,bool>())
     .run(Node());
+  b=dijkstra(g,LengthMap())
+    .predMap(concepts::ReadWriteMap<Node,Arc>())
+    .distMap(concepts::ReadWriteMap<Node,VType>())
+    .processedMap(concepts::WriteMap<Node,bool>())
+    .path(concepts::Path<Digraph>())
+    .dist(VType())
+    .run(Node(),Node());
 }
 
 template <class Digraph>
@@ -109,7 +142,7 @@ void checkDijkstra() {
   LengthMap length(G);
 
   std::istringstream input(test_lgf);
-  digraphReader(input, G).
+  digraphReader(G, input).
     arcMap("length", length).
     node("source", s).
     node("target", t).
@@ -122,7 +155,7 @@ void checkDijkstra() {
   check(dijkstra_test.dist(t)==3,"Dijkstra found a wrong path.");
 
   Path<Digraph> p = dijkstra_test.path(t);
-  check(p.length()==3,"getPath() found a wrong path.");
+  check(p.length()==3,"path() found a wrong path.");
   check(checkPath(G, p),"path() found a wrong path.");
   check(pathSource(G, p) == s,"path() found a wrong path.");
   check(pathTarget(G, p) == t,"path() found a wrong path.");
@@ -132,7 +165,7 @@ void checkDijkstra() {
     Node v=G.target(e);
     check( !dijkstra_test.reached(u) ||
            (dijkstra_test.dist(v) - dijkstra_test.dist(u) <= length[e]),
-           "dist(target)-dist(source)-arc_length= " <<
+           "Wrong output. dist(target)-dist(source)-arc_length=" <<
            dijkstra_test.dist(v) - dijkstra_test.dist(u) - length[e]);
   }
 

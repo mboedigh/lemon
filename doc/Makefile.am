@@ -1,16 +1,20 @@
 EXTRA_DIST += \
 	doc/Doxyfile.in \
+	doc/DoxygenLayout.xml \
 	doc/coding_style.dox \
 	doc/dirs.dox \
 	doc/groups.dox \
 	doc/lgf.dox \
 	doc/license.dox \
 	doc/mainpage.dox \
+	doc/migration.dox \
+	doc/named-param.dox \
 	doc/namespaces.dox \
 	doc/html \
 	doc/CMakeLists.txt
 
 DOC_EPS_IMAGES18 = \
+	grid_graph.eps \
 	nodeshape_0.eps \
 	nodeshape_1.eps \
 	nodeshape_2.eps \

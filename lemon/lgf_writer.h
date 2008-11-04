@@ -33,9 +33,11 @@
 #include <vector>
 #include <functional>
 
-#include <lemon/assert.h>
 #include <lemon/core.h>
 #include <lemon/maps.h>
+
+#include <lemon/concept_check.h>
+#include <lemon/concepts/maps.h>
 
 namespace lemon {
 
@@ -52,7 +54,7 @@ namespace lemon {
 
     template <typename T>
     bool operator<(const T&, const T&) {
-      throw DataFormatError("Label map is not comparable");
+      throw FormatError("Label map is not comparable");
     }
 
     template <typename _Map>
@@ -200,7 +202,7 @@ namespace lemon {
         typename std::map<Value, std::string>::const_iterator it =
           _map.find(str);
         if (it == _map.end()) {
-          throw DataFormatError("Item not found");
+          throw FormatError("Item not found");
         }
         return it->second;
       }
@@ -220,7 +222,7 @@ namespace lemon {
         typename std::map<typename Graph::Edge, std::string>
           ::const_iterator it = _map.find(val);
         if (it == _map.end()) {
-          throw DataFormatError("Item not found");
+          throw FormatError("Item not found");
         }
         return (_graph.direction(val) ? '+' : '-') + it->second;
       }
@@ -304,22 +306,82 @@ namespace lemon {
       return os;
     }
 
+    class Section {
+    public:
+      virtual ~Section() {}
+      virtual void process(std::ostream& os) = 0;
+    };
+
+    template <typename Functor>
+    class LineSection : public Section {
+    private:
+
+      Functor _functor;
+
+    public:
+
+      LineSection(const Functor& functor) : _functor(functor) {}
+      virtual ~LineSection() {}
+
+      virtual void process(std::ostream& os) {
+        std::string line;
+        while (!(line = _functor()).empty()) os << line << std::endl;
+      }
+    };
+
+    template <typename Functor>
+    class StreamSection : public Section {
+    private:
+
+      Functor _functor;
+
+    public:
+
+      StreamSection(const Functor& functor) : _functor(functor) {}
+      virtual ~StreamSection() {}
+
+      virtual void process(std::ostream& os) {
+        _functor(os);
+      }
+    };
+
   }
 
   template <typename Digraph>
   class DigraphWriter;
 
+  /// \brief Return a \ref DigraphWriter class
+  ///
+  /// This function just returns a \ref DigraphWriter class.
+  /// \relates DigraphWriter
   template <typename Digraph>
-  DigraphWriter<Digraph> digraphWriter(std::ostream& os,
-                                       const Digraph& digraph);
+  DigraphWriter<Digraph> digraphWriter(const Digraph& digraph,
+                                       std::ostream& os = std::cout) {
+    DigraphWriter<Digraph> tmp(digraph, os);
+    return tmp;
+  }
 
+  /// \brief Return a \ref DigraphWriter class
+  ///
+  /// This function just returns a \ref DigraphWriter class.
+  /// \relates DigraphWriter
   template <typename Digraph>
-  DigraphWriter<Digraph> digraphWriter(const std::string& fn,
-                                       const Digraph& digraph);
+  DigraphWriter<Digraph> digraphWriter(const Digraph& digraph,
+                                       const std::string& fn) {
+    DigraphWriter<Digraph> tmp(digraph, fn);
+    return tmp;
+  }
 
+  /// \brief Return a \ref DigraphWriter class
+  ///
+  /// This function just returns a \ref DigraphWriter class.
+  /// \relates DigraphWriter
   template <typename Digraph>
-  DigraphWriter<Digraph> digraphWriter(const char *fn,
-                                       const Digraph& digraph);
+  DigraphWriter<Digraph> digraphWriter(const Digraph& digraph,
+                                       const char* fn) {
+    DigraphWriter<Digraph> tmp(digraph, fn);
+    return tmp;
+  }
 
   /// \ingroup lemon_io
   ///
@@ -340,7 +402,7 @@ namespace lemon {
   /// arc() functions are used to add attribute writing rules.
   ///
   ///\code
-  /// DigraphWriter<Digraph>(std::cout, digraph).
+  /// DigraphWriter<Digraph>(digraph, std::cout).
   ///   nodeMap("coordinates", coord_map).
   ///   nodeMap("size", size).
   ///   nodeMap("title", title).
@@ -410,25 +472,35 @@ namespace lemon {
     ///
     /// Construct a directed graph writer, which writes to the given
     /// output stream.
-    DigraphWriter(std::ostream& is, const Digraph& digraph)
-      : _os(&is), local_os(false), _digraph(digraph),
+    DigraphWriter(const Digraph& digraph, std::ostream& os = std::cout)
+      : _os(&os), local_os(false), _digraph(digraph),
         _skip_nodes(false), _skip_arcs(false) {}
 
     /// \brief Constructor
     ///
     /// Construct a directed graph writer, which writes to the given
     /// output file.
-    DigraphWriter(const std::string& fn, const Digraph& digraph)
+    DigraphWriter(const Digraph& digraph, const std::string& fn)
       : _os(new std::ofstream(fn.c_str())), local_os(true), _digraph(digraph),
-        _skip_nodes(false), _skip_arcs(false) {}
+        _skip_nodes(false), _skip_arcs(false) {
+      if (!(*_os)) {
+        delete _os;
+        throw IoError("Cannot write file", fn);
+      }
+    }
 
     /// \brief Constructor
     ///
     /// Construct a directed graph writer, which writes to the given
     /// output file.
-    DigraphWriter(const char* fn, const Digraph& digraph)
+    DigraphWriter(const Digraph& digraph, const char* fn)
       : _os(new std::ofstream(fn)), local_os(true), _digraph(digraph),
-        _skip_nodes(false), _skip_arcs(false) {}
+        _skip_nodes(false), _skip_arcs(false) {
+      if (!(*_os)) {
+        delete _os;
+        throw IoError("Cannot write file", fn);
+      }
+    }
 
     /// \brief Destructor
     ~DigraphWriter() {
@@ -454,12 +526,12 @@ namespace lemon {
 
   private:
 
-    friend DigraphWriter<Digraph> digraphWriter<>(std::ostream& os,
-                                                  const Digraph& digraph);
-    friend DigraphWriter<Digraph> digraphWriter<>(const std::string& fn,
-                                                  const Digraph& digraph);
-    friend DigraphWriter<Digraph> digraphWriter<>(const char *fn,
-                                                  const Digraph& digraph);
+    friend DigraphWriter<Digraph> digraphWriter<>(const Digraph& digraph,
+                                                  std::ostream& os);
+    friend DigraphWriter<Digraph> digraphWriter<>(const Digraph& digraph,
+                                                  const std::string& fn);
+    friend DigraphWriter<Digraph> digraphWriter<>(const Digraph& digraph,
+                                                  const char *fn);
 
     DigraphWriter(DigraphWriter& other)
       : _os(other._os), local_os(other.local_os), _digraph(other._digraph),
@@ -861,50 +933,39 @@ namespace lemon {
     /// @}
   };
 
-  /// \brief Return a \ref DigraphWriter class
-  ///
-  /// This function just returns a \ref DigraphWriter class.
-  /// \relates DigraphWriter
-  template <typename Digraph>
-  DigraphWriter<Digraph> digraphWriter(std::ostream& os,
-                                       const Digraph& digraph) {
-    DigraphWriter<Digraph> tmp(os, digraph);
-    return tmp;
-  }
-
-  /// \brief Return a \ref DigraphWriter class
-  ///
-  /// This function just returns a \ref DigraphWriter class.
-  /// \relates DigraphWriter
-  template <typename Digraph>
-  DigraphWriter<Digraph> digraphWriter(const std::string& fn,
-                                       const Digraph& digraph) {
-    DigraphWriter<Digraph> tmp(fn, digraph);
-    return tmp;
-  }
-
-  /// \brief Return a \ref DigraphWriter class
-  ///
-  /// This function just returns a \ref DigraphWriter class.
-  /// \relates DigraphWriter
-  template <typename Digraph>
-  DigraphWriter<Digraph> digraphWriter(const char* fn,
-                                       const Digraph& digraph) {
-    DigraphWriter<Digraph> tmp(fn, digraph);
-    return tmp;
-  }
-
   template <typename Graph>
   class GraphWriter;
 
+  /// \brief Return a \ref GraphWriter class
+  ///
+  /// This function just returns a \ref GraphWriter class.
+  /// \relates GraphWriter
   template <typename Graph>
-  GraphWriter<Graph> graphWriter(std::ostream& os, const Graph& graph);
+  GraphWriter<Graph> graphWriter(const Graph& graph,
+                                 std::ostream& os = std::cout) {
+    GraphWriter<Graph> tmp(graph, os);
+    return tmp;
+  }
 
+  /// \brief Return a \ref GraphWriter class
+  ///
+  /// This function just returns a \ref GraphWriter class.
+  /// \relates GraphWriter
   template <typename Graph>
-  GraphWriter<Graph> graphWriter(const std::string& fn, const Graph& graph);
+  GraphWriter<Graph> graphWriter(const Graph& graph, const std::string& fn) {
+    GraphWriter<Graph> tmp(graph, fn);
+    return tmp;
+  }
 
+  /// \brief Return a \ref GraphWriter class
+  ///
+  /// This function just returns a \ref GraphWriter class.
+  /// \relates GraphWriter
   template <typename Graph>
-  GraphWriter<Graph> graphWriter(const char *fn, const Graph& graph);
+  GraphWriter<Graph> graphWriter(const Graph& graph, const char* fn) {
+    GraphWriter<Graph> tmp(graph, fn);
+    return tmp;
+  }
 
   /// \ingroup lemon_io
   ///
@@ -966,25 +1027,35 @@ namespace lemon {
     ///
     /// Construct a directed graph writer, which writes to the given
     /// output stream.
-    GraphWriter(std::ostream& is, const Graph& graph)
-      : _os(&is), local_os(false), _graph(graph),
+    GraphWriter(const Graph& graph, std::ostream& os = std::cout)
+      : _os(&os), local_os(false), _graph(graph),
         _skip_nodes(false), _skip_edges(false) {}
 
     /// \brief Constructor
     ///
     /// Construct a directed graph writer, which writes to the given
     /// output file.
-    GraphWriter(const std::string& fn, const Graph& graph)
+    GraphWriter(const Graph& graph, const std::string& fn)
       : _os(new std::ofstream(fn.c_str())), local_os(true), _graph(graph),
-        _skip_nodes(false), _skip_edges(false) {}
+        _skip_nodes(false), _skip_edges(false) {
+      if (!(*_os)) {
+        delete _os;
+        throw IoError("Cannot write file", fn);
+      }
+    }
 
     /// \brief Constructor
     ///
     /// Construct a directed graph writer, which writes to the given
     /// output file.
-    GraphWriter(const char* fn, const Graph& graph)
+    GraphWriter(const Graph& graph, const char* fn)
       : _os(new std::ofstream(fn)), local_os(true), _graph(graph),
-        _skip_nodes(false), _skip_edges(false) {}
+        _skip_nodes(false), _skip_edges(false) {
+      if (!(*_os)) {
+        delete _os;
+        throw IoError("Cannot write file", fn);
+      }
+    }
 
     /// \brief Destructor
     ~GraphWriter() {
@@ -1010,12 +1081,12 @@ namespace lemon {
 
   private:
 
-    friend GraphWriter<Graph> graphWriter<>(std::ostream& os,
-                                            const Graph& graph);
-    friend GraphWriter<Graph> graphWriter<>(const std::string& fn,
-                                            const Graph& graph);
-    friend GraphWriter<Graph> graphWriter<>(const char *fn,
-                                            const Graph& graph);
+    friend GraphWriter<Graph> graphWriter<>(const Graph& graph,
+                                            std::ostream& os);
+    friend GraphWriter<Graph> graphWriter<>(const Graph& graph,
+                                            const std::string& fn);
+    friend GraphWriter<Graph> graphWriter<>(const Graph& graph,
+                                            const char *fn);
 
     GraphWriter(GraphWriter& other)
       : _os(other._os), local_os(other.local_os), _graph(other._graph),
@@ -1463,33 +1534,216 @@ namespace lemon {
     /// @}
   };
 
-  /// \brief Return a \ref GraphWriter class
+  class SectionWriter;
+
+  SectionWriter sectionWriter(std::istream& is);
+  SectionWriter sectionWriter(const std::string& fn);
+  SectionWriter sectionWriter(const char* fn);
+
+  /// \ingroup lemon_io
   ///
-  /// This function just returns a \ref GraphWriter class.
-  /// \relates GraphWriter
-  template <typename Graph>
-  GraphWriter<Graph> graphWriter(std::ostream& os, const Graph& graph) {
-    GraphWriter<Graph> tmp(os, graph);
+  /// \brief Section writer class
+  ///
+  /// In the \ref lgf-format "LGF" file extra sections can be placed,
+  /// which contain any data in arbitrary format. Such sections can be
+  /// written with this class. A writing rule can be added to the
+  /// class with two different functions. With the \c sectionLines()
+  /// function a generator can write the section line-by-line, while
+  /// with the \c sectionStream() member the section can be written to
+  /// an output stream.
+  class SectionWriter {
+  private:
+
+    std::ostream* _os;
+    bool local_os;
+
+    typedef std::vector<std::pair<std::string, _writer_bits::Section*> >
+    Sections;
+
+    Sections _sections;
+
+  public:
+
+    /// \brief Constructor
+    ///
+    /// Construct a section writer, which writes to the given output
+    /// stream.
+    SectionWriter(std::ostream& os)
+      : _os(&os), local_os(false) {}
+
+    /// \brief Constructor
+    ///
+    /// Construct a section writer, which writes into the given file.
+    SectionWriter(const std::string& fn)
+      : _os(new std::ofstream(fn.c_str())), local_os(true) {
+      if (!(*_os)) {
+        delete _os;
+        throw IoError("Cannot write file", fn);
+      }
+    }
+
+    /// \brief Constructor
+    ///
+    /// Construct a section writer, which writes into the given file.
+    SectionWriter(const char* fn)
+      : _os(new std::ofstream(fn)), local_os(true) {
+      if (!(*_os)) {
+        delete _os;
+        throw IoError("Cannot write file", fn);
+      }
+    }
+
+    /// \brief Destructor
+    ~SectionWriter() {
+      for (Sections::iterator it = _sections.begin();
+           it != _sections.end(); ++it) {
+        delete it->second;
+      }
+
+      if (local_os) {
+        delete _os;
+      }
+
+    }
+
+  private:
+
+    friend SectionWriter sectionWriter(std::ostream& os);
+    friend SectionWriter sectionWriter(const std::string& fn);
+    friend SectionWriter sectionWriter(const char* fn);
+
+    SectionWriter(SectionWriter& other)
+      : _os(other._os), local_os(other.local_os) {
+
+      other._os = 0;
+      other.local_os = false;
+
+      _sections.swap(other._sections);
+    }
+
+    SectionWriter& operator=(const SectionWriter&);
+
+  public:
+
+    /// \name Section writers
+    /// @{
+
+    /// \brief Add a section writer with line oriented writing
+    ///
+    /// The first parameter is the type descriptor of the section, the
+    /// second is a generator with std::string values. At the writing
+    /// process, the returned \c std::string will be written into the
+    /// output file until it is an empty string.
+    ///
+    /// For example, an integer vector is written into a section.
+    ///\code
+    ///  @numbers
+    ///  12 45 23 78
+    ///  4 28 38 28
+    ///  23 6 16
+    ///\endcode
+    ///
+    /// The generator is implemented as a struct.
+    ///\code
+    ///  struct NumberSection {
+    ///    std::vector<int>::const_iterator _it, _end;
+    ///    NumberSection(const std::vector<int>& data)
+    ///      : _it(data.begin()), _end(data.end()) {}
+    ///    std::string operator()() {
+    ///      int rem_in_line = 4;
+    ///      std::ostringstream ls;
+    ///      while (rem_in_line > 0 && _it != _end) {
+    ///        ls << *(_it++) << ' ';
+    ///        --rem_in_line;
+    ///      }
+    ///      return ls.str();
+    ///    }
+    ///  };
+    ///
+    ///  // ...
+    ///
+    ///  writer.sectionLines("numbers", NumberSection(vec));
+    ///\endcode
+    template <typename Functor>
+    SectionWriter& sectionLines(const std::string& type, Functor functor) {
+      LEMON_ASSERT(!type.empty(), "Type is empty.");
+      _sections.push_back(std::make_pair(type,
+        new _writer_bits::LineSection<Functor>(functor)));
+      return *this;
+    }
+
+
+    /// \brief Add a section writer with stream oriented writing
+    ///
+    /// The first parameter is the type of the section, the second is
+    /// a functor, which takes a \c std::ostream& parameter. The
+    /// functor writes the section to the output stream.
+    /// \warning The last line must be closed with end-line character.
+    template <typename Functor>
+    SectionWriter& sectionStream(const std::string& type, Functor functor) {
+      LEMON_ASSERT(!type.empty(), "Type is empty.");
+      _sections.push_back(std::make_pair(type,
+         new _writer_bits::StreamSection<Functor>(functor)));
+      return *this;
+    }
+
+    /// @}
+
+  public:
+
+
+    /// \name Execution of the writer
+    /// @{
+
+    /// \brief Start the batch processing
+    ///
+    /// This function starts the batch processing.
+    void run() {
+
+      LEMON_ASSERT(_os != 0, "This writer is assigned to an other writer");
+
+      for (Sections::iterator it = _sections.begin();
+           it != _sections.end(); ++it) {
+        (*_os) << '@' << it->first << std::endl;
+        it->second->process(*_os);
+      }
+    }
+
+    /// \brief Give back the stream of the writer
+    ///
+    /// Returns the stream of the writer
+    std::ostream& ostream() {
+      return *_os;
+    }
+
+    /// @}
+
+  };
+
+  /// \brief Return a \ref SectionWriter class
+  ///
+  /// This function just returns a \ref SectionWriter class.
+  /// \relates SectionWriter
+  inline SectionWriter sectionWriter(std::ostream& os) {
+    SectionWriter tmp(os);
     return tmp;
   }
 
-  /// \brief Return a \ref GraphWriter class
+  /// \brief Return a \ref SectionWriter class
   ///
-  /// This function just returns a \ref GraphWriter class.
-  /// \relates GraphWriter
-  template <typename Graph>
-  GraphWriter<Graph> graphWriter(const std::string& fn, const Graph& graph) {
-    GraphWriter<Graph> tmp(fn, graph);
+  /// This function just returns a \ref SectionWriter class.
+  /// \relates SectionWriter
+  inline SectionWriter sectionWriter(const std::string& fn) {
+    SectionWriter tmp(fn);
     return tmp;
   }
 
-  /// \brief Return a \ref GraphWriter class
+  /// \brief Return a \ref SectionWriter class
   ///
-  /// This function just returns a \ref GraphWriter class.
-  /// \relates GraphWriter
-  template <typename Graph>
-  GraphWriter<Graph> graphWriter(const char* fn, const Graph& graph) {
-    GraphWriter<Graph> tmp(fn, graph);
+  /// This function just returns a \ref SectionWriter class.
+  /// \relates SectionWriter
+  inline SectionWriter sectionWriter(const char* fn) {
+    SectionWriter tmp(fn);
     return tmp;
   }
 }
