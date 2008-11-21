@@ -81,6 +81,7 @@ do
         -e "s/\<DefProcessedMapToBeDefaultMap\>/SetStandardProcessedMap/g"\
         -e "s/\<copyGraph\>/graphCopy/g"\
         -e "s/\<copyDigraph\>/digraphCopy/g"\
+        -e "s/\<HyperCubeDigraph\>/HypercubeGraph/g"\
         -e "s/\<IntegerMap\>/RangeMap/g"\
         -e "s/\<integerMap\>/rangeMap/g"\
         -e "s/\<\([sS]\)tdMap\>/\1parseMap/g"\
@@ -90,6 +91,7 @@ do
         -e "s/\<StoreBoolMap\>/LoggerBoolMap/g"\
         -e "s/\<storeBoolMap\>/loggerBoolMap/g"\
         -e "s/\<BoundingBox\>/Box/g"\
+        -e "s/\<readNauty\>/readNautyGraph/g"\
     <$i > $TMP
     mv $TMP $i
 done
