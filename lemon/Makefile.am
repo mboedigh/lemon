@@ -28,6 +28,7 @@ lemon_HEADERS += \
         lemon/dfs.h \
         lemon/dijkstra.h \
         lemon/dim2.h \
+        lemon/dimacs.h \
 	lemon/elevator.h \
 	lemon/error.h \
 	lemon/full_graph.h \
@@ -43,6 +44,7 @@ lemon_HEADERS += \
 	lemon/max_matching.h \
 	lemon/nauty_reader.h \
 	lemon/path.h \
+	lemon/preflow.h \
         lemon/random.h \
 	lemon/smart_graph.h \
 	lemon/suurballe.h \
