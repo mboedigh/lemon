@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2008
+ * Copyright (C) 2003-2009
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -67,7 +67,7 @@ namespace lemon {
       : nodes(_g.nodes), arcs(_g.arcs) { }
 
     typedef True NodeNumTag;
-    typedef True EdgeNumTag;
+    typedef True ArcNumTag;
 
     int nodeNum() const { return nodes.size(); }
     int arcNum() const { return arcs.size(); }
@@ -305,7 +305,9 @@ namespace lemon {
       Node b = addNode();
       nodes[b._id].first_out=nodes[n._id].first_out;
       nodes[n._id].first_out=-1;
-      for(int i=nodes[b._id].first_out;i!=-1;i++) arcs[i].source=b._id;
+      for(int i=nodes[b._id].first_out; i!=-1; i=arcs[i].next_out) {
+        arcs[i].source=b._id;
+      }
       if(connect) addArc(n,b);
       return b;
     }
@@ -464,8 +466,8 @@ namespace lemon {
       explicit Arc(int id) { _id = id;}
 
     public:
-      operator Edge() const { 
-        return _id != -1 ? edgeFromId(_id / 2) : INVALID; 
+      operator Edge() const {
+        return _id != -1 ? edgeFromId(_id / 2) : INVALID;
       }
 
       Arc() {}
@@ -480,6 +482,13 @@ namespace lemon {
     SmartGraphBase()
       : nodes(), arcs() {}
 
+    typedef True NodeNumTag;
+    typedef True EdgeNumTag;
+    typedef True ArcNumTag;
+
+    int nodeNum() const { return nodes.size(); }
+    int edgeNum() const { return arcs.size() / 2; }
+    int arcNum() const { return arcs.size(); }
 
     int maxNodeId() const { return nodes.size()-1; }
     int maxEdgeId() const { return arcs.size() / 2 - 1; }
@@ -728,8 +737,8 @@ namespace lemon {
         dir.push_back(arcFromId(n));
         dir.push_back(arcFromId(n-1));
         Parent::notifier(Arc()).erase(dir);
-        nodes[arcs[n].target].first_out=arcs[n].next_out;
-        nodes[arcs[n-1].target].first_out=arcs[n-1].next_out;
+        nodes[arcs[n-1].target].first_out=arcs[n].next_out;
+        nodes[arcs[n].target].first_out=arcs[n-1].next_out;
         arcs.pop_back();
         arcs.pop_back();
       }

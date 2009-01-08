@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2008
+ * Copyright (C) 2003-2009
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -30,7 +30,7 @@
 
 //\ingroup digraphbits
 //\file
-//\brief Extenders for the digraph types
+//\brief Extenders for the graph types
 namespace lemon {
 
   // \ingroup digraphbits

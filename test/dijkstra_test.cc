@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2008
+ * Copyright (C) 2003-2009
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -89,7 +89,7 @@ void checkDijkstraCompile()
       ::SetDistMap<concepts::ReadWriteMap<Node,VType> >
       ::SetProcessedMap<concepts::WriteMap<Node,bool> >
       ::SetStandardProcessedMap
-      ::SetOperationTraits<DijkstraWidestPathOperationTraits<VType> >
+      ::SetOperationTraits<DijkstraDefaultOperationTraits<VType> >
       ::SetHeap<BinHeap<VType, concepts::ReadWriteMap<Node,int> > >
       ::SetStandardHeap<BinHeap<VType, concepts::ReadWriteMap<Node,int> > >
       ::Create dijkstra_test(G,length);
