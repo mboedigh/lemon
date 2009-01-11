@@ -1,37 +1,36 @@
 EXTRA_DIST += \
-	test/CMakeLists.txt \
-        test/min_cost_flow_test.lgf \
-        test/preflow_graph.lgf
+	test/CMakeLists.txt
 
 noinst_HEADERS += \
 	test/graph_test.h \
-        test/test_tools.h
+	test/test_tools.h
 
 check_PROGRAMS += \
 	test/bfs_test \
-        test/circulation_test \
-        test/counter_test \
+	test/circulation_test \
+	test/counter_test \
 	test/dfs_test \
 	test/digraph_test \
 	test/dijkstra_test \
-        test/dim_test \
+	test/dim_test \
 	test/error_test \
 	test/graph_adaptor_test \
 	test/graph_copy_test \
 	test/graph_test \
 	test/graph_utils_test \
+	test/hao_orlin_test \
 	test/heap_test \
 	test/kruskal_test \
-	test/hao_orlin_test \
-        test/maps_test \
+	test/maps_test \
 	test/max_matching_test \
-        test/random_test \
-        test/path_test \
-        test/preflow_test \
-        test/suurballe_test \
-        test/test_tools_fail \
-        test/test_tools_pass \
-        test/time_measure_test \
+	test/path_test \
+	test/preflow_test \
+	test/radix_sort_test \
+	test/random_test \
+	test/suurballe_test \
+	test/test_tools_fail \
+	test/test_tools_pass \
+	test/time_measure_test \
 	test/unionfind_test
 
 TESTS += $(check_PROGRAMS)
@@ -56,6 +55,7 @@ test_maps_test_SOURCES = test/maps_test.cc
 test_max_matching_test_SOURCES = test/max_matching_test.cc
 test_path_test_SOURCES = test/path_test.cc
 test_preflow_test_SOURCES = test/preflow_test.cc
+test_radix_sort_test_SOURCES = test/radix_sort_test.cc
 test_suurballe_test_SOURCES = test/suurballe_test.cc
 test_random_test_SOURCES = test/random_test.cc
 test_test_tools_fail_SOURCES = test/test_tools_fail.cc

@@ -1,8 +1,8 @@
-/* -*- C++ -*-
+/* -*- mode: C++; indent-tabs-mode: nil; -*-
  *
- * This file is a part of LEMON, a generic C++ optimization library
+ * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2008
+ * Copyright (C) 2003-2009
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -17,7 +17,6 @@
  */
 
 #include <iostream>
-#include <fstream>
 
 #include <lemon/list_graph.h>
 #include <lemon/lgf_reader.h>
@@ -28,9 +27,52 @@
 
 using namespace lemon;
 
+char test_lgf[] =
+  "@nodes\n"
+  "label supply1 supply2 supply3\n"
+  "1     0        20      27\n"
+  "2     0       -4        0\n"
+  "3     0        0        0\n"
+  "4     0        0        0\n"
+  "5     0        9        0\n"
+  "6     0       -6        0\n"
+  "7     0        0        0\n"
+  "8     0        0        0\n"
+  "9     0        3        0\n"
+  "10    0       -2        0\n"
+  "11    0        0        0\n"
+  "12    0       -20     -27\n"
+  "@arcs\n"
+  "      cost capacity lower1 lower2\n"
+  " 1  2  70  11       0      8\n"
+  " 1  3 150   3       0      1\n"
+  " 1  4  80  15       0      2\n"
+  " 2  8  80  12       0      0\n"
+  " 3  5 140   5       0      3\n"
+  " 4  6  60  10       0      1\n"
+  " 4  7  80   2       0      0\n"
+  " 4  8 110   3       0      0\n"
+  " 5  7  60  14       0      0\n"
+  " 5 11 120  12       0      0\n"
+  " 6  3   0   3       0      0\n"
+  " 6  9 140   4       0      0\n"
+  " 6 10  90   8       0      0\n"
+  " 7  1  30   5       0      0\n"
+  " 8 12  60  16       0      4\n"
+  " 9 12  50   6       0      0\n"
+  "10 12  70  13       0      5\n"
+  "10  2 100   7       0      0\n"
+  "10  7  60  10       0      0\n"
+  "11 10  20  14       0      6\n"
+  "12 11  30  10       0      0\n"
+  "@attributes\n"
+  "source  1\n"
+  "target 12\n"
+  "@end\n";
+
 // Check the feasibility of the flow
 template <typename Digraph, typename FlowMap>
-bool checkFlow( const Digraph& gr, const FlowMap& flow, 
+bool checkFlow( const Digraph& gr, const FlowMap& flow,
                 typename Digraph::Node s, typename Digraph::Node t,
                 int value )
 {
@@ -53,7 +95,7 @@ bool checkFlow( const Digraph& gr, const FlowMap& flow,
 }
 
 // Check the optimalitiy of the flow
-template < typename Digraph, typename CostMap, 
+template < typename Digraph, typename CostMap,
            typename FlowMap, typename PotentialMap >
 bool checkOptimality( const Digraph& gr, const CostMap& cost,
                       const FlowMap& flow, const PotentialMap& pi )
@@ -96,21 +138,13 @@ int main()
   ListDigraph::ArcMap<int> length(digraph);
   Node source, target;
 
-  std::string fname;
-  if(getenv("srcdir"))
-    fname = std::string(getenv("srcdir"));
-  else fname = ".";
-  fname += "/test/min_cost_flow_test.lgf";
-
-  std::ifstream input(fname.c_str());
-  check(input, "Input file '" << fname << "' not found");
+  std::istringstream input(test_lgf);
   DigraphReader<ListDigraph>(digraph, input).
     arcMap("cost", length).
     node("source", source).
     node("target", target).
     run();
-  input.close();
-  
+
   // Find 2 paths
   {
     Suurballe<ListDigraph> suurballe(digraph, length, source, target);
@@ -118,7 +152,7 @@ int main()
     check(checkFlow(digraph, suurballe.flowMap(), source, target, 2),
           "The flow is not feasible");
     check(suurballe.totalLength() == 510, "The flow is not optimal");
-    check(checkOptimality(digraph, length, suurballe.flowMap(), 
+    check(checkOptimality(digraph, length, suurballe.flowMap(),
                           suurballe.potentialMap()),
           "Wrong potentials");
     for (int i = 0; i < suurballe.pathNum(); ++i)
@@ -133,7 +167,7 @@ int main()
     check(checkFlow(digraph, suurballe.flowMap(), source, target, 3),
           "The flow is not feasible");
     check(suurballe.totalLength() == 1040, "The flow is not optimal");
-    check(checkOptimality(digraph, length, suurballe.flowMap(), 
+    check(checkOptimality(digraph, length, suurballe.flowMap(),
                           suurballe.potentialMap()),
           "Wrong potentials");
     for (int i = 0; i < suurballe.pathNum(); ++i)
@@ -148,7 +182,7 @@ int main()
     check(checkFlow(digraph, suurballe.flowMap(), source, target, 3),
           "The flow is not feasible");
     check(suurballe.totalLength() == 1040, "The flow is not optimal");
-    check(checkOptimality(digraph, length, suurballe.flowMap(), 
+    check(checkOptimality(digraph, length, suurballe.flowMap(),
                           suurballe.potentialMap()),
           "Wrong potentials");
     for (int i = 0; i < suurballe.pathNum(); ++i)

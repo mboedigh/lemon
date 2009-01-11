@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2008
+ * Copyright (C) 2003-2009
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -870,7 +870,9 @@ namespace lemon {
       while (readSuccess() && line >> c && c != '@') {
         readLine();
       }
-      line.putback(c);
+      if (readSuccess()) {
+        line.putback(c);
+      }
     }
 
     void readNodes() {
@@ -1699,7 +1701,9 @@ namespace lemon {
       while (readSuccess() && line >> c && c != '@') {
         readLine();
       }
-      line.putback(c);
+      if (readSuccess()) {
+        line.putback(c);
+      }
     }
 
     void readNodes() {
@@ -2226,7 +2230,9 @@ namespace lemon {
       while (readSuccess() && line >> c && c != '@') {
         readLine();
       }
-      line.putback(c);
+      if (readSuccess()) {
+        line.putback(c);
+      }
     }
 
   public:
@@ -2567,7 +2573,9 @@ namespace lemon {
       while (readSuccess() && line >> c && c != '@') {
         readLine();
       }
-      line.putback(c);
+      if (readSuccess()) {
+        line.putback(c);
+      }
     }
 
     void readMaps(std::vector<std::string>& maps) {

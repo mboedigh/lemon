@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2008
+ * Copyright (C) 2003-2009
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -1410,6 +1410,7 @@ namespace lemon {
             _stack[++_stack_head] = e;
           } else {
             _visitor->leave(s);
+            _visitor->stop(s);
           }
         }
     }
@@ -1625,7 +1626,7 @@ namespace lemon {
     ///
     /// \pre Either \ref run(Node) "run()" or \ref init()
     /// must be called before using this function.
-    bool reached(Node v) { return (*_reached)[v]; }
+    bool reached(Node v) const { return (*_reached)[v]; }
 
     ///@}
 
