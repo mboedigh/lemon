@@ -29,9 +29,7 @@
 #include<sys/time.h>
 #include<ctime>
 #else
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
-#include<windows.h>
+#include<lemon/bits/windows.h>
 #endif
 
 #include<lemon/math.h>
@@ -679,29 +677,19 @@ public:
     os << "%%Creator: LEMON, graphToEps()\n";
 
     {
+      os << "%%CreationDate: ";
 #ifndef WIN32
       timeval tv;
       gettimeofday(&tv, 0);
 
       char cbuf[26];
       ctime_r(&tv.tv_sec,cbuf);
-      os << "%%CreationDate: " << cbuf;
+      os << cbuf;
 #else
-      SYSTEMTIME time;
-      char buf1[11], buf2[9], buf3[5];
-
-      GetSystemTime(&time);
-      if (GetDateFormat(LOCALE_USER_DEFAULT, 0, &time,
-                        "ddd MMM dd", buf1, 11) &&
-          GetTimeFormat(LOCALE_USER_DEFAULT, 0, &time,
-                        "HH':'mm':'ss", buf2, 9) &&
-          GetDateFormat(LOCALE_USER_DEFAULT, 0, &time,
-                                "yyyy", buf3, 5)) {
-        os << "%%CreationDate: " << buf1 << ' '
-           << buf2 << ' ' << buf3 << std::endl;
-      }
+      os << bits::getWinFormattedDate();
 #endif
     }
+    os << std::endl;
 
     if (_autoArcWidthScale) {
       double max_w=0;

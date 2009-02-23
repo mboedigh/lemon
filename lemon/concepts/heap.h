@@ -20,10 +20,11 @@
 ///\file
 ///\brief The concept of heaps.
 
-#ifndef LEMON_CONCEPT_HEAP_H
-#define LEMON_CONCEPT_HEAP_H
+#ifndef LEMON_CONCEPTS_HEAP_H
+#define LEMON_CONCEPTS_HEAP_H
 
 #include <lemon/core.h>
+#include <lemon/concept_check.h>
 
 namespace lemon {
 
@@ -242,4 +243,4 @@ namespace lemon {
     /// @}
   } // namespace lemon
 }
-#endif // LEMON_CONCEPT_PATH_H
+#endif
