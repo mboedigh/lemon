@@ -1,0 +1,42 @@
+INCLUDE_DIRECTORIES(
+  ${PROJECT_SOURCE_DIR}
+  ${PROJECT_BINARY_DIR}
+)
+
+CONFIGURE_FILE(
+  ${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/config.h
+)
+
+SET(LEMON_SOURCES
+  arg_parser.cc
+  base.cc
+  color.cc
+  lp_base.cc
+  lp_skeleton.cc
+  random.cc
+  bits/windows.cc
+)
+
+IF(HAVE_GLPK)
+  SET(LEMON_SOURCES ${LEMON_SOURCES} glpk.cc)
+  INCLUDE_DIRECTORIES(${GLPK_INCLUDE_DIR})
+  IF(WIN32)
+    INSTALL(FILES ${GLPK_BIN_DIR}/glpk.dll DESTINATION bin)
+    INSTALL(FILES ${GLPK_BIN_DIR}/libltdl3.dll DESTINATION bin)
+    INSTALL(FILES ${GLPK_BIN_DIR}/zlib1.dll DESTINATION bin)
+  ENDIF(WIN32)
+ENDIF(HAVE_GLPK)
+
+ADD_LIBRARY(lemon ${LEMON_SOURCES})
+
+INSTALL(
+  TARGETS lemon
+  ARCHIVE DESTINATION lib
+  COMPONENT library)
+
+INSTALL(
+  DIRECTORY . bits concepts
+  DESTINATION include/lemon
+  COMPONENT headers
+  FILES_MATCHING PATTERN "*.h")
