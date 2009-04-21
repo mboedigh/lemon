@@ -230,9 +230,9 @@ template< typename GR,
 
     ///@{
 
-    template <typename _FlowMap>
+    template <typename T>
     struct SetFlowMapTraits : public Traits {
-      typedef _FlowMap FlowMap;
+      typedef T FlowMap;
       static FlowMap *createFlowMap(const Digraph&) {
         LEMON_ASSERT(false, "FlowMap is not initialized");
         return 0; // ignore warnings
@@ -244,17 +244,17 @@ template< typename GR,
     ///
     /// \ref named-templ-param "Named parameter" for setting FlowMap
     /// type.
-    template <typename _FlowMap>
+    template <typename T>
     struct SetFlowMap
       : public Circulation<Digraph, LowerMap, UpperMap, SupplyMap,
-                           SetFlowMapTraits<_FlowMap> > {
+                           SetFlowMapTraits<T> > {
       typedef Circulation<Digraph, LowerMap, UpperMap, SupplyMap,
-                          SetFlowMapTraits<_FlowMap> > Create;
+                          SetFlowMapTraits<T> > Create;
     };
 
-    template <typename _Elevator>
+    template <typename T>
     struct SetElevatorTraits : public Traits {
-      typedef _Elevator Elevator;
+      typedef T Elevator;
       static Elevator *createElevator(const Digraph&, int) {
         LEMON_ASSERT(false, "Elevator is not initialized");
         return 0; // ignore warnings
@@ -270,17 +270,17 @@ template< typename GR,
     /// \ref elevator(Elevator&) "elevator()" function before calling
     /// \ref run() or \ref init().
     /// \sa SetStandardElevator
-    template <typename _Elevator>
+    template <typename T>
     struct SetElevator
       : public Circulation<Digraph, LowerMap, UpperMap, SupplyMap,
-                           SetElevatorTraits<_Elevator> > {
+                           SetElevatorTraits<T> > {
       typedef Circulation<Digraph, LowerMap, UpperMap, SupplyMap,
-                          SetElevatorTraits<_Elevator> > Create;
+                          SetElevatorTraits<T> > Create;
     };
 
-    template <typename _Elevator>
+    template <typename T>
     struct SetStandardElevatorTraits : public Traits {
-      typedef _Elevator Elevator;
+      typedef T Elevator;
       static Elevator *createElevator(const Digraph& digraph, int max_level) {
         return new Elevator(digraph, max_level);
       }
@@ -298,12 +298,12 @@ template< typename GR,
     /// algorithm with the \ref elevator(Elevator&) "elevator()" function
     /// before calling \ref run() or \ref init().
     /// \sa SetElevator
-    template <typename _Elevator>
+    template <typename T>
     struct SetStandardElevator
       : public Circulation<Digraph, LowerMap, UpperMap, SupplyMap,
-                       SetStandardElevatorTraits<_Elevator> > {
+                       SetStandardElevatorTraits<T> > {
       typedef Circulation<Digraph, LowerMap, UpperMap, SupplyMap,
-                      SetStandardElevatorTraits<_Elevator> > Create;
+                      SetStandardElevatorTraits<T> > Create;
     };
 
     /// @}
@@ -470,13 +470,13 @@ template< typename GR,
       createStructures();
 
       for(NodeIt n(_g);n!=INVALID;++n) {
-        _excess->set(n, (*_supply)[n]);
+        (*_excess)[n] = (*_supply)[n];
       }
 
       for (ArcIt e(_g);e!=INVALID;++e) {
         _flow->set(e, (*_lo)[e]);
-        _excess->set(_g.target(e), (*_excess)[_g.target(e)] + (*_flow)[e]);
-        _excess->set(_g.source(e), (*_excess)[_g.source(e)] - (*_flow)[e]);
+        (*_excess)[_g.target(e)] += (*_flow)[e];
+        (*_excess)[_g.source(e)] -= (*_flow)[e];
       }
 
       // global relabeling tested, but in general case it provides
@@ -499,23 +499,23 @@ template< typename GR,
       createStructures();
 
       for(NodeIt n(_g);n!=INVALID;++n) {
-        _excess->set(n, (*_supply)[n]);
+        (*_excess)[n] = (*_supply)[n];
       }
 
       for (ArcIt e(_g);e!=INVALID;++e) {
         if (!_tol.positive((*_excess)[_g.target(e)] + (*_up)[e])) {
           _flow->set(e, (*_up)[e]);
-          _excess->set(_g.target(e), (*_excess)[_g.target(e)] + (*_up)[e]);
-          _excess->set(_g.source(e), (*_excess)[_g.source(e)] - (*_up)[e]);
+          (*_excess)[_g.target(e)] += (*_up)[e];
+          (*_excess)[_g.source(e)] -= (*_up)[e];
         } else if (_tol.positive((*_excess)[_g.target(e)] + (*_lo)[e])) {
           _flow->set(e, (*_lo)[e]);
-          _excess->set(_g.target(e), (*_excess)[_g.target(e)] + (*_lo)[e]);
-          _excess->set(_g.source(e), (*_excess)[_g.source(e)] - (*_lo)[e]);
+          (*_excess)[_g.target(e)] += (*_lo)[e];
+          (*_excess)[_g.source(e)] -= (*_lo)[e];
         } else {
           Flow fc = -(*_excess)[_g.target(e)];
           _flow->set(e, fc);
-          _excess->set(_g.target(e), 0);
-          _excess->set(_g.source(e), (*_excess)[_g.source(e)] - fc);
+          (*_excess)[_g.target(e)] = 0;
+          (*_excess)[_g.source(e)] -= fc;
         }
       }
 
@@ -554,16 +554,16 @@ template< typename GR,
           if((*_level)[v]<actlevel) {
             if(!_tol.less(fc, exc)) {
               _flow->set(e, (*_flow)[e] + exc);
-              _excess->set(v, (*_excess)[v] + exc);
+              (*_excess)[v] += exc;
               if(!_level->active(v) && _tol.positive((*_excess)[v]))
                 _level->activate(v);
-              _excess->set(act,0);
+              (*_excess)[act] = 0;
               _level->deactivate(act);
               goto next_l;
             }
             else {
               _flow->set(e, (*_up)[e]);
-              _excess->set(v, (*_excess)[v] + fc);
+              (*_excess)[v] += fc;
               if(!_level->active(v) && _tol.positive((*_excess)[v]))
                 _level->activate(v);
               exc-=fc;
@@ -578,16 +578,16 @@ template< typename GR,
           if((*_level)[v]<actlevel) {
             if(!_tol.less(fc, exc)) {
               _flow->set(e, (*_flow)[e] - exc);
-              _excess->set(v, (*_excess)[v] + exc);
+              (*_excess)[v] += exc;
               if(!_level->active(v) && _tol.positive((*_excess)[v]))
                 _level->activate(v);
-              _excess->set(act,0);
+              (*_excess)[act] = 0;
               _level->deactivate(act);
               goto next_l;
             }
             else {
               _flow->set(e, (*_lo)[e]);
-              _excess->set(v, (*_excess)[v] + fc);
+              (*_excess)[v] += fc;
               if(!_level->active(v) && _tol.positive((*_excess)[v]))
                 _level->activate(v);
               exc-=fc;
@@ -596,7 +596,7 @@ template< typename GR,
           else if((*_level)[v]<mlevel) mlevel=(*_level)[v];
         }
 
-        _excess->set(act, exc);
+        (*_excess)[act] = exc;
         if(!_tol.positive(exc)) _level->deactivate(act);
         else if(mlevel==_node_num) {
           _level->liftHighestActiveToTop();
@@ -699,7 +699,7 @@ template< typename GR,
     /// empty set, so \c bar[v] will be \c false for all nodes \c v.
     ///
     /// \note This function calls \ref barrier() for each node,
-    /// so it runs in \f$O(n)\f$ time.
+    /// so it runs in O(n) time.
     ///
     /// \pre Either \ref run() or \ref init() must be called before
     /// using this function.

@@ -12,21 +12,24 @@ lemon_libemon_la_SOURCES = \
 	lemon/color.cc \
 	lemon/lp_base.cc \
 	lemon/lp_skeleton.cc \
-        lemon/random.cc \
+	lemon/random.cc \
 	lemon/bits/windows.cc
 
 
 lemon_libemon_la_CXXFLAGS = \
+	$(AM_CXXFLAGS) \
 	$(GLPK_CFLAGS) \
 	$(CPLEX_CFLAGS) \
 	$(SOPLEX_CXXFLAGS) \
-	$(CLP_CXXFLAGS)
+	$(CLP_CXXFLAGS) \
+	$(CBC_CXXFLAGS)
 
 lemon_libemon_la_LDFLAGS = \
 	$(GLPK_LIBS) \
 	$(CPLEX_LIBS) \
 	$(SOPLEX_LIBS) \
-	$(CLP_LIBS)
+	$(CLP_LIBS) \
+	$(CBC_LIBS)
 
 if HAVE_GLPK
 lemon_libemon_la_SOURCES += lemon/glpk.cc
@@ -42,6 +45,10 @@ endif
 
 if HAVE_CLP
 lemon_libemon_la_SOURCES += lemon/clp.cc
+endif
+
+if HAVE_CBC
+lemon_libemon_la_SOURCES += lemon/cbc.cc
 endif
 
 lemon_HEADERS += \
@@ -68,6 +75,7 @@ lemon_HEADERS += \
 	lemon/euler.h \
 	lemon/full_graph.h \
 	lemon/glpk.h \
+	lemon/gomory_hu.h \
 	lemon/graph_to_eps.h \
 	lemon/grid_graph.h \
 	lemon/hypercube_graph.h \
@@ -81,8 +89,8 @@ lemon_HEADERS += \
 	lemon/lp_skeleton.h \
 	lemon/list_graph.h \
 	lemon/maps.h \
+	lemon/matching.h \
 	lemon/math.h \
-	lemon/max_matching.h \
 	lemon/min_cost_arborescence.h \
 	lemon/nauty_reader.h \
 	lemon/network_simplex.h \

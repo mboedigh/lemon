@@ -497,12 +497,11 @@ namespace lemon {
         InArcIt& operator++() { return *this; }
       };
 
-      /// \brief Read write map of the nodes to type \c T.
+      /// \brief Reference map of the nodes to type \c T.
       ///
-      /// ReadWrite map of the nodes to type \c T.
-      /// \sa Reference
+      /// Reference map of the nodes to type \c T.
       template<class T>
-      class NodeMap : public ReadWriteMap< Node, T >
+      class NodeMap : public ReferenceMap<Node, T, T&, const T&>
       {
       public:
 
@@ -513,7 +512,8 @@ namespace lemon {
 
       private:
         ///Copy constructor
-        NodeMap(const NodeMap& nm) : ReadWriteMap< Node, T >(nm) { }
+        NodeMap(const NodeMap& nm) :
+          ReferenceMap<Node, T, T&, const T&>(nm) { }
         ///Assignment operator
         template <typename CMap>
         NodeMap& operator=(const CMap&) {
@@ -522,12 +522,11 @@ namespace lemon {
         }
       };
 
-      /// \brief Read write map of the directed arcs to type \c T.
+      /// \brief Reference map of the arcs to type \c T.
       ///
-      /// Reference map of the directed arcs to type \c T.
-      /// \sa Reference
+      /// Reference map of the arcs to type \c T.
       template<class T>
-      class ArcMap : public ReadWriteMap<Arc,T>
+      class ArcMap : public ReferenceMap<Arc, T, T&, const T&>
       {
       public:
 
@@ -537,7 +536,8 @@ namespace lemon {
         ArcMap(const Graph&, T) { }
       private:
         ///Copy constructor
-        ArcMap(const ArcMap& em) : ReadWriteMap<Arc,T>(em) { }
+        ArcMap(const ArcMap& em) :
+          ReferenceMap<Arc, T, T&, const T&>(em) { }
         ///Assignment operator
         template <typename CMap>
         ArcMap& operator=(const CMap&) {
@@ -546,12 +546,11 @@ namespace lemon {
         }
       };
 
-      /// Read write map of the edges to type \c T.
+      /// Reference map of the edges to type \c T.
 
-      /// Reference map of the arcs to type \c T.
-      /// \sa Reference
+      /// Reference map of the edges to type \c T.
       template<class T>
-      class EdgeMap : public ReadWriteMap<Edge,T>
+      class EdgeMap : public ReferenceMap<Edge, T, T&, const T&>
       {
       public:
 
@@ -561,7 +560,8 @@ namespace lemon {
         EdgeMap(const Graph&, T) { }
       private:
         ///Copy constructor
-        EdgeMap(const EdgeMap& em) : ReadWriteMap<Edge,T>(em) {}
+        EdgeMap(const EdgeMap& em) :
+          ReferenceMap<Edge, T, T&, const T&>(em) {}
         ///Assignment operator
         template <typename CMap>
         EdgeMap& operator=(const CMap&) {
@@ -601,23 +601,35 @@ namespace lemon {
 
       /// \brief Opposite node on an arc
       ///
-      /// \return the opposite of the given Node on the given Edge
+      /// \return The opposite of the given node on the given edge.
       Node oppositeNode(Node, Edge) const { return INVALID; }
 
       /// \brief First node of the edge.
       ///
-      /// \return the first node of the given Edge.
+      /// \return The first node of the given edge.
       ///
       /// Naturally edges don't have direction and thus
-      /// don't have source and target node. But we use these two methods
-      /// to query the two nodes of the arc. The direction of the arc
-      /// which arises this way is called the inherent direction of the
+      /// don't have source and target node. However we use \c u() and \c v()
+      /// methods to query the two nodes of the arc. The direction of the
+      /// arc which arises this way is called the inherent direction of the
       /// edge, and is used to define the "default" direction
       /// of the directed versions of the arcs.
-      /// \sa direction
+      /// \sa v()
+      /// \sa direction()
       Node u(Edge) const { return INVALID; }
 
       /// \brief Second node of the edge.
+      ///
+      /// \return The second node of the given edge.
+      ///
+      /// Naturally edges don't have direction and thus
+      /// don't have source and target node. However we use \c u() and \c v()
+      /// methods to query the two nodes of the arc. The direction of the
+      /// arc which arises this way is called the inherent direction of the
+      /// edge, and is used to define the "default" direction
+      /// of the directed versions of the arcs.
+      /// \sa u()
+      /// \sa direction()
       Node v(Edge) const { return INVALID; }
 
       /// \brief Source node of the directed arc.
@@ -736,6 +748,7 @@ namespace lemon {
       template <typename _Graph>
       struct Constraints {
         void constraints() {
+          checkConcept<BaseGraphComponent, _Graph>();
           checkConcept<IterableGraphComponent<>, _Graph>();
           checkConcept<IDableGraphComponent<>, _Graph>();
           checkConcept<MappableGraphComponent<>, _Graph>();

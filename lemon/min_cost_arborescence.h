@@ -35,19 +35,19 @@ namespace lemon {
   /// \brief Default traits class for MinCostArborescence class.
   ///
   /// Default traits class for MinCostArborescence class.
-  /// \param _Digraph Digraph type.
-  /// \param _CostMap Type of cost map.
-  template <class _Digraph, class _CostMap>
+  /// \param GR Digraph type.
+  /// \param CM Type of cost map.
+  template <class GR, class CM>
   struct MinCostArborescenceDefaultTraits{
 
     /// \brief The digraph type the algorithm runs on.
-    typedef _Digraph Digraph;
+    typedef GR Digraph;
 
     /// \brief The type of the map that stores the arc costs.
     ///
     /// The type of the map that stores the arc costs.
     /// It must meet the \ref concepts::ReadMap "ReadMap" concept.
-    typedef _CostMap CostMap;
+    typedef CM CostMap;
 
     /// \brief The value type of the costs.
     ///
@@ -63,25 +63,25 @@ namespace lemon {
     /// arc. After it will set all arborescence arcs once.
     typedef typename Digraph::template ArcMap<bool> ArborescenceMap;
 
-    /// \brief Instantiates a ArborescenceMap.
+    /// \brief Instantiates a \c ArborescenceMap.
     ///
-    /// This function instantiates a \ref ArborescenceMap.
+    /// This function instantiates a \c ArborescenceMap.
     /// \param digraph is the graph, to which we would like to
-    /// calculate the ArborescenceMap.
+    /// calculate the \c ArborescenceMap.
     static ArborescenceMap *createArborescenceMap(const Digraph &digraph){
       return new ArborescenceMap(digraph);
     }
 
-    /// \brief The type of the PredMap
+    /// \brief The type of the \c PredMap
     ///
-    /// The type of the PredMap. It is a node map with an arc value type.
+    /// The type of the \c PredMap. It is a node map with an arc value type.
     typedef typename Digraph::template NodeMap<typename Digraph::Arc> PredMap;
 
-    /// \brief Instantiates a PredMap.
+    /// \brief Instantiates a \c PredMap.
     ///
-    /// This function instantiates a \ref PredMap.
-    /// \param _digraph is the digraph, to which we would like to define the
-    /// PredMap.
+    /// This function instantiates a \c PredMap.
+    /// \param digraph The digraph to which we would like to define the
+    /// \c PredMap.
     static PredMap *createPredMap(const Digraph &digraph){
       return new PredMap(digraph);
     }
@@ -90,47 +90,45 @@ namespace lemon {
 
   /// \ingroup spantree
   ///
-  /// \brief %MinCostArborescence algorithm class.
+  /// \brief Minimum Cost Arborescence algorithm class.
   ///
   /// This class provides an efficient implementation of
-  /// %MinCostArborescence algorithm. The arborescence is a tree
+  /// Minimum Cost Arborescence algorithm. The arborescence is a tree
   /// which is directed from a given source node of the digraph. One or
   /// more sources should be given for the algorithm and it will calculate
   /// the minimum cost subgraph which are union of arborescences with the
   /// given sources and spans all the nodes which are reachable from the
-  /// sources. The time complexity of the algorithm is \f$ O(n^2+e) \f$.
+  /// sources. The time complexity of the algorithm is O(n<sup>2</sup>+e).
   ///
   /// The algorithm provides also an optimal dual solution, therefore
   /// the optimality of the solution can be checked.
   ///
-  /// \param _Digraph The digraph type the algorithm runs on. The default value
+  /// \param GR The digraph type the algorithm runs on. The default value
   /// is \ref ListDigraph.
-  /// \param _CostMap This read-only ArcMap determines the costs of the
+  /// \param CM This read-only ArcMap determines the costs of the
   /// arcs. It is read once for each arc, so the map may involve in
   /// relatively time consuming process to compute the arc cost if
   /// it is necessary. The default map type is \ref
   /// concepts::Digraph::ArcMap "Digraph::ArcMap<int>".
-  /// \param _Traits Traits class to set various data types used
+  /// \param TR Traits class to set various data types used
   /// by the algorithm. The default traits class is
   /// \ref MinCostArborescenceDefaultTraits
-  /// "MinCostArborescenceDefaultTraits<_Digraph, _CostMap>".  See \ref
+  /// "MinCostArborescenceDefaultTraits<GR, CM>".  See \ref
   /// MinCostArborescenceDefaultTraits for the documentation of a
   /// MinCostArborescence traits class.
-  ///
-  /// \author Balazs Dezso
 #ifndef DOXYGEN
-  template <typename _Digraph = ListDigraph,
-            typename _CostMap = typename _Digraph::template ArcMap<int>,
-            typename _Traits =
-            MinCostArborescenceDefaultTraits<_Digraph, _CostMap> >
+  template <typename GR = ListDigraph,
+            typename CM = typename GR::template ArcMap<int>,
+            typename TR =
+              MinCostArborescenceDefaultTraits<GR, CM> >
 #else
-  template <typename _Digraph, typename _CostMap, typedef _Traits>
+  template <typename GR, typename CM, typedef TR>
 #endif
   class MinCostArborescence {
   public:
 
     /// The traits.
-    typedef _Traits Traits;
+    typedef TR Traits;
     /// The type of the underlying digraph.
     typedef typename Traits::Digraph Digraph;
     /// The type of the map that stores the arc costs.
@@ -295,7 +293,7 @@ namespace lemon {
           minimum = (*_cost_arcs)[nodes[i]];
         }
       }
-      _arc_order->set(minimum.arc, _dual_variables.size());
+      (*_arc_order)[minimum.arc] = _dual_variables.size();
       DualVariable var(_dual_node_list.size() - 1,
                        _dual_node_list.size(), minimum.value);
       _dual_variables.push_back(var);
@@ -337,7 +335,7 @@ namespace lemon {
           minimum = (*_cost_arcs)[nodes[i]];
         }
       }
-      _arc_order->set(minimum.arc, _dual_variables.size());
+      (*_arc_order)[minimum.arc] = _dual_variables.size();
       DualVariable var(node_bottom, _dual_node_list.size(), minimum.value);
       _dual_variables.push_back(var);
       StackLevel level;
@@ -366,7 +364,7 @@ namespace lemon {
       while (!_heap->empty()) {
         Node source = _heap->top();
         _heap->pop();
-        _node_order->set(source, -1);
+        (*_node_order)[source] = -1;
         for (OutArcIt it(*_digraph, source); it != INVALID; ++it) {
           if ((*_arc_order)[it] < 0) continue;
           Node target = _digraph->target(it);
@@ -392,7 +390,7 @@ namespace lemon {
 
   public:
 
-    /// \name Named template parameters
+    /// \name Named Template Parameters
 
     /// @{
 
@@ -440,8 +438,8 @@ namespace lemon {
 
     /// \brief Constructor.
     ///
-    /// \param _digraph The digraph the algorithm will run on.
-    /// \param _cost The cost map used by the algorithm.
+    /// \param digraph The digraph the algorithm will run on.
+    /// \param cost The cost map used by the algorithm.
     MinCostArborescence(const Digraph& digraph, const CostMap& cost)
       : _digraph(&digraph), _cost(&cost), _pred(0), local_pred(false),
         _arborescence(0), local_arborescence(false),
@@ -456,7 +454,7 @@ namespace lemon {
     /// \brief Sets the arborescence map.
     ///
     /// Sets the arborescence map.
-    /// \return \c (*this)
+    /// \return <tt>(*this)</tt>
     MinCostArborescence& arborescenceMap(ArborescenceMap& m) {
       if (local_arborescence) {
         delete _arborescence;
@@ -469,7 +467,7 @@ namespace lemon {
     /// \brief Sets the arborescence map.
     ///
     /// Sets the arborescence map.
-    /// \return \c (*this)
+    /// \return <tt>(*this)</tt>
     MinCostArborescence& predMap(PredMap& m) {
       if (local_pred) {
         delete _pred;
@@ -632,7 +630,7 @@ namespace lemon {
 
     /// @}
 
-    /// \name Execution control
+    /// \name Execution Control
     /// The simplest way to execute the algorithm is to use
     /// one of the member functions called \c run(...). \n
     /// If you need more control on the execution,
@@ -652,13 +650,13 @@ namespace lemon {
       _heap->clear();
       for (NodeIt it(*_digraph); it != INVALID; ++it) {
         (*_cost_arcs)[it].arc = INVALID;
-        _node_order->set(it, -3);
-        _heap_cross_ref->set(it, Heap::PRE_HEAP);
+        (*_node_order)[it] = -3;
+        (*_heap_cross_ref)[it] = Heap::PRE_HEAP;
         _pred->set(it, INVALID);
       }
       for (ArcIt it(*_digraph); it != INVALID; ++it) {
         _arborescence->set(it, false);
-        _arc_order->set(it, -1);
+        (*_arc_order)[it] = -1;
       }
       _dual_node_list.clear();
       _dual_variables.clear();

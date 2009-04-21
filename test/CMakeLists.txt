@@ -1,13 +1,13 @@
 INCLUDE_DIRECTORIES(
-  ${CMAKE_SOURCE_DIR}
-  ${CMAKE_BINARY_DIR}
+  ${PROJECT_SOURCE_DIR}
+  ${PROJECT_BINARY_DIR}
 )
 
 IF(HAVE_GLPK)
   INCLUDE_DIRECTORIES(${GLPK_INCLUDE_DIR})
 ENDIF(HAVE_GLPK)
 
-LINK_DIRECTORIES(${CMAKE_BINARY_DIR}/lemon)
+LINK_DIRECTORIES(${PROJECT_BINARY_DIR}/lemon)
 
 SET(TESTS
   adaptors_test
@@ -21,6 +21,7 @@ SET(TESTS
   edge_set_test
   error_test
   euler_test
+  gomory_hu_test
   graph_copy_test
   graph_test
   graph_utils_test
@@ -28,7 +29,7 @@ SET(TESTS
   heap_test
   kruskal_test
   maps_test
-  max_matching_test
+  matching_test
   min_cost_arborescence_test
   min_cost_flow_test
   path_test

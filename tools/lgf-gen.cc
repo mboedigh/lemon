@@ -23,15 +23,14 @@
 /// Graph generator application for various types of plane graphs.
 ///
 /// See
-/// \verbatim
-///  lgf-gen --help
-/// \endverbatim
+/// \code
+///   lgf-gen --help
+/// \endcode
 /// for more info on the usage.
-///
-
 
 #include <algorithm>
 #include <set>
+#include <ctime>
 #include <lemon/list_graph.h>
 #include <lemon/random.h>
 #include <lemon/dim2.h>

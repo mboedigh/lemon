@@ -32,8 +32,8 @@ namespace lemon {
   ///
   /// Default traits class of Preflow class.
   /// \tparam GR Digraph type.
-  /// \tparam CM Capacity map type.
-  template <typename GR, typename CM>
+  /// \tparam CAP Capacity map type.
+  template <typename GR, typename CAP>
   struct PreflowDefaultTraits {
 
     /// \brief The type of the digraph the algorithm runs on.
@@ -43,7 +43,7 @@ namespace lemon {
     ///
     /// The type of the map that stores the arc capacities.
     /// It must meet the \ref concepts::ReadMap "ReadMap" concept.
-    typedef CM CapacityMap;
+    typedef CAP CapacityMap;
 
     /// \brief The type of the flow values.
     typedef typename CapacityMap::Value Flow;
@@ -94,8 +94,9 @@ namespace lemon {
   /// \brief %Preflow algorithm class.
   ///
   /// This class provides an implementation of Goldberg-Tarjan's \e preflow
-  /// \e push-relabel algorithm producing a flow of maximum value in a
-  /// digraph. The preflow algorithms are the fastest known maximum
+  /// \e push-relabel algorithm producing a \ref max_flow
+  /// "flow of maximum value" in a digraph.
+  /// The preflow algorithms are the fastest known maximum
   /// flow algorithms. The current implementation use a mixture of the
   /// \e "highest label" and the \e "bound decrease" heuristics.
   /// The worst case time complexity of the algorithm is \f$O(n^2\sqrt{e})\f$.
@@ -105,14 +106,14 @@ namespace lemon {
   /// second phase constructs a feasible maximum flow on each arc.
   ///
   /// \tparam GR The type of the digraph the algorithm runs on.
-  /// \tparam CM The type of the capacity map. The default map
+  /// \tparam CAP The type of the capacity map. The default map
   /// type is \ref concepts::Digraph::ArcMap "GR::ArcMap<int>".
 #ifdef DOXYGEN
-  template <typename GR, typename CM, typename TR>
+  template <typename GR, typename CAP, typename TR>
 #else
   template <typename GR,
-            typename CM = typename GR::template ArcMap<int>,
-            typename TR = PreflowDefaultTraits<GR, CM> >
+            typename CAP = typename GR::template ArcMap<int>,
+            typename TR = PreflowDefaultTraits<GR, CAP> >
 #endif
   class Preflow {
   public:
@@ -194,9 +195,9 @@ namespace lemon {
 
     ///@{
 
-    template <typename _FlowMap>
+    template <typename T>
     struct SetFlowMapTraits : public Traits {
-      typedef _FlowMap FlowMap;
+      typedef T FlowMap;
       static FlowMap *createFlowMap(const Digraph&) {
         LEMON_ASSERT(false, "FlowMap is not initialized");
         return 0; // ignore warnings
@@ -208,16 +209,16 @@ namespace lemon {
     ///
     /// \ref named-templ-param "Named parameter" for setting FlowMap
     /// type.
-    template <typename _FlowMap>
+    template <typename T>
     struct SetFlowMap
-      : public Preflow<Digraph, CapacityMap, SetFlowMapTraits<_FlowMap> > {
+      : public Preflow<Digraph, CapacityMap, SetFlowMapTraits<T> > {
       typedef Preflow<Digraph, CapacityMap,
-                      SetFlowMapTraits<_FlowMap> > Create;
+                      SetFlowMapTraits<T> > Create;
     };
 
-    template <typename _Elevator>
+    template <typename T>
     struct SetElevatorTraits : public Traits {
-      typedef _Elevator Elevator;
+      typedef T Elevator;
       static Elevator *createElevator(const Digraph&, int) {
         LEMON_ASSERT(false, "Elevator is not initialized");
         return 0; // ignore warnings
@@ -233,16 +234,16 @@ namespace lemon {
     /// \ref elevator(Elevator&) "elevator()" function before calling
     /// \ref run() or \ref init().
     /// \sa SetStandardElevator
-    template <typename _Elevator>
+    template <typename T>
     struct SetElevator
-      : public Preflow<Digraph, CapacityMap, SetElevatorTraits<_Elevator> > {
+      : public Preflow<Digraph, CapacityMap, SetElevatorTraits<T> > {
       typedef Preflow<Digraph, CapacityMap,
-                      SetElevatorTraits<_Elevator> > Create;
+                      SetElevatorTraits<T> > Create;
     };
 
-    template <typename _Elevator>
+    template <typename T>
     struct SetStandardElevatorTraits : public Traits {
-      typedef _Elevator Elevator;
+      typedef T Elevator;
       static Elevator *createElevator(const Digraph& digraph, int max_level) {
         return new Elevator(digraph, max_level);
       }
@@ -260,12 +261,12 @@ namespace lemon {
     /// algorithm with the \ref elevator(Elevator&) "elevator()" function
     /// before calling \ref run() or \ref init().
     /// \sa SetElevator
-    template <typename _Elevator>
+    template <typename T>
     struct SetStandardElevator
       : public Preflow<Digraph, CapacityMap,
-                       SetStandardElevatorTraits<_Elevator> > {
+                       SetStandardElevatorTraits<T> > {
       typedef Preflow<Digraph, CapacityMap,
-                      SetStandardElevatorTraits<_Elevator> > Create;
+                      SetStandardElevatorTraits<T> > Create;
     };
 
     /// @}
@@ -403,7 +404,7 @@ namespace lemon {
 
       _phase = true;
       for (NodeIt n(_graph); n != INVALID; ++n) {
-        _excess->set(n, 0);
+        (*_excess)[n] = 0;
       }
 
       for (ArcIt e(_graph); e != INVALID; ++e) {
@@ -416,10 +417,10 @@ namespace lemon {
       _level->initAddItem(_target);
 
       std::vector<Node> queue;
-      reached.set(_source, true);
+      reached[_source] = true;
 
       queue.push_back(_target);
-      reached.set(_target, true);
+      reached[_target] = true;
       while (!queue.empty()) {
         _level->initNewLevel();
         std::vector<Node> nqueue;
@@ -428,7 +429,7 @@ namespace lemon {
           for (InArcIt e(_graph, n); e != INVALID; ++e) {
             Node u = _graph.source(e);
             if (!reached[u] && _tolerance.positive((*_capacity)[e])) {
-              reached.set(u, true);
+              reached[u] = true;
               _level->initAddItem(u);
               nqueue.push_back(u);
             }
@@ -443,7 +444,7 @@ namespace lemon {
           Node u = _graph.target(e);
           if ((*_level)[u] == _level->maxLevel()) continue;
           _flow->set(e, (*_capacity)[e]);
-          _excess->set(u, (*_excess)[u] + (*_capacity)[e]);
+          (*_excess)[u] += (*_capacity)[e];
           if (u != _target && !_level->active(u)) {
             _level->activate(u);
           }
@@ -477,7 +478,7 @@ namespace lemon {
           excess -= (*_flow)[e];
         }
         if (excess < 0 && n != _source) return false;
-        _excess->set(n, excess);
+        (*_excess)[n] = excess;
       }
 
       typename Digraph::template NodeMap<bool> reached(_graph, false);
@@ -486,10 +487,10 @@ namespace lemon {
       _level->initAddItem(_target);
 
       std::vector<Node> queue;
-      reached.set(_source, true);
+      reached[_source] = true;
 
       queue.push_back(_target);
-      reached.set(_target, true);
+      reached[_target] = true;
       while (!queue.empty()) {
         _level->initNewLevel();
         std::vector<Node> nqueue;
@@ -499,7 +500,7 @@ namespace lemon {
             Node u = _graph.source(e);
             if (!reached[u] &&
                 _tolerance.positive((*_capacity)[e] - (*_flow)[e])) {
-              reached.set(u, true);
+              reached[u] = true;
               _level->initAddItem(u);
               nqueue.push_back(u);
             }
@@ -507,7 +508,7 @@ namespace lemon {
           for (OutArcIt e(_graph, n); e != INVALID; ++e) {
             Node v = _graph.target(e);
             if (!reached[v] && _tolerance.positive((*_flow)[e])) {
-              reached.set(v, true);
+              reached[v] = true;
               _level->initAddItem(v);
               nqueue.push_back(v);
             }
@@ -523,7 +524,7 @@ namespace lemon {
           Node u = _graph.target(e);
           if ((*_level)[u] == _level->maxLevel()) continue;
           _flow->set(e, (*_capacity)[e]);
-          _excess->set(u, (*_excess)[u] + rem);
+          (*_excess)[u] += rem;
           if (u != _target && !_level->active(u)) {
             _level->activate(u);
           }
@@ -535,7 +536,7 @@ namespace lemon {
           Node v = _graph.source(e);
           if ((*_level)[v] == _level->maxLevel()) continue;
           _flow->set(e, 0);
-          _excess->set(v, (*_excess)[v] + rem);
+          (*_excess)[v] += rem;
           if (v != _target && !_level->active(v)) {
             _level->activate(v);
           }
@@ -576,12 +577,12 @@ namespace lemon {
               }
               if (!_tolerance.less(rem, excess)) {
                 _flow->set(e, (*_flow)[e] + excess);
-                _excess->set(v, (*_excess)[v] + excess);
+                (*_excess)[v] += excess;
                 excess = 0;
                 goto no_more_push_1;
               } else {
                 excess -= rem;
-                _excess->set(v, (*_excess)[v] + rem);
+                (*_excess)[v] += rem;
                 _flow->set(e, (*_capacity)[e]);
               }
             } else if (new_level > (*_level)[v]) {
@@ -599,12 +600,12 @@ namespace lemon {
               }
               if (!_tolerance.less(rem, excess)) {
                 _flow->set(e, (*_flow)[e] - excess);
-                _excess->set(v, (*_excess)[v] + excess);
+                (*_excess)[v] += excess;
                 excess = 0;
                 goto no_more_push_1;
               } else {
                 excess -= rem;
-                _excess->set(v, (*_excess)[v] + rem);
+                (*_excess)[v] += rem;
                 _flow->set(e, 0);
               }
             } else if (new_level > (*_level)[v]) {
@@ -614,7 +615,7 @@ namespace lemon {
 
         no_more_push_1:
 
-          _excess->set(n, excess);
+          (*_excess)[n] = excess;
 
           if (excess != 0) {
             if (new_level + 1 < _level->maxLevel()) {
@@ -649,12 +650,12 @@ namespace lemon {
               }
               if (!_tolerance.less(rem, excess)) {
                 _flow->set(e, (*_flow)[e] + excess);
-                _excess->set(v, (*_excess)[v] + excess);
+                (*_excess)[v] += excess;
                 excess = 0;
                 goto no_more_push_2;
               } else {
                 excess -= rem;
-                _excess->set(v, (*_excess)[v] + rem);
+                (*_excess)[v] += rem;
                 _flow->set(e, (*_capacity)[e]);
               }
             } else if (new_level > (*_level)[v]) {
@@ -672,12 +673,12 @@ namespace lemon {
               }
               if (!_tolerance.less(rem, excess)) {
                 _flow->set(e, (*_flow)[e] - excess);
-                _excess->set(v, (*_excess)[v] + excess);
+                (*_excess)[v] += excess;
                 excess = 0;
                 goto no_more_push_2;
               } else {
                 excess -= rem;
-                _excess->set(v, (*_excess)[v] + rem);
+                (*_excess)[v] += rem;
                 _flow->set(e, 0);
               }
             } else if (new_level > (*_level)[v]) {
@@ -687,7 +688,7 @@ namespace lemon {
 
         no_more_push_2:
 
-          _excess->set(n, excess);
+          (*_excess)[n] = excess;
 
           if (excess != 0) {
             if (new_level + 1 < _level->maxLevel()) {
@@ -730,7 +731,7 @@ namespace lemon {
 
       typename Digraph::template NodeMap<bool> reached(_graph);
       for (NodeIt n(_graph); n != INVALID; ++n) {
-        reached.set(n, (*_level)[n] < _level->maxLevel());
+        reached[n] = (*_level)[n] < _level->maxLevel();
       }
 
       _level->initStart();
@@ -738,7 +739,7 @@ namespace lemon {
 
       std::vector<Node> queue;
       queue.push_back(_source);
-      reached.set(_source, true);
+      reached[_source] = true;
 
       while (!queue.empty()) {
         _level->initNewLevel();
@@ -748,7 +749,7 @@ namespace lemon {
           for (OutArcIt e(_graph, n); e != INVALID; ++e) {
             Node v = _graph.target(e);
             if (!reached[v] && _tolerance.positive((*_flow)[e])) {
-              reached.set(v, true);
+              reached[v] = true;
               _level->initAddItem(v);
               nqueue.push_back(v);
             }
@@ -757,7 +758,7 @@ namespace lemon {
             Node u = _graph.source(e);
             if (!reached[u] &&
                 _tolerance.positive((*_capacity)[e] - (*_flow)[e])) {
-              reached.set(u, true);
+              reached[u] = true;
               _level->initAddItem(u);
               nqueue.push_back(u);
             }
@@ -791,12 +792,12 @@ namespace lemon {
             }
             if (!_tolerance.less(rem, excess)) {
               _flow->set(e, (*_flow)[e] + excess);
-              _excess->set(v, (*_excess)[v] + excess);
+              (*_excess)[v] += excess;
               excess = 0;
               goto no_more_push;
             } else {
               excess -= rem;
-              _excess->set(v, (*_excess)[v] + rem);
+              (*_excess)[v] += rem;
               _flow->set(e, (*_capacity)[e]);
             }
           } else if (new_level > (*_level)[v]) {
@@ -814,12 +815,12 @@ namespace lemon {
             }
             if (!_tolerance.less(rem, excess)) {
               _flow->set(e, (*_flow)[e] - excess);
-              _excess->set(v, (*_excess)[v] + excess);
+              (*_excess)[v] += excess;
               excess = 0;
               goto no_more_push;
             } else {
               excess -= rem;
-              _excess->set(v, (*_excess)[v] + rem);
+              (*_excess)[v] += rem;
               _flow->set(e, 0);
             }
           } else if (new_level > (*_level)[v]) {
@@ -829,7 +830,7 @@ namespace lemon {
 
       no_more_push:
 
-        _excess->set(n, excess);
+        (*_excess)[n] = excess;
 
         if (excess != 0) {
           if (new_level + 1 < _level->maxLevel()) {
@@ -946,7 +947,7 @@ namespace lemon {
     /// could be slightly different if inexact computation is used.
     ///
     /// \note This function calls \ref minCut() for each node, so it runs in
-    /// \f$O(n)\f$ time.
+    /// O(n) time.
     ///
     /// \pre Either \ref run() or \ref init() must be called before
     /// using this function.

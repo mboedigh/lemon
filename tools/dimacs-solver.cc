@@ -23,11 +23,10 @@
 /// This program solves various problems given in DIMACS format.
 ///
 /// See
-/// \verbatim
-///  dimacs-solver --help
-/// \endverbatim
+/// \code
+///   dimacs-solver --help
+/// \endcode
 /// for more info on usage.
-///
 
 #include <iostream>
 #include <fstream>
@@ -43,7 +42,7 @@
 
 #include <lemon/dijkstra.h>
 #include <lemon/preflow.h>
-#include <lemon/max_matching.h>
+#include <lemon/matching.h>
 #include <lemon/network_simplex.h>
 
 using namespace lemon;
@@ -73,7 +72,7 @@ void solve_sp(ArgParser &ap, std::istream &is, std::ostream &,
 
 template<class Value>
 void solve_max(ArgParser &ap, std::istream &is, std::ostream &,
-              DimacsDescriptor &desc)
+               Value infty, DimacsDescriptor &desc)
 {
   bool report = !ap.given("q");
   Digraph g;
@@ -81,7 +80,7 @@ void solve_max(ArgParser &ap, std::istream &is, std::ostream &,
   Digraph::ArcMap<Value> cap(g);
   Timer ti;
   ti.restart();
-  readDimacsMax(is, g, cap, s, t, desc);
+  readDimacsMax(is, g, cap, s, t, infty, desc);
   if(report) std::cerr << "Read the file: " << ti << '\n';
   ti.restart();
   Preflow<Digraph, Digraph::ArcMap<Value> > pre(g,cap,s,t);
@@ -102,7 +101,7 @@ void solve_min(ArgParser &ap, std::istream &is, std::ostream &,
   Digraph::NodeMap<Value> sup(g);
   Timer ti;
   ti.restart();
-  readDimacsMin(is, g, lower, cap, cost, sup, desc);
+  readDimacsMin(is, g, lower, cap, cost, sup, 0, desc);
   if (report) std::cerr << "Read the file: " << ti << '\n';
   ti.restart();
   NetworkSimplex<Digraph, Value> ns(g);
@@ -138,13 +137,24 @@ template<class Value>
 void solve(ArgParser &ap, std::istream &is, std::ostream &os,
            DimacsDescriptor &desc)
 {
+  std::stringstream iss(static_cast<std::string>(ap["infcap"]));
+  Value infty;
+  iss >> infty;
+  if(iss.fail())
+    {
+      std::cerr << "Cannot interpret '"
+                << static_cast<std::string>(ap["infcap"]) << "' as infinite"
+                << std::endl;
+      exit(1);
+    }
+  
   switch(desc.type)
     {
     case DimacsDescriptor::MIN:
       solve_min<Value>(ap,is,os,desc);
       break;
     case DimacsDescriptor::MAX:
-      solve_max<Value>(ap,is,os,desc);
+      solve_max<Value>(ap,is,os,infty,desc);
       break;
     case DimacsDescriptor::SP:
       solve_sp<Value>(ap,is,os,desc);
@@ -181,6 +191,7 @@ int main(int argc, const char *argv[]) {
     .boolOption("ldouble","Use 'long double' for capacities, costs etc.")
     .optionGroup("datatype","ldouble")
     .onlyOneGroup("datatype")
+    .stringOption("infcap","Value used for 'very high' capacities","0")
     .run();
 
   std::ifstream input;
