@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2008
+ * Copyright (C) 2003-2009
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -30,7 +30,7 @@
 
 //\ingroup digraphbits
 //\file
-//\brief Extenders for the digraph types
+//\brief Extenders for the graph types
 namespace lemon {
 
   // \ingroup digraphbits
@@ -38,10 +38,10 @@ namespace lemon {
   // \brief BaseDigraph to BaseGraph extender
   template <typename Base>
   class UndirDigraphExtender : public Base {
+    typedef Base Parent;
 
   public:
 
-    typedef Base Parent;
     typedef typename Parent::Arc Edge;
     typedef typename Parent::Node Node;
 
@@ -280,8 +280,9 @@ namespace lemon {
 
   template <typename Base>
   class BidirBpGraphExtender : public Base {
-  public:
     typedef Base Parent;
+
+  public:
     typedef BidirBpGraphExtender Digraph;
 
     typedef typename Parent::Node Node;

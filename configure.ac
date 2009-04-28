@@ -19,15 +19,13 @@ AM_INIT_AUTOMAKE([-Wall -Werror foreign subdir-objects nostdinc])
 AC_CONFIG_SRCDIR([lemon/list_graph.h])
 AC_CONFIG_HEADERS([config.h lemon/config.h])
 
-lx_cmdline_cxxflags_set=${CXXFLAGS+set}
-
 dnl Do compilation tests using the C++ compiler.
 AC_LANG([C++])
 
 dnl Check the existence of long long type.
 AC_CHECK_TYPE(long long, [long_long_found=yes], [long_long_found=no])
 if test x"$long_long_found" = x"yes"; then
-  AC_DEFINE([HAVE_LONG_LONG], [1], [Define to 1 if you have long long.])
+  AC_DEFINE([LEMON_HAVE_LONG_LONG], [1], [Define to 1 if you have long long.])
 fi
 
 dnl Checks for programs.
@@ -52,27 +50,19 @@ else
 fi
 
 dnl Set custom compiler flags when using g++.
-if test x"$lx_cmdline_cxxflags_set" != x"set" -a "$GXX" = yes -a "$ICC" = no; then
-  CXXFLAGS="$CXXFLAGS -Wall -W -Wall -W -Wunused -Wformat=2 -Wctor-dtor-privacy -Wnon-virtual-dtor -Wno-char-subscripts -Wwrite-strings -Wno-char-subscripts -Wreturn-type -Wcast-qual -Wcast-align -Wsign-promo -Woverloaded-virtual -Woverloaded-virtual -ansi -fno-strict-aliasing -Wold-style-cast -Wno-unknown-pragmas"
+if test "$GXX" = yes -a "$ICC" = no; then
+  WARNINGCXXFLAGS="-Wall -W -Wall -W -Wunused -Wformat=2 -Wctor-dtor-privacy -Wnon-virtual-dtor -Wno-char-subscripts -Wwrite-strings -Wno-char-subscripts -Wreturn-type -Wcast-qual -Wcast-align -Wsign-promo -Woverloaded-virtual -ansi -fno-strict-aliasing -Wold-style-cast -Wno-unknown-pragmas"
 fi
+AC_SUBST([WARNINGCXXFLAGS])
 
 dnl Checks for libraries.
-#LX_CHECK_GLPK
-#LX_CHECK_CPLEX
-#LX_CHECK_SOPLEX
+LX_CHECK_GLPK
+LX_CHECK_CPLEX
+LX_CHECK_SOPLEX
+LX_CHECK_COIN
 
-dnl Disable/enable building the demo programs.
-AC_ARG_ENABLE([demo],
-AS_HELP_STRING([--enable-demo], [build the demo programs])
-AS_HELP_STRING([--disable-demo], [do not build the demo programs @<:@default@:>@]),
-              [], [enable_demo=no])
-AC_MSG_CHECKING([whether to build the demo programs])
-if test x"$enable_demo" != x"no"; then
-  AC_MSG_RESULT([yes])
-else
-  AC_MSG_RESULT([no])
-fi
-AM_CONDITIONAL([WANT_DEMO], [test x"$enable_demo" != x"no"])
+AM_CONDITIONAL([HAVE_LP], [test x"$lx_lp_found" = x"yes"])
+AM_CONDITIONAL([HAVE_MIP], [test x"$lx_mip_found" = x"yes"])
 
 dnl Disable/enable building the binary tools.
 AC_ARG_ENABLE([tools],
@@ -107,6 +97,7 @@ AC_SUBST([CONFIG_STATUS_DEPENDENCIES],
 
 AC_CONFIG_FILES([
 Makefile
+demo/Makefile
 cmake/version.cmake
 doc/Doxyfile
 lemon/lemon.pc
@@ -120,15 +111,16 @@ echo
 echo Package version............... : $PACKAGE-$VERSION
 echo
 echo C++ compiler.................. : $CXX
-echo C++ compiles flags............ : $CXXFLAGS
+echo C++ compiles flags............ : $WARNINGCXXFLAGS $CXXFLAGS
 echo
 echo Compiler supports long long... : $long_long_found
 echo
-#echo GLPK support.................. : $lx_glpk_found
-#echo CPLEX support................. : $lx_cplex_found
-#echo SOPLEX support................ : $lx_soplex_found
-#echo
-echo Build demo programs........... : $enable_demo
+echo GLPK support.................. : $lx_glpk_found
+echo CPLEX support................. : $lx_cplex_found
+echo SOPLEX support................ : $lx_soplex_found
+echo CLP support................... : $lx_clp_found
+echo CBC support................... : $lx_cbc_found
+echo
 echo Build additional tools........ : $enable_tools
 echo
 echo The packace will be installed in

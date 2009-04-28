@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2008
+ * Copyright (C) 2003-2009
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -16,8 +16,8 @@
  *
  */
 
-#ifndef LEMON_CONCEPT_MAPS_H
-#define LEMON_CONCEPT_MAPS_H
+#ifndef LEMON_CONCEPTS_MAPS_H
+#define LEMON_CONCEPTS_MAPS_H
 
 #include <lemon/core.h>
 #include <lemon/concept_check.h>
@@ -213,4 +213,4 @@ namespace lemon {
 
 } //namespace lemon
 
-#endif // LEMON_CONCEPT_MAPS_H
+#endif
