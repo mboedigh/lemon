@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2008
+ * Copyright (C) 2003-2009
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -21,24 +21,22 @@
 #include "test_tools.h"
 #include <lemon/tolerance.h>
 
-#ifdef HAVE_CONFIG_H
 #include <lemon/config.h>
+
+#ifdef LEMON_HAVE_GLPK
+#include <lemon/glpk.h>
 #endif
 
-#ifdef HAVE_GLPK
-#include <lemon/lp_glpk.h>
+#ifdef LEMON_HAVE_CPLEX
+#include <lemon/cplex.h>
 #endif
 
-#ifdef HAVE_CPLEX
-#include <lemon/lp_cplex.h>
+#ifdef LEMON_HAVE_SOPLEX
+#include <lemon/soplex.h>
 #endif
 
-#ifdef HAVE_SOPLEX
-#include <lemon/lp_soplex.h>
-#endif
-
-#ifdef HAVE_CLP
-#include <lemon/lp_clp.h>
+#ifdef LEMON_HAVE_CLP
+#include <lemon/clp.h>
 #endif
 
 using namespace lemon;
@@ -162,11 +160,11 @@ void lpTest(LpSolver& lp)
     c = (2.2== p2 );
     c = (2  == p2 );
 
-    c = (2 <= e <= 3);
-    c = (2 <= p1<= 3);
+    c = ((2 <= e) <= 3);
+    c = ((2 <= p1) <= 3);
 
-    c = (2 >= e >= 3);
-    c = (2 >= p1>= 3);
+    c = ((2 >= e) >= 3);
+    c = ((2 >= p1) >= 3);
 
     e[x[3]]=2;
     e[x[3]]=4;
@@ -178,7 +176,7 @@ void lpTest(LpSolver& lp)
     lp.addRow(-LP::INF,3.0*(x[1]+x[2]*2-5*x[3]+12-x[4]/3)+2*x[4]-4,23);
 
     lp.addRow(x[1]+x[3]<=x[5]-3);
-    lp.addRow(-7<=x[1]+x[3]-12<=3);
+    lp.addRow((-7<=x[1]+x[3]-12)<=3);
     lp.addRow(x[1]<=x[5]);
 
     std::ostringstream buf;
@@ -197,6 +195,11 @@ void lpTest(LpSolver& lp)
     buf << "Coeff. of p2 should be 0";
     check(const_cast<const LpSolver::Expr&>(e)[p2]==0, buf.str());
 
+    //Test for clone/new
+    LP* lpnew = lp.newSolver();
+    LP* lpclone = lp.cloneSolver();
+    delete lpnew;
+    delete lpclone;
 
   }
 
@@ -247,7 +250,8 @@ void solveAndCheck(LpSolver& lp, LpSolver::ProblemType stat,
 
   if (stat ==  LpSolver::OPTIMAL) {
     std::ostringstream sbuf;
-    sbuf << "Wrong optimal value: the right optimum is " << exp_opt;
+    sbuf << "Wrong optimal value (" << lp.primal() <<") with "
+         << lp.solverName() <<"\n     the right optimum is " << exp_opt;
     check(std::abs(lp.primal()-exp_opt) < 1e-3, sbuf.str());
   }
 }
@@ -355,47 +359,59 @@ void aTest(LpSolver & lp)
 
 }
 
+template<class LP>
+void cloneTest()
+{
+  //Test for clone/new
+
+  LP* lp = new LP();
+  LP* lpnew = lp->newSolver();
+  LP* lpclone = lp->cloneSolver();
+  delete lp;
+  delete lpnew;
+  delete lpclone;
+}
+
 int main()
 {
   LpSkeleton lp_skel;
   lpTest(lp_skel);
 
-#ifdef HAVE_GLPK
+#ifdef LEMON_HAVE_GLPK
   {
-    LpGlpk lp_glpk1,lp_glpk2;
+    GlpkLp lp_glpk1,lp_glpk2;
     lpTest(lp_glpk1);
     aTest(lp_glpk2);
+    cloneTest<GlpkLp>();
   }
 #endif
 
-#ifdef HAVE_CPLEX
+#ifdef LEMON_HAVE_CPLEX
   try {
-    LpCplex lp_cplex1,lp_cplex2;
+    CplexLp lp_cplex1,lp_cplex2;
     lpTest(lp_cplex1);
     aTest(lp_cplex2);
+    cloneTest<CplexLp>();
   } catch (CplexEnv::LicenseError& error) {
-#ifdef LEMON_FORCE_CPLEX_CHECK
     check(false, error.what());
-#else
-    std::cerr << error.what() << std::endl;
-    std::cerr << "Cplex license check failed, lp check skipped" << std::endl;
-#endif
   }
 #endif
 
-#ifdef HAVE_SOPLEX
+#ifdef LEMON_HAVE_SOPLEX
   {
-    LpSoplex lp_soplex1,lp_soplex2;
+    SoplexLp lp_soplex1,lp_soplex2;
     lpTest(lp_soplex1);
     aTest(lp_soplex2);
+    cloneTest<SoplexLp>();
   }
 #endif
 
-#ifdef HAVE_CLP
+#ifdef LEMON_HAVE_CLP
   {
-    LpClp lp_clp1,lp_clp2;
+    ClpLp lp_clp1,lp_clp2;
     lpTest(lp_clp1);
     aTest(lp_clp2);
+    cloneTest<ClpLp>();
   }
 #endif
 

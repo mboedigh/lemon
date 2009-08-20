@@ -31,7 +31,7 @@ namespace lemon {
   class FullDigraphBase {
   public:
 
-    typedef FullDigraphBase Graph;
+    typedef FullDigraphBase Digraph;
 
     class Node;
     class Arc;
@@ -157,9 +157,8 @@ namespace lemon {
   /// can neither add nor delete either arcs or nodes, and it needs
   /// constant space in memory.
   ///
-  /// This class conforms to the \ref concepts::Digraph "Digraph" concept
-  /// and it also has an important extra feature that its maps are
-  /// real \ref concepts::ReferenceMap "reference map"s.
+  /// This class fully conforms to the \ref concepts::Digraph
+  /// "Digraph concept".
   ///
   /// The \c FullDigraph and \c FullGraph classes are very similar,
   /// but there are two differences. While this class conforms only
@@ -170,9 +169,9 @@ namespace lemon {
   ///
   /// \sa FullGraph
   class FullDigraph : public ExtendedFullDigraphBase {
-  public:
-
     typedef ExtendedFullDigraphBase Parent;
+
+  public:
 
     /// \brief Constructor
     FullDigraph() { construct(0); }
@@ -227,8 +226,6 @@ namespace lemon {
 
 
   class FullGraphBase {
-    int _node_num;
-    int _edge_num;
   public:
 
     typedef FullGraphBase Graph;
@@ -238,6 +235,9 @@ namespace lemon {
     class Edge;
 
   protected:
+
+    int _node_num;
+    int _edge_num;
 
     FullGraphBase() {}
 
@@ -527,9 +527,7 @@ namespace lemon {
   /// add nor delete either edges or nodes, and it needs constant
   /// space in memory.
   ///
-  /// This class conforms to the \ref concepts::Graph "Graph" concept
-  /// and it also has an important extra feature that its maps are
-  /// real \ref concepts::ReferenceMap "reference map"s.
+  /// This class fully conforms to the \ref concepts::Graph "Graph concept".
   ///
   /// The \c FullGraph and \c FullDigraph classes are very similar,
   /// but there are two differences. While the \c FullDigraph class
@@ -540,9 +538,9 @@ namespace lemon {
   ///
   /// \sa FullDigraph
   class FullGraph : public ExtendedFullGraphBase {
-  public:
-
     typedef ExtendedFullGraphBase Parent;
+
+  public:
 
     /// \brief Constructor
     FullGraph() { construct(0); }

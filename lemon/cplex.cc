@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2008
+ * Copyright (C) 2003-2009
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -20,7 +20,7 @@
 #include <vector>
 #include <cstring>
 
-#include <lemon/lp_cplex.h>
+#include <lemon/cplex.h>
 
 extern "C" {
 #include <ilcplex/cplex.h>
@@ -72,12 +72,14 @@ namespace lemon {
   CplexBase::CplexBase() : LpBase() {
     int status;
     _prob = CPXcreateprob(cplexEnv(), &status, "Cplex problem");
+    messageLevel(MESSAGE_NOTHING);
   }
 
   CplexBase::CplexBase(const CplexEnv& env)
     : LpBase(), _env(env) {
     int status;
     _prob = CPXcreateprob(cplexEnv(), &status, "Cplex problem");
+    messageLevel(MESSAGE_NOTHING);
   }
 
   CplexBase::CplexBase(const CplexBase& cplex)
@@ -86,6 +88,7 @@ namespace lemon {
     _prob = CPXcloneprob(cplexEnv(), cplex._prob, &status);
     rows = cplex.rows;
     cols = cplex.cols;
+    messageLevel(MESSAGE_NOTHING);
   }
 
   CplexBase::~CplexBase() {
@@ -438,25 +441,44 @@ namespace lemon {
     cols.clear();
   }
 
-  // LpCplex members
+  void CplexBase::_messageLevel(MessageLevel level) {
+    switch (level) {
+    case MESSAGE_NOTHING:
+      _message_enabled = false;
+      break;
+    case MESSAGE_ERROR:
+    case MESSAGE_WARNING:
+    case MESSAGE_NORMAL:
+    case MESSAGE_VERBOSE:
+      _message_enabled = true;
+      break;
+    }
+  }
 
-  LpCplex::LpCplex()
-    : LpBase(), CplexBase(), LpSolver() {}
+  void CplexBase::_applyMessageLevel() {
+    CPXsetintparam(cplexEnv(), CPX_PARAM_SCRIND, 
+                   _message_enabled ? CPX_ON : CPX_OFF);
+  }
 
-  LpCplex::LpCplex(const CplexEnv& env)
-    : LpBase(), CplexBase(env), LpSolver() {}
+  // CplexLp members
 
-  LpCplex::LpCplex(const LpCplex& other)
-    : LpBase(), CplexBase(other), LpSolver() {}
+  CplexLp::CplexLp()
+    : LpBase(), LpSolver(), CplexBase() {}
 
-  LpCplex::~LpCplex() {}
+  CplexLp::CplexLp(const CplexEnv& env)
+    : LpBase(), LpSolver(), CplexBase(env) {}
 
-  LpCplex* LpCplex::_newSolver() const { return new LpCplex; }
-  LpCplex* LpCplex::_cloneSolver() const {return new LpCplex(*this); }
+  CplexLp::CplexLp(const CplexLp& other)
+    : LpBase(), LpSolver(), CplexBase(other) {}
 
-  const char* LpCplex::_solverName() const { return "LpCplex"; }
+  CplexLp::~CplexLp() {}
 
-  void LpCplex::_clear_temporals() {
+  CplexLp* CplexLp::newSolver() const { return new CplexLp; }
+  CplexLp* CplexLp::cloneSolver() const {return new CplexLp(*this); }
+
+  const char* CplexLp::_solverName() const { return "CplexLp"; }
+
+  void CplexLp::_clear_temporals() {
     _col_status.clear();
     _row_status.clear();
     _primal_ray.clear();
@@ -472,7 +494,7 @@ namespace lemon {
   // value does not necessarily mean that a solution exists. Use query
   // routines CPXsolninfo, CPXgetstat, and CPXsolution to obtain
   // further information about the status of the optimization.
-  LpCplex::SolveExitStatus LpCplex::convertStatus(int status) {
+  CplexLp::SolveExitStatus CplexLp::convertStatus(int status) {
 #if CPX_VERSION >= 800
     if (status == 0) {
       switch (CPXgetstat(cplexEnv(), _prob)) {
@@ -505,45 +527,49 @@ namespace lemon {
 #endif
   }
 
-  LpCplex::SolveExitStatus LpCplex::_solve() {
+  CplexLp::SolveExitStatus CplexLp::_solve() {
     _clear_temporals();
+    _applyMessageLevel();
     return convertStatus(CPXlpopt(cplexEnv(), _prob));
   }
 
-  LpCplex::SolveExitStatus LpCplex::solvePrimal() {
+  CplexLp::SolveExitStatus CplexLp::solvePrimal() {
     _clear_temporals();
+    _applyMessageLevel();
     return convertStatus(CPXprimopt(cplexEnv(), _prob));
   }
 
-  LpCplex::SolveExitStatus LpCplex::solveDual() {
+  CplexLp::SolveExitStatus CplexLp::solveDual() {
     _clear_temporals();
+    _applyMessageLevel();
     return convertStatus(CPXdualopt(cplexEnv(), _prob));
   }
 
-  LpCplex::SolveExitStatus LpCplex::solveBarrier() {
+  CplexLp::SolveExitStatus CplexLp::solveBarrier() {
     _clear_temporals();
+    _applyMessageLevel();
     return convertStatus(CPXbaropt(cplexEnv(), _prob));
   }
 
-  LpCplex::Value LpCplex::_getPrimal(int i) const {
+  CplexLp::Value CplexLp::_getPrimal(int i) const {
     Value x;
     CPXgetx(cplexEnv(), _prob, &x, i, i);
     return x;
   }
 
-  LpCplex::Value LpCplex::_getDual(int i) const {
+  CplexLp::Value CplexLp::_getDual(int i) const {
     Value y;
     CPXgetpi(cplexEnv(), _prob, &y, i, i);
     return y;
   }
 
-  LpCplex::Value LpCplex::_getPrimalValue() const {
+  CplexLp::Value CplexLp::_getPrimalValue() const {
     Value objval;
     CPXgetobjval(cplexEnv(), _prob, &objval);
     return objval;
   }
 
-  LpCplex::VarStatus LpCplex::_getColStatus(int i) const {
+  CplexLp::VarStatus CplexLp::_getColStatus(int i) const {
     if (_col_status.empty()) {
       _col_status.resize(CPXgetnumcols(cplexEnv(), _prob));
       CPXgetbase(cplexEnv(), _prob, &_col_status.front(), 0);
@@ -559,11 +585,11 @@ namespace lemon {
       return UPPER;
     default:
       LEMON_ASSERT(false, "Wrong column status");
-      return LpCplex::VarStatus();
+      return CplexLp::VarStatus();
     }
   }
 
-  LpCplex::VarStatus LpCplex::_getRowStatus(int i) const {
+  CplexLp::VarStatus CplexLp::_getRowStatus(int i) const {
     if (_row_status.empty()) {
       _row_status.resize(CPXgetnumrows(cplexEnv(), _prob));
       CPXgetbase(cplexEnv(), _prob, 0, &_row_status.front());
@@ -581,11 +607,11 @@ namespace lemon {
       return UPPER;
     default:
       LEMON_ASSERT(false, "Wrong row status");
-      return LpCplex::VarStatus();
+      return CplexLp::VarStatus();
     }
   }
 
-  LpCplex::Value LpCplex::_getPrimalRay(int i) const {
+  CplexLp::Value CplexLp::_getPrimalRay(int i) const {
     if (_primal_ray.empty()) {
       _primal_ray.resize(CPXgetnumcols(cplexEnv(), _prob));
       CPXgetray(cplexEnv(), _prob, &_primal_ray.front());
@@ -593,14 +619,14 @@ namespace lemon {
     return _primal_ray[i];
   }
 
-  LpCplex::Value LpCplex::_getDualRay(int i) const {
+  CplexLp::Value CplexLp::_getDualRay(int i) const {
     if (_dual_ray.empty()) {
 
     }
     return _dual_ray[i];
   }
 
-  //7.5-os cplex statusai (Vigyazat: a 9.0-asei masok!)
+  // Cplex 7.0 status values
   // This table lists the statuses, returned by the CPXgetstat()
   // routine, for solutions to LP problems or mixed integer problems. If
   // no solution exists, the return value is zero.
@@ -647,7 +673,7 @@ namespace lemon {
   // 20   CPX_PIVOT
   //       User pivot used
   //
-  //     Ezeket hova tegyem:
+  // Pending return values
   // ??case CPX_ABORT_DUAL_INFEAS
   // ??case CPX_ABORT_CROSSOVER
   // ??case CPX_INForUNBD
@@ -686,7 +712,7 @@ namespace lemon {
   void statusSwitch(CPXENVptr,int&){}
 #endif
 
-  LpCplex::ProblemType LpCplex::_getPrimalType() const {
+  CplexLp::ProblemType CplexLp::_getPrimalType() const {
     // Unboundedness not treated well: the following is from cplex 9.0 doc
     // About Unboundedness
 
@@ -718,7 +744,6 @@ namespace lemon {
 #else
     statusSwitch(cplexEnv(),stat);
     //CPXgetstat(cplexEnv(), _prob);
-    //printf("A primal status: %d, CPX_OPTIMAL=%d \n",stat,CPX_OPTIMAL);
     switch (stat) {
     case 0:
       return UNDEFINED; //Undefined
@@ -751,7 +776,7 @@ namespace lemon {
 #endif
   }
 
-  //9.0-as cplex verzio statusai
+  // Cplex 9.0 status values
   // CPX_STAT_ABORT_DUAL_OBJ_LIM
   // CPX_STAT_ABORT_IT_LIM
   // CPX_STAT_ABORT_OBJ_LIM
@@ -768,7 +793,7 @@ namespace lemon {
   // CPX_STAT_OPTIMAL_RELAXED
   // CPX_STAT_UNBOUNDED
 
-  LpCplex::ProblemType LpCplex::_getDualType() const {
+  CplexLp::ProblemType CplexLp::_getDualType() const {
     int stat = CPXgetstat(cplexEnv(), _prob);
 #if CPX_VERSION >= 800
     switch (stat) {
@@ -795,10 +820,10 @@ namespace lemon {
 #endif
   }
 
-  // MipCplex members
+  // CplexMip members
 
-  MipCplex::MipCplex()
-    : LpBase(), CplexBase(), MipSolver() {
+  CplexMip::CplexMip()
+    : LpBase(), MipSolver(), CplexBase() {
 
 #if CPX_VERSION < 800
     CPXchgprobtype(cplexEnv(),  _prob, CPXPROB_MIP);
@@ -807,8 +832,8 @@ namespace lemon {
 #endif
   }
 
-  MipCplex::MipCplex(const CplexEnv& env)
-    : LpBase(), CplexBase(env), MipSolver() {
+  CplexMip::CplexMip(const CplexEnv& env)
+    : LpBase(), MipSolver(), CplexBase(env) {
 
 #if CPX_VERSION < 800
     CPXchgprobtype(cplexEnv(),  _prob, CPXPROB_MIP);
@@ -818,17 +843,17 @@ namespace lemon {
 
   }
 
-  MipCplex::MipCplex(const MipCplex& other)
-    : LpBase(), CplexBase(other), MipSolver() {}
+  CplexMip::CplexMip(const CplexMip& other)
+    : LpBase(), MipSolver(), CplexBase(other) {}
 
-  MipCplex::~MipCplex() {}
+  CplexMip::~CplexMip() {}
 
-  MipCplex* MipCplex::_newSolver() const { return new MipCplex; }
-  MipCplex* MipCplex::_cloneSolver() const {return new MipCplex(*this); }
+  CplexMip* CplexMip::newSolver() const { return new CplexMip; }
+  CplexMip* CplexMip::cloneSolver() const {return new CplexMip(*this); }
 
-  const char* MipCplex::_solverName() const { return "MipCplex"; }
+  const char* CplexMip::_solverName() const { return "CplexMip"; }
 
-  void MipCplex::_setColType(int i, MipCplex::ColTypes col_type) {
+  void CplexMip::_setColType(int i, CplexMip::ColTypes col_type) {
 
     // Note If a variable is to be changed to binary, a call to CPXchgbds
     // should also be made to change the bounds to 0 and 1.
@@ -847,7 +872,7 @@ namespace lemon {
     }
   }
 
-  MipCplex::ColTypes MipCplex::_getColType(int i) const {
+  CplexMip::ColTypes CplexMip::_getColType(int i) const {
     char t;
     CPXgetctype (cplexEnv(), _prob, &t, i, i);
     switch (t) {
@@ -862,8 +887,9 @@ namespace lemon {
 
   }
 
-  MipCplex::SolveExitStatus MipCplex::_solve() {
+  CplexMip::SolveExitStatus CplexMip::_solve() {
     int status;
+    _applyMessageLevel();
     status = CPXmipopt (cplexEnv(), _prob);
     if (status==0)
       return SOLVED;
@@ -873,7 +899,7 @@ namespace lemon {
   }
 
 
-  MipCplex::ProblemType MipCplex::_getType() const {
+  CplexMip::ProblemType CplexMip::_getType() const {
 
     int stat = CPXgetstat(cplexEnv(), _prob);
 
@@ -909,13 +935,13 @@ namespace lemon {
     // has a feasible solution.
   }
 
-  MipCplex::Value MipCplex::_getSol(int i) const {
+  CplexMip::Value CplexMip::_getSol(int i) const {
     Value x;
     CPXgetmipx(cplexEnv(), _prob, &x, i, i);
     return x;
   }
 
-  MipCplex::Value MipCplex::_getSolValue() const {
+  CplexMip::Value CplexMip::_getSolValue() const {
     Value objval;
     CPXgetmipobjval(cplexEnv(), _prob, &objval);
     return objval;

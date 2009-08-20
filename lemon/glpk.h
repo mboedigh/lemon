@@ -16,8 +16,8 @@
  *
  */
 
-#ifndef LEMON_LP_GLPK_H
-#define LEMON_LP_GLPK_H
+#ifndef LEMON_GLPK_H
+#define LEMON_GLPK_H
 
 ///\file
 ///\brief Header of the LEMON-GLPK lp solver interface.
@@ -26,9 +26,10 @@
 #include <lemon/lp_base.h>
 
 // forward declaration
-#ifndef _GLP_PROB
+#if !defined _GLP_PROB && !defined GLP_PROB
 #define _GLP_PROB
-typedef struct { double _prob; } glp_prob;
+#define GLP_PROB
+typedef struct { double _opaque_prob; } glp_prob;
 /* LP/MIP problem object */
 #endif
 
@@ -100,6 +101,24 @@ namespace lemon {
 
     virtual void _clear();
 
+    virtual void _messageLevel(MessageLevel level);
+
+  private:
+
+    static void freeEnv();
+
+    struct FreeEnvHelper {
+      ~FreeEnvHelper() {
+        freeEnv();
+      }
+    };
+    
+    static FreeEnvHelper freeEnvHelper;
+
+  protected:
+    
+    int _message_level;
+    
   public:
 
     ///Pointer to the underlying GLPK data structure.
@@ -119,13 +138,18 @@ namespace lemon {
   ///
   /// This class implements an interface for the GLPK LP solver.
   ///\ingroup lp_group
-  class LpGlpk : public GlpkBase, public LpSolver {
+  class GlpkLp : public LpSolver, public GlpkBase {
   public:
 
     ///\e
-    LpGlpk();
+    GlpkLp();
     ///\e
-    LpGlpk(const LpGlpk&);
+    GlpkLp(const GlpkLp&);
+
+    ///\e
+    virtual GlpkLp* cloneSolver() const;
+    ///\e
+    virtual GlpkLp* newSolver() const;
 
   private:
 
@@ -135,9 +159,6 @@ namespace lemon {
     void _clear_temporals();
 
   protected:
-
-    virtual LpGlpk* _cloneSolver() const;
-    virtual LpGlpk* _newSolver() const;
 
     virtual const char* _solverName() const;
 
@@ -153,8 +174,6 @@ namespace lemon {
     virtual Value _getPrimalRay(int i) const;
     virtual Value _getDualRay(int i) const;
 
-    ///\todo It should be clarified
-    ///
     virtual ProblemType _getPrimalType() const;
     virtual ProblemType _getDualType() const;
 
@@ -166,55 +185,37 @@ namespace lemon {
     ///Solve with dual simplex
     SolveExitStatus solveDual();
 
+  private:
+
+    bool _presolve;
+
+  public:
+
     ///Turns on or off the presolver
 
     ///Turns on (\c b is \c true) or off (\c b is \c false) the presolver
     ///
     ///The presolver is off by default.
-    void presolver(bool b);
+    void presolver(bool presolve);
 
-    ///Enum for \c messageLevel() parameter
-    enum MessageLevel {
-      /// no output (default value)
-      MESSAGE_NO_OUTPUT = 0,
-      /// error messages only
-      MESSAGE_ERROR_MESSAGE = 1,
-      /// normal output
-      MESSAGE_NORMAL_OUTPUT = 2,
-      /// full output (includes informational messages)
-      MESSAGE_FULL_OUTPUT = 3
-    };
-
-  private:
-
-    MessageLevel _message_level;
-
-  public:
-
-    ///Set the verbosity of the messages
-
-    ///Set the verbosity of the messages
-    ///
-    ///\param m is the level of the messages output by the solver routines.
-    void messageLevel(MessageLevel m);
   };
 
   /// \brief Interface for the GLPK MIP solver
   ///
   /// This class implements an interface for the GLPK MIP solver.
   ///\ingroup lp_group
-  class MipGlpk : public GlpkBase, public MipSolver {
+  class GlpkMip : public MipSolver, public GlpkBase {
   public:
 
     ///\e
-    MipGlpk();
+    GlpkMip();
     ///\e
-    MipGlpk(const MipGlpk&);
+    GlpkMip(const GlpkMip&);
+
+    virtual GlpkMip* cloneSolver() const;
+    virtual GlpkMip* newSolver() const;
 
   protected:
-
-    virtual MipGlpk* _cloneSolver() const;
-    virtual MipGlpk* _newSolver() const;
 
     virtual const char* _solverName() const;
 
@@ -226,34 +227,10 @@ namespace lemon {
     virtual Value _getSol(int i) const;
     virtual Value _getSolValue() const;
 
-    ///Enum for \c messageLevel() parameter
-    enum MessageLevel {
-      /// no output (default value)
-      MESSAGE_NO_OUTPUT = 0,
-      /// error messages only
-      MESSAGE_ERROR_MESSAGE = 1,
-      /// normal output
-      MESSAGE_NORMAL_OUTPUT = 2,
-      /// full output (includes informational messages)
-      MESSAGE_FULL_OUTPUT = 3
-    };
-
-  private:
-
-    MessageLevel _message_level;
-
-  public:
-
-    ///Set the verbosity of the messages
-
-    ///Set the verbosity of the messages
-    ///
-    ///\param m is the level of the messages output by the solver routines.
-    void messageLevel(MessageLevel m);
   };
 
 
 } //END OF NAMESPACE LEMON
 
-#endif //LEMON_LP_GLPK_H
+#endif //LEMON_GLPK_H
 

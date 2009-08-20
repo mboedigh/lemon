@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2008
+ * Copyright (C) 2003-2009
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -16,8 +16,8 @@
  *
  */
 
-#ifndef LEMON_LP_CPLEX_H
-#define LEMON_LP_CPLEX_H
+#ifndef LEMON_CPLEX_H
+#define LEMON_CPLEX_H
 
 ///\file
 ///\brief Header of the LEMON-CPLEX lp solver interface.
@@ -78,7 +78,7 @@ namespace lemon {
   /// \brief Base interface for the CPLEX LP and MIP solver
   ///
   /// This class implements the common interface of the CPLEX LP and
-  /// MIP solvers.  
+  /// MIP solvers.
   /// \ingroup lp_group
   class CplexBase : virtual public LpBase {
   protected:
@@ -144,14 +144,29 @@ namespace lemon {
 
     virtual void _clear();
 
+    virtual void _messageLevel(MessageLevel level);
+    void _applyMessageLevel();
+
+    bool _message_enabled;
+
   public:
 
     /// Returns the used \c CplexEnv instance
     const CplexEnv& env() const { return _env; }
+
+    /// \brief Returns the const cpxenv pointer
     ///
+    /// \note The cpxenv might be destructed with the solver.
     const cpxenv* cplexEnv() const { return _env.cplexEnv(); }
 
+    /// \brief Returns the const cpxenv pointer
+    ///
+    /// \note The cpxenv might be destructed with the solver.
+    cpxenv* cplexEnv() { return _env.cplexEnv(); }
+
+    /// Returns the cplex problem object
     cpxlp* cplexLp() { return _prob; }
+    /// Returns the cplex problem object
     const cpxlp* cplexLp() const { return _prob; }
 
   };
@@ -160,16 +175,21 @@ namespace lemon {
   ///
   /// This class implements an interface for the CPLEX LP solver.
   ///\ingroup lp_group
-  class LpCplex : public CplexBase, public LpSolver {
+  class CplexLp : public LpSolver, public CplexBase {
   public:
     /// \e
-    LpCplex();
+    CplexLp();
     /// \e
-    LpCplex(const CplexEnv&);
+    CplexLp(const CplexEnv&);
     /// \e
-    LpCplex(const LpCplex&);
+    CplexLp(const CplexLp&);
     /// \e
-    virtual ~LpCplex();
+    virtual ~CplexLp();
+
+    /// \e
+    virtual CplexLp* cloneSolver() const;
+    /// \e
+    virtual CplexLp* newSolver() const;
 
   private:
 
@@ -185,9 +205,6 @@ namespace lemon {
     SolveExitStatus convertStatus(int status);
 
   protected:
-
-    virtual LpCplex* _cloneSolver() const;
-    virtual LpCplex* _newSolver() const;
 
     virtual const char* _solverName() const;
 
@@ -222,21 +239,24 @@ namespace lemon {
   ///
   /// This class implements an interface for the CPLEX MIP solver.
   ///\ingroup lp_group
-  class MipCplex : public CplexBase, public MipSolver {
+  class CplexMip : public MipSolver, public CplexBase {
   public:
     /// \e
-    MipCplex();
+    CplexMip();
     /// \e
-    MipCplex(const CplexEnv&);
+    CplexMip(const CplexEnv&);
     /// \e
-    MipCplex(const MipCplex&);
+    CplexMip(const CplexMip&);
     /// \e
-    virtual ~MipCplex();
+    virtual ~CplexMip();
+
+    /// \e
+    virtual CplexMip* cloneSolver() const;
+    /// \e
+    virtual CplexMip* newSolver() const;
 
   protected:
 
-    virtual MipCplex* _cloneSolver() const;
-    virtual MipCplex* _newSolver() const;
 
     virtual const char* _solverName() const;
 
@@ -252,5 +272,5 @@ namespace lemon {
 
 } //END OF NAMESPACE LEMON
 
-#endif //LEMON_LP_CPLEX_H
+#endif //LEMON_CPLEX_H
 

@@ -84,6 +84,8 @@ namespace lemon {
     row_num = col_num = 0;
   }
 
+  void SkeletonSolverBase::_messageLevel(MessageLevel) {}
+
   LpSkeleton::SolveExitStatus LpSkeleton::_solve() { return SOLVED; }
 
   LpSkeleton::Value LpSkeleton::_getPrimal(int) const { return 0; }
@@ -105,10 +107,10 @@ namespace lemon {
   LpSkeleton::VarStatus LpSkeleton::_getRowStatus(int) const
   { return BASIC; }
 
-  LpSkeleton* LpSkeleton::_newSolver() const
+  LpSkeleton* LpSkeleton::newSolver() const
   { return static_cast<LpSkeleton*>(0); }
 
-  LpSkeleton* LpSkeleton::_cloneSolver() const
+  LpSkeleton* LpSkeleton::cloneSolver() const
   { return static_cast<LpSkeleton*>(0); }
 
   const char* LpSkeleton::_solverName() const { return "LpSkeleton"; }
@@ -122,10 +124,10 @@ namespace lemon {
   MipSkeleton::ProblemType MipSkeleton::_getType() const
   { return UNDEFINED; }
 
-  MipSkeleton* MipSkeleton::_newSolver() const
+  MipSkeleton* MipSkeleton::newSolver() const
   { return static_cast<MipSkeleton*>(0); }
 
-  MipSkeleton* MipSkeleton::_cloneSolver() const
+  MipSkeleton* MipSkeleton::cloneSolver() const
   { return static_cast<MipSkeleton*>(0); }
 
   const char* MipSkeleton::_solverName() const { return "MipSkeleton"; }

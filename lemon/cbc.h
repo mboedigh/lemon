@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2008
+ * Copyright (C) 2003-2009
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -16,68 +16,47 @@
  *
  */
 
-#ifndef LEMON_LP_SOPLEX_H
-#define LEMON_LP_SOPLEX_H
+// -*- C++ -*-
+#ifndef LEMON_CBC_H
+#define LEMON_CBC_H
 
 ///\file
-///\brief Header of the LEMON-SOPLEX lp solver interface.
-
-#include <vector>
-#include <string>
+///\brief Header of the LEMON-CBC mip solver interface.
+///\ingroup lp_group
 
 #include <lemon/lp_base.h>
 
-// Forward declaration
-namespace soplex {
-  class SoPlex;
-}
+class CoinModel;
+class OsiSolverInterface;
+class CbcModel;
 
 namespace lemon {
 
-  /// \ingroup lp_group
+  /// \brief Interface for the CBC MIP solver
   ///
-  /// \brief Interface for the SOPLEX solver
-  ///
-  /// This class implements an interface for the SoPlex LP solver.
-  /// The SoPlex library is an object oriented lp solver library
-  /// developed at the Konrad-Zuse-Zentrum für Informationstechnik
-  /// Berlin (ZIB). You can find detailed information about it at the
-  /// <tt>http://soplex.zib.de</tt> address.
-  class LpSoplex : public LpSolver {
-  private:
+  /// This class implements an interface for the CBC MIP solver.
+  ///\ingroup lp_group
+  class CbcMip : public MipSolver {
+  protected:
 
-    soplex::SoPlex* soplex;
-
-    std::vector<std::string> _col_names;
-    std::map<std::string, int> _col_names_ref;
-
-    std::vector<std::string> _row_names;
-    std::map<std::string, int> _row_names_ref;
-
-  private:
-
-    // these values cannot be retrieved element by element
-    mutable std::vector<Value> _primal_values;
-    mutable std::vector<Value> _dual_values;
-
-    mutable std::vector<Value> _primal_ray;
-    mutable std::vector<Value> _dual_ray;
-
-    void _clear_temporals();
+    CoinModel *_prob;
+    OsiSolverInterface *_osi_solver;
+    CbcModel *_cbc_model;
 
   public:
 
     /// \e
-    LpSoplex();
+    CbcMip();
     /// \e
-    LpSoplex(const LpSoplex&);
+    CbcMip(const CbcMip&);
     /// \e
-    ~LpSoplex();
+    ~CbcMip();
+    /// \e
+    virtual CbcMip* newSolver() const;
+    /// \e
+    virtual CbcMip* cloneSolver() const;
 
   protected:
-
-    virtual LpSoplex* _newSolver() const;
-    virtual LpSoplex* _cloneSolver() const;
 
     virtual const char* _solverName() const;
 
@@ -126,26 +105,25 @@ namespace lemon {
     virtual void _setSense(Sense sense);
     virtual Sense _getSense() const;
 
+    virtual ColTypes _getColType(int col) const;
+    virtual void _setColType(int col, ColTypes col_type);
+
     virtual SolveExitStatus _solve();
-    virtual Value _getPrimal(int i) const;
-    virtual Value _getDual(int i) const;
-
-    virtual Value _getPrimalValue() const;
-
-    virtual Value _getPrimalRay(int i) const;
-    virtual Value _getDualRay(int i) const;
-
-    virtual VarStatus _getColStatus(int i) const;
-    virtual VarStatus _getRowStatus(int i) const;
-
-    virtual ProblemType _getPrimalType() const;
-    virtual ProblemType _getDualType() const;
+    virtual ProblemType _getType() const;
+    virtual Value _getSol(int i) const;
+    virtual Value _getSolValue() const;
 
     virtual void _clear();
 
+    virtual void _messageLevel(MessageLevel level);
+    void _applyMessageLevel();
+
+    int _message_level;
+
+    
+
   };
 
-} //END OF NAMESPACE LEMON
+}
 
-#endif //LEMON_LP_SOPLEX_H
-
+#endif

@@ -496,14 +496,12 @@ namespace lemon {
   /// }
   ///\endcode
   ///
-  /// This graph type is fully conform to the \ref concepts::Graph
-  /// "Graph" concept, and it also has an important extra feature
-  /// that its maps are real \ref concepts::ReferenceMap
-  /// "reference map"s.
+  /// This graph type fully conforms to the \ref concepts::Graph
+  /// "Graph concept".
   class GridGraph : public ExtendedGridGraphBase {
-  public:
-
     typedef ExtendedGridGraphBase Parent;
+
+  public:
 
     /// \brief Map to get the indices of the nodes as dim2::Point<int>.
     ///
