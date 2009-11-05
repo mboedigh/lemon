@@ -51,7 +51,7 @@ namespace lemon {
     typedef True ArcNumTag;
 
     Node operator()(int ix) const { return Node(ix); }
-    int index(const Node& node) const { return node._id; }
+    static int index(const Node& node) { return node._id; }
 
     Arc arc(const Node& s, const Node& t) const {
       return Arc(s._id * _node_num + t._id);
@@ -213,7 +213,7 @@ namespace lemon {
     /// completely static, the nodes can be indexed with integers from
     /// the range <tt>[0..nodeNum()-1]</tt>.
     /// \sa operator()()
-    int index(Node node) const { return Parent::index(node); }
+    static int index(const Node& node) { return Parent::index(node); }
 
     /// \brief Returns the arc connecting the given nodes.
     ///
@@ -287,7 +287,7 @@ namespace lemon {
   public:
 
     Node operator()(int ix) const { return Node(ix); }
-    int index(const Node& node) const { return node._id; }
+    static int index(const Node& node) { return node._id; }
 
     Edge edge(const Node& u, const Node& v) const {
       if (u._id < v._id) {
@@ -588,7 +588,7 @@ namespace lemon {
     /// completely static, the nodes can be indexed with integers from
     /// the range <tt>[0..nodeNum()-1]</tt>.
     /// \sa operator()()
-    int index(Node node) const { return Parent::index(node); }
+    static int index(const Node& node) { return Parent::index(node); }
 
     /// \brief Returns the arc connecting the given nodes.
     ///

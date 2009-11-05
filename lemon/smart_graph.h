@@ -497,7 +497,7 @@ namespace lemon {
       node._id = nodes.size() - 1;
     }
 
-    void next(Node& node) const {
+    static void next(Node& node) {
       --node._id;
     }
 
@@ -505,7 +505,7 @@ namespace lemon {
       arc._id = arcs.size() - 1;
     }
 
-    void next(Arc& arc) const {
+    static void next(Arc& arc) {
       --arc._id;
     }
 
@@ -513,7 +513,7 @@ namespace lemon {
       arc._id = arcs.size() / 2 - 1;
     }
 
-    void next(Edge& arc) const {
+    static void next(Edge& arc) {
       --arc._id;
     }
 
