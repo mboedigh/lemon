@@ -43,13 +43,13 @@ namespace lemon {
   /// for finding a \ref min_cost_flow "minimum cost flow"
   /// \ref amo93networkflows, \ref dantzig63linearprog,
   /// \ref kellyoneill91netsimplex.
-  /// This algorithm is a specialized version of the linear programming
-  /// simplex method directly for the minimum cost flow problem.
-  /// It is one of the most efficient solution methods.
+  /// This algorithm is a highly efficient specialized version of the
+  /// linear programming simplex method directly for the minimum cost
+  /// flow problem.
   ///
-  /// In general this class is the fastest implementation available
-  /// in LEMON for the minimum cost flow problem.
-  /// Moreover it supports both directions of the supply/demand inequality
+  /// In general, %NetworkSimplex is the fastest implementation available
+  /// in LEMON for this problem.
+  /// Moreover, it supports both directions of the supply/demand inequality
   /// constraints. For more information, see \ref SupplyType.
   ///
   /// Most of the parameters of the problem (except for the digraph)
@@ -58,12 +58,12 @@ namespace lemon {
   /// specified, then default values will be used.
   ///
   /// \tparam GR The digraph type the algorithm runs on.
-  /// \tparam V The value type used for flow amounts, capacity bounds
+  /// \tparam V The number type used for flow amounts, capacity bounds
   /// and supply values in the algorithm. By default, it is \c int.
-  /// \tparam C The value type used for costs and potentials in the
+  /// \tparam C The number type used for costs and potentials in the
   /// algorithm. By default, it is the same as \c V.
   ///
-  /// \warning Both value types must be signed and all input data must
+  /// \warning Both number types must be signed and all input data must
   /// be integer.
   ///
   /// \note %NetworkSimplex provides five different pivot rule
@@ -126,7 +126,7 @@ namespace lemon {
     /// of the algorithm.
     /// By default, \ref BLOCK_SEARCH "Block Search" is used, which
     /// proved to be the most efficient and the most robust on various
-    /// test inputs according to our benchmark tests.
+    /// test inputs.
     /// However, another pivot rule can be selected using the \ref run()
     /// function with the proper parameter.
     enum PivotRule {
@@ -164,7 +164,7 @@ namespace lemon {
     TEMPLATE_DIGRAPH_TYPEDEFS(GR);
 
     typedef std::vector<int> IntVector;
-    typedef std::vector<bool> BoolVector;
+    typedef std::vector<char> CharVector;
     typedef std::vector<Value> ValueVector;
     typedef std::vector<Cost> CostVector;
 
@@ -212,8 +212,8 @@ namespace lemon {
     IntVector _succ_num;
     IntVector _last_succ;
     IntVector _dirty_revs;
-    BoolVector _forward;
-    IntVector _state;
+    CharVector _forward;
+    CharVector _state;
     int _root;
 
     // Temporary data used in the current pivot iteration
@@ -221,6 +221,8 @@ namespace lemon {
     int first, second, right, last;
     int stem, par_stem, new_stem;
     Value delta;
+    
+    const Value MAX;
 
   public:
   
@@ -242,7 +244,7 @@ namespace lemon {
       const IntVector  &_source;
       const IntVector  &_target;
       const CostVector &_cost;
-      const IntVector  &_state;
+      const CharVector &_state;
       const CostVector &_pi;
       int &_in_arc;
       int _search_arc_num;
@@ -294,7 +296,7 @@ namespace lemon {
       const IntVector  &_source;
       const IntVector  &_target;
       const CostVector &_cost;
-      const IntVector  &_state;
+      const CharVector &_state;
       const CostVector &_pi;
       int &_in_arc;
       int _search_arc_num;
@@ -333,7 +335,7 @@ namespace lemon {
       const IntVector  &_source;
       const IntVector  &_target;
       const CostVector &_cost;
-      const IntVector  &_state;
+      const CharVector &_state;
       const CostVector &_pi;
       int &_in_arc;
       int _search_arc_num;
@@ -406,7 +408,7 @@ namespace lemon {
       const IntVector  &_source;
       const IntVector  &_target;
       const CostVector &_cost;
-      const IntVector  &_state;
+      const CharVector &_state;
       const CostVector &_pi;
       int &_in_arc;
       int _search_arc_num;
@@ -509,7 +511,7 @@ namespace lemon {
       const IntVector  &_source;
       const IntVector  &_target;
       const CostVector &_cost;
-      const IntVector  &_state;
+      const CharVector &_state;
       const CostVector &_pi;
       int &_in_arc;
       int _search_arc_num;
@@ -631,11 +633,11 @@ namespace lemon {
     /// but it is usually slower. Therefore it is disabled by default.
     NetworkSimplex(const GR& graph, bool arc_mixing = false) :
       _graph(graph), _node_id(graph), _arc_id(graph),
+      MAX(std::numeric_limits<Value>::max()),
       INF(std::numeric_limits<Value>::has_infinity ?
-          std::numeric_limits<Value>::infinity() :
-          std::numeric_limits<Value>::max())
+          std::numeric_limits<Value>::infinity() : MAX)
     {
-      // Check the value types
+      // Check the number types
       LEMON_ASSERT(std::numeric_limits<Value>::is_signed,
         "The flow type of NetworkSimplex must be signed");
       LEMON_ASSERT(std::numeric_limits<Cost>::is_signed,
@@ -727,7 +729,7 @@ namespace lemon {
     /// This function sets the upper bounds (capacities) on the arcs.
     /// If it is not used before calling \ref run(), the upper bounds
     /// will be set to \ref INF on all arcs (i.e. the flow value will be
-    /// unbounded from above on each arc).
+    /// unbounded from above).
     ///
     /// \param map An arc map storing the upper bounds.
     /// Its \c Value type must be convertible to the \c Value type
@@ -1020,9 +1022,9 @@ namespace lemon {
         for (int i = 0; i != _arc_num; ++i) {
           Value c = _lower[i];
           if (c >= 0) {
-            _cap[i] = _upper[i] < INF ? _upper[i] - c : INF;
+            _cap[i] = _upper[i] < MAX ? _upper[i] - c : INF;
           } else {
-            _cap[i] = _upper[i] < INF + c ? _upper[i] - c : INF;
+            _cap[i] = _upper[i] < MAX + c ? _upper[i] - c : INF;
           }
           _supply[_source[i]] -= c;
           _supply[_target[i]] += c;
@@ -1214,7 +1216,7 @@ namespace lemon {
       for (int u = first; u != join; u = _parent[u]) {
         e = _pred[u];
         d = _forward[u] ?
-          _flow[e] : (_cap[e] == INF ? INF : _cap[e] - _flow[e]);
+          _flow[e] : (_cap[e] >= MAX ? INF : _cap[e] - _flow[e]);
         if (d < delta) {
           delta = d;
           u_out = u;
@@ -1225,7 +1227,7 @@ namespace lemon {
       for (int u = second; u != join; u = _parent[u]) {
         e = _pred[u];
         d = _forward[u] ? 
-          (_cap[e] == INF ? INF : _cap[e] - _flow[e]) : _flow[e];
+          (_cap[e] >= MAX ? INF : _cap[e] - _flow[e]) : _flow[e];
         if (d <= delta) {
           delta = d;
           u_out = u;
@@ -1424,7 +1426,7 @@ namespace lemon {
       while (pivot.findEnteringArc()) {
         findJoinNode();
         bool change = findLeavingArc();
-        if (delta >= INF) return UNBOUNDED;
+        if (delta >= MAX) return UNBOUNDED;
         changeFlow(change);
         if (change) {
           updateTreeStructure();

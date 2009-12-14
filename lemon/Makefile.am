@@ -62,15 +62,18 @@ lemon_HEADERS += \
 	lemon/bin_heap.h \
 	lemon/binom_heap.h \
 	lemon/bucket_heap.h \
+	lemon/capacity_scaling.h \
 	lemon/cbc.h \
 	lemon/circulation.h \
 	lemon/clp.h \
 	lemon/color.h \
 	lemon/concept_check.h \
 	lemon/connectivity.h \
-	lemon/counter.h \
 	lemon/core.h \
+	lemon/cost_scaling.h \
+	lemon/counter.h \
 	lemon/cplex.h \
+	lemon/cycle_canceling.h \
 	lemon/dfs.h \
 	lemon/dijkstra.h \
 	lemon/dim2.h \
