@@ -113,9 +113,17 @@ namespace lemon {
   /// the maximum flow value and the minimum cut is obtained. The
   /// second phase constructs a feasible maximum flow on each arc.
   ///
+  /// \warning This implementation cannot handle infinite or very large
+  /// capacities (e.g. the maximum value of \c CAP::Value).
+  ///
   /// \tparam GR The type of the digraph the algorithm runs on.
   /// \tparam CAP The type of the capacity map. The default map
   /// type is \ref concepts::Digraph::ArcMap "GR::ArcMap<int>".
+  /// \tparam TR The traits class that defines various types used by the
+  /// algorithm. By default, it is \ref PreflowDefaultTraits
+  /// "PreflowDefaultTraits<GR, CAP>".
+  /// In most cases, this parameter should not be set directly,
+  /// consider to use the named template parameters instead.
 #ifdef DOXYGEN
   template <typename GR, typename CAP, typename TR>
 #else

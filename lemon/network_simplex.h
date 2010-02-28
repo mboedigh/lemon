@@ -164,9 +164,10 @@ namespace lemon {
     TEMPLATE_DIGRAPH_TYPEDEFS(GR);
 
     typedef std::vector<int> IntVector;
-    typedef std::vector<char> CharVector;
     typedef std::vector<Value> ValueVector;
     typedef std::vector<Cost> CostVector;
+    typedef std::vector<char> BoolVector;
+    // Note: vector<char> is used instead of vector<bool> for efficiency reasons
 
     // State constants for arcs
     enum ArcStateEnum {
@@ -194,6 +195,7 @@ namespace lemon {
     IntArcMap _arc_id;
     IntVector _source;
     IntVector _target;
+    bool _arc_mixing;
 
     // Node and arc data
     ValueVector _lower;
@@ -212,8 +214,8 @@ namespace lemon {
     IntVector _succ_num;
     IntVector _last_succ;
     IntVector _dirty_revs;
-    CharVector _forward;
-    CharVector _state;
+    BoolVector _forward;
+    BoolVector _state;
     int _root;
 
     // Temporary data used in the current pivot iteration
@@ -244,7 +246,7 @@ namespace lemon {
       const IntVector  &_source;
       const IntVector  &_target;
       const CostVector &_cost;
-      const CharVector &_state;
+      const BoolVector &_state;
       const CostVector &_pi;
       int &_in_arc;
       int _search_arc_num;
@@ -265,7 +267,7 @@ namespace lemon {
       // Find next entering arc
       bool findEnteringArc() {
         Cost c;
-        for (int e = _next_arc; e < _search_arc_num; ++e) {
+        for (int e = _next_arc; e != _search_arc_num; ++e) {
           c = _state[e] * (_cost[e] + _pi[_source[e]] - _pi[_target[e]]);
           if (c < 0) {
             _in_arc = e;
@@ -273,7 +275,7 @@ namespace lemon {
             return true;
           }
         }
-        for (int e = 0; e < _next_arc; ++e) {
+        for (int e = 0; e != _next_arc; ++e) {
           c = _state[e] * (_cost[e] + _pi[_source[e]] - _pi[_target[e]]);
           if (c < 0) {
             _in_arc = e;
@@ -296,7 +298,7 @@ namespace lemon {
       const IntVector  &_source;
       const IntVector  &_target;
       const CostVector &_cost;
-      const CharVector &_state;
+      const BoolVector &_state;
       const CostVector &_pi;
       int &_in_arc;
       int _search_arc_num;
@@ -313,7 +315,7 @@ namespace lemon {
       // Find next entering arc
       bool findEnteringArc() {
         Cost c, min = 0;
-        for (int e = 0; e < _search_arc_num; ++e) {
+        for (int e = 0; e != _search_arc_num; ++e) {
           c = _state[e] * (_cost[e] + _pi[_source[e]] - _pi[_target[e]]);
           if (c < min) {
             min = c;
@@ -335,7 +337,7 @@ namespace lemon {
       const IntVector  &_source;
       const IntVector  &_target;
       const CostVector &_cost;
-      const CharVector &_state;
+      const BoolVector &_state;
       const CostVector &_pi;
       int &_in_arc;
       int _search_arc_num;
@@ -354,7 +356,7 @@ namespace lemon {
         _next_arc(0)
       {
         // The main parameters of the pivot rule
-        const double BLOCK_SIZE_FACTOR = 0.5;
+        const double BLOCK_SIZE_FACTOR = 1.0;
         const int MIN_BLOCK_SIZE = 10;
 
         _block_size = std::max( int(BLOCK_SIZE_FACTOR *
@@ -367,7 +369,7 @@ namespace lemon {
         Cost c, min = 0;
         int cnt = _block_size;
         int e;
-        for (e = _next_arc; e < _search_arc_num; ++e) {
+        for (e = _next_arc; e != _search_arc_num; ++e) {
           c = _state[e] * (_cost[e] + _pi[_source[e]] - _pi[_target[e]]);
           if (c < min) {
             min = c;
@@ -378,7 +380,7 @@ namespace lemon {
             cnt = _block_size;
           }
         }
-        for (e = 0; e < _next_arc; ++e) {
+        for (e = 0; e != _next_arc; ++e) {
           c = _state[e] * (_cost[e] + _pi[_source[e]] - _pi[_target[e]]);
           if (c < min) {
             min = c;
@@ -408,7 +410,7 @@ namespace lemon {
       const IntVector  &_source;
       const IntVector  &_target;
       const CostVector &_cost;
-      const CharVector &_state;
+      const BoolVector &_state;
       const CostVector &_pi;
       int &_in_arc;
       int _search_arc_num;
@@ -469,7 +471,7 @@ namespace lemon {
         // Major iteration: build a new candidate list
         min = 0;
         _curr_length = 0;
-        for (e = _next_arc; e < _search_arc_num; ++e) {
+        for (e = _next_arc; e != _search_arc_num; ++e) {
           c = _state[e] * (_cost[e] + _pi[_source[e]] - _pi[_target[e]]);
           if (c < 0) {
             _candidates[_curr_length++] = e;
@@ -480,7 +482,7 @@ namespace lemon {
             if (_curr_length == _list_length) goto search_end;
           }
         }
-        for (e = 0; e < _next_arc; ++e) {
+        for (e = 0; e != _next_arc; ++e) {
           c = _state[e] * (_cost[e] + _pi[_source[e]] - _pi[_target[e]]);
           if (c < 0) {
             _candidates[_curr_length++] = e;
@@ -511,7 +513,7 @@ namespace lemon {
       const IntVector  &_source;
       const IntVector  &_target;
       const CostVector &_cost;
-      const CharVector &_state;
+      const BoolVector &_state;
       const CostVector &_pi;
       int &_in_arc;
       int _search_arc_num;
@@ -564,7 +566,7 @@ namespace lemon {
       bool findEnteringArc() {
         // Check the current candidate list
         int e;
-        for (int i = 0; i < _curr_length; ++i) {
+        for (int i = 0; i != _curr_length; ++i) {
           e = _candidates[i];
           _cand_cost[e] = _state[e] *
             (_cost[e] + _pi[_source[e]] - _pi[_target[e]]);
@@ -577,7 +579,7 @@ namespace lemon {
         int cnt = _block_size;
         int limit = _head_length;
 
-        for (e = _next_arc; e < _search_arc_num; ++e) {
+        for (e = _next_arc; e != _search_arc_num; ++e) {
           _cand_cost[e] = _state[e] *
             (_cost[e] + _pi[_source[e]] - _pi[_target[e]]);
           if (_cand_cost[e] < 0) {
@@ -589,7 +591,7 @@ namespace lemon {
             cnt = _block_size;
           }
         }
-        for (e = 0; e < _next_arc; ++e) {
+        for (e = 0; e != _next_arc; ++e) {
           _cand_cost[e] = _state[e] *
             (_cost[e] + _pi[_source[e]] - _pi[_target[e]]);
           if (_cand_cost[e] < 0) {
@@ -633,6 +635,7 @@ namespace lemon {
     /// but it is usually slower. Therefore it is disabled by default.
     NetworkSimplex(const GR& graph, bool arc_mixing = false) :
       _graph(graph), _node_id(graph), _arc_id(graph),
+      _arc_mixing(arc_mixing),
       MAX(std::numeric_limits<Value>::max()),
       INF(std::numeric_limits<Value>::has_infinity ?
           std::numeric_limits<Value>::infinity() : MAX)
@@ -643,58 +646,7 @@ namespace lemon {
       LEMON_ASSERT(std::numeric_limits<Cost>::is_signed,
         "The cost type of NetworkSimplex must be signed");
         
-      // Resize vectors
-      _node_num = countNodes(_graph);
-      _arc_num = countArcs(_graph);
-      int all_node_num = _node_num + 1;
-      int max_arc_num = _arc_num + 2 * _node_num;
-
-      _source.resize(max_arc_num);
-      _target.resize(max_arc_num);
-
-      _lower.resize(_arc_num);
-      _upper.resize(_arc_num);
-      _cap.resize(max_arc_num);
-      _cost.resize(max_arc_num);
-      _supply.resize(all_node_num);
-      _flow.resize(max_arc_num);
-      _pi.resize(all_node_num);
-
-      _parent.resize(all_node_num);
-      _pred.resize(all_node_num);
-      _forward.resize(all_node_num);
-      _thread.resize(all_node_num);
-      _rev_thread.resize(all_node_num);
-      _succ_num.resize(all_node_num);
-      _last_succ.resize(all_node_num);
-      _state.resize(max_arc_num);
-
-      // Copy the graph
-      int i = 0;
-      for (NodeIt n(_graph); n != INVALID; ++n, ++i) {
-        _node_id[n] = i;
-      }
-      if (arc_mixing) {
-        // Store the arcs in a mixed order
-        int k = std::max(int(std::sqrt(double(_arc_num))), 10);
-        int i = 0, j = 0;
-        for (ArcIt a(_graph); a != INVALID; ++a) {
-          _arc_id[a] = i;
-          _source[i] = _node_id[_graph.source(a)];
-          _target[i] = _node_id[_graph.target(a)];
-          if ((i += k) >= _arc_num) i = ++j;
-        }
-      } else {
-        // Store the arcs in the original order
-        int i = 0;
-        for (ArcIt a(_graph); a != INVALID; ++a, ++i) {
-          _arc_id[a] = i;
-          _source[i] = _node_id[_graph.source(a)];
-          _target[i] = _node_id[_graph.target(a)];
-        }
-      }
-      
-      // Reset parameters
+      // Reset data structures
       reset();
     }
 
@@ -842,12 +794,12 @@ namespace lemon {
     ///     .supplyMap(sup).run();
     /// \endcode
     ///
-    /// This function can be called more than once. All the parameters
-    /// that have been given are kept for the next call, unless
-    /// \ref reset() is called, thus only the modified parameters
-    /// have to be set again. See \ref reset() for examples.
-    /// However, the underlying digraph must not be modified after this
-    /// class have been constructed, since it copies and extends the graph.
+    /// This function can be called more than once. All the given parameters
+    /// are kept for the next call, unless \ref resetParams() or \ref reset()
+    /// is used, thus only the modified parameters have to be set again.
+    /// If the underlying digraph was also modified after the construction
+    /// of the class (or the last \ref reset() call), then the \ref reset()
+    /// function must be called.
     ///
     /// \param pivot_rule The pivot rule that will be used during the
     /// algorithm. For more information, see \ref PivotRule.
@@ -861,6 +813,7 @@ namespace lemon {
     /// cost and infinite upper bound.
     ///
     /// \see ProblemType, PivotRule
+    /// \see resetParams(), reset()
     ProblemType run(PivotRule pivot_rule = BLOCK_SEARCH) {
       if (!init()) return INFEASIBLE;
       return start(pivot_rule);
@@ -872,11 +825,12 @@ namespace lemon {
     /// before using functions \ref lowerMap(), \ref upperMap(),
     /// \ref costMap(), \ref supplyMap(), \ref stSupply(), \ref supplyType().
     ///
-    /// It is useful for multiple run() calls. If this function is not
-    /// used, all the parameters given before are kept for the next
-    /// \ref run() call.
-    /// However, the underlying digraph must not be modified after this
-    /// class have been constructed, since it copies and extends the graph.
+    /// It is useful for multiple \ref run() calls. Basically, all the given
+    /// parameters are kept for the next \ref run() call, unless
+    /// \ref resetParams() or \ref reset() is used.
+    /// If the underlying digraph was also modified after the construction
+    /// of the class or the last \ref reset() call, then the \ref reset()
+    /// function must be used, otherwise \ref resetParams() is sufficient.
     ///
     /// For example,
     /// \code
@@ -886,20 +840,22 @@ namespace lemon {
     ///   ns.lowerMap(lower).upperMap(upper).costMap(cost)
     ///     .supplyMap(sup).run();
     ///
-    ///   // Run again with modified cost map (reset() is not called,
+    ///   // Run again with modified cost map (resetParams() is not called,
     ///   // so only the cost map have to be set again)
     ///   cost[e] += 100;
     ///   ns.costMap(cost).run();
     ///
-    ///   // Run again from scratch using reset()
+    ///   // Run again from scratch using resetParams()
     ///   // (the lower bounds will be set to zero on all arcs)
-    ///   ns.reset();
+    ///   ns.resetParams();
     ///   ns.upperMap(capacity).costMap(cost)
     ///     .supplyMap(sup).run();
     /// \endcode
     ///
     /// \return <tt>(*this)</tt>
-    NetworkSimplex& reset() {
+    ///
+    /// \see reset(), run()
+    NetworkSimplex& resetParams() {
       for (int i = 0; i != _node_num; ++i) {
         _supply[i] = 0;
       }
@@ -913,6 +869,83 @@ namespace lemon {
       return *this;
     }
 
+    /// \brief Reset the internal data structures and all the parameters
+    /// that have been given before.
+    ///
+    /// This function resets the internal data structures and all the
+    /// paramaters that have been given before using functions \ref lowerMap(),
+    /// \ref upperMap(), \ref costMap(), \ref supplyMap(), \ref stSupply(),
+    /// \ref supplyType().
+    ///
+    /// It is useful for multiple \ref run() calls. Basically, all the given
+    /// parameters are kept for the next \ref run() call, unless
+    /// \ref resetParams() or \ref reset() is used.
+    /// If the underlying digraph was also modified after the construction
+    /// of the class or the last \ref reset() call, then the \ref reset()
+    /// function must be used, otherwise \ref resetParams() is sufficient.
+    ///
+    /// See \ref resetParams() for examples.
+    ///
+    /// \return <tt>(*this)</tt>
+    ///
+    /// \see resetParams(), run()
+    NetworkSimplex& reset() {
+      // Resize vectors
+      _node_num = countNodes(_graph);
+      _arc_num = countArcs(_graph);
+      int all_node_num = _node_num + 1;
+      int max_arc_num = _arc_num + 2 * _node_num;
+
+      _source.resize(max_arc_num);
+      _target.resize(max_arc_num);
+
+      _lower.resize(_arc_num);
+      _upper.resize(_arc_num);
+      _cap.resize(max_arc_num);
+      _cost.resize(max_arc_num);
+      _supply.resize(all_node_num);
+      _flow.resize(max_arc_num);
+      _pi.resize(all_node_num);
+
+      _parent.resize(all_node_num);
+      _pred.resize(all_node_num);
+      _forward.resize(all_node_num);
+      _thread.resize(all_node_num);
+      _rev_thread.resize(all_node_num);
+      _succ_num.resize(all_node_num);
+      _last_succ.resize(all_node_num);
+      _state.resize(max_arc_num);
+
+      // Copy the graph
+      int i = 0;
+      for (NodeIt n(_graph); n != INVALID; ++n, ++i) {
+        _node_id[n] = i;
+      }
+      if (_arc_mixing) {
+        // Store the arcs in a mixed order
+        int k = std::max(int(std::sqrt(double(_arc_num))), 10);
+        int i = 0, j = 0;
+        for (ArcIt a(_graph); a != INVALID; ++a) {
+          _arc_id[a] = i;
+          _source[i] = _node_id[_graph.source(a)];
+          _target[i] = _node_id[_graph.target(a)];
+          if ((i += k) >= _arc_num) i = ++j;
+        }
+      } else {
+        // Store the arcs in the original order
+        int i = 0;
+        for (ArcIt a(_graph); a != INVALID; ++a, ++i) {
+          _arc_id[a] = i;
+          _source[i] = _node_id[_graph.source(a)];
+          _target[i] = _node_id[_graph.target(a)];
+        }
+      }
+      
+      // Reset parameters
+      resetParams();
+      return *this;
+    }
+    
     /// @}
 
     /// \name Query Functions
@@ -1328,7 +1361,7 @@ namespace lemon {
       }
 
       // Update _rev_thread using the new _thread values
-      for (int i = 0; i < int(_dirty_revs.size()); ++i) {
+      for (int i = 0; i != int(_dirty_revs.size()); ++i) {
         u = _dirty_revs[i];
         _rev_thread[_thread[u]] = u;
       }
@@ -1400,6 +1433,100 @@ namespace lemon {
       }
     }
 
+    // Heuristic initial pivots
+    bool initialPivots() {
+      Value curr, total = 0;
+      std::vector<Node> supply_nodes, demand_nodes;
+      for (NodeIt u(_graph); u != INVALID; ++u) {
+        curr = _supply[_node_id[u]];
+        if (curr > 0) {
+          total += curr;
+          supply_nodes.push_back(u);
+        }
+        else if (curr < 0) {
+          demand_nodes.push_back(u);
+        }
+      }
+      if (_sum_supply > 0) total -= _sum_supply;
+      if (total <= 0) return true;
+
+      IntVector arc_vector;
+      if (_sum_supply >= 0) {
+        if (supply_nodes.size() == 1 && demand_nodes.size() == 1) {
+          // Perform a reverse graph search from the sink to the source
+          typename GR::template NodeMap<bool> reached(_graph, false);
+          Node s = supply_nodes[0], t = demand_nodes[0];
+          std::vector<Node> stack;
+          reached[t] = true;
+          stack.push_back(t);
+          while (!stack.empty()) {
+            Node u, v = stack.back();
+            stack.pop_back();
+            if (v == s) break;
+            for (InArcIt a(_graph, v); a != INVALID; ++a) {
+              if (reached[u = _graph.source(a)]) continue;
+              int j = _arc_id[a];
+              if (_cap[j] >= total) {
+                arc_vector.push_back(j);
+                reached[u] = true;
+                stack.push_back(u);
+              }
+            }
+          }
+        } else {
+          // Find the min. cost incomming arc for each demand node
+          for (int i = 0; i != int(demand_nodes.size()); ++i) {
+            Node v = demand_nodes[i];
+            Cost c, min_cost = std::numeric_limits<Cost>::max();
+            Arc min_arc = INVALID;
+            for (InArcIt a(_graph, v); a != INVALID; ++a) {
+              c = _cost[_arc_id[a]];
+              if (c < min_cost) {
+                min_cost = c;
+                min_arc = a;
+              }
+            }
+            if (min_arc != INVALID) {
+              arc_vector.push_back(_arc_id[min_arc]);
+            }
+          }
+        }
+      } else {
+        // Find the min. cost outgoing arc for each supply node
+        for (int i = 0; i != int(supply_nodes.size()); ++i) {
+          Node u = supply_nodes[i];
+          Cost c, min_cost = std::numeric_limits<Cost>::max();
+          Arc min_arc = INVALID;
+          for (OutArcIt a(_graph, u); a != INVALID; ++a) {
+            c = _cost[_arc_id[a]];
+            if (c < min_cost) {
+              min_cost = c;
+              min_arc = a;
+            }
+          }
+          if (min_arc != INVALID) {
+            arc_vector.push_back(_arc_id[min_arc]);
+          }
+        }
+      }
+
+      // Perform heuristic initial pivots
+      for (int i = 0; i != int(arc_vector.size()); ++i) {
+        in_arc = arc_vector[i];
+        if (_state[in_arc] * (_cost[in_arc] + _pi[_source[in_arc]] -
+            _pi[_target[in_arc]]) >= 0) continue;
+        findJoinNode();
+        bool change = findLeavingArc();
+        if (delta >= MAX) return false;
+        changeFlow(change);
+        if (change) {
+          updateTreeStructure();
+          updatePotential();
+        }
+      }
+      return true;
+    }
+
     // Execute the algorithm
     ProblemType start(PivotRule pivot_rule) {
       // Select the pivot rule implementation
@@ -1421,6 +1548,9 @@ namespace lemon {
     template <typename PivotRuleImpl>
     ProblemType start() {
       PivotRuleImpl pivot(*this);
+
+      // Perform heuristic initial pivots
+      if (!initialPivots()) return UNBOUNDED;
 
       // Execute the Network Simplex algorithm
       while (pivot.findEnteringArc()) {
