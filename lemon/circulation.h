@@ -72,7 +72,11 @@ namespace lemon {
     /// The type of the map that stores the flow values.
     /// It must conform to the \ref concepts::ReadWriteMap "ReadWriteMap"
     /// concept.
+#ifdef DOXYGEN
+    typedef GR::ArcMap<Value> FlowMap;
+#else
     typedef typename Digraph::template ArcMap<Value> FlowMap;
+#endif
 
     /// \brief Instantiates a FlowMap.
     ///
@@ -87,9 +91,12 @@ namespace lemon {
     ///
     /// The elevator type used by the algorithm.
     ///
-    /// \sa Elevator
-    /// \sa LinkedElevator
+    /// \sa Elevator, LinkedElevator
+#ifdef DOXYGEN
+    typedef lemon::Elevator<GR, GR::Node> Elevator;
+#else
     typedef lemon::Elevator<Digraph, typename Digraph::Node> Elevator;
+#endif
 
     /// \brief Instantiates an Elevator.
     ///
@@ -166,6 +173,11 @@ namespace lemon {
      The default map type is \c LM.
      \tparam SM The type of the supply map. The default map type is
      \ref concepts::Digraph::NodeMap "GR::NodeMap<UM::Value>".
+     \tparam TR The traits class that defines various types used by the
+     algorithm. By default, it is \ref CirculationDefaultTraits
+     "CirculationDefaultTraits<GR, LM, UM, SM>".
+     In most cases, this parameter should not be set directly,
+     consider to use the named template parameters instead.
   */
 #ifdef DOXYGEN
 template< typename GR,
@@ -299,7 +311,7 @@ template< typename GR,
     /// The Elevator should have standard constructor interface to be
     /// able to automatically created by the algorithm (i.e. the
     /// digraph and the maximum level should be passed to it).
-    /// However an external elevator object could also be passed to the
+    /// However, an external elevator object could also be passed to the
     /// algorithm with the \ref elevator(Elevator&) "elevator()" function
     /// before calling \ref run() or \ref init().
     /// \sa SetElevator
@@ -469,8 +481,8 @@ template< typename GR,
 
     /// \name Execution Control
     /// The simplest way to execute the algorithm is to call \ref run().\n
-    /// If you need more control on the initial solution or the execution,
-    /// first you have to call one of the \ref init() functions, then
+    /// If you need better control on the initial solution or the execution,
+    /// you have to call one of the \ref init() functions first, then
     /// the \ref start() function.
 
     ///@{

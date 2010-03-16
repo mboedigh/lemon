@@ -1,3 +1,7 @@
+if USE_VALGRIND
+TESTS_ENVIRONMENT=$(top_srcdir)/scripts/valgrind-wrapper.sh
+endif
+
 EXTRA_DIST += \
 	test/CMakeLists.txt
 
@@ -31,7 +35,9 @@ check_PROGRAMS += \
 	test/matching_test \
 	test/min_cost_arborescence_test \
 	test/min_cost_flow_test \
+	test/min_mean_cycle_test \
 	test/path_test \
+	test/planarity_test \
 	test/preflow_test \
 	test/radix_sort_test \
 	test/random_test \
@@ -80,7 +86,9 @@ test_mip_test_SOURCES = test/mip_test.cc
 test_matching_test_SOURCES = test/matching_test.cc
 test_min_cost_arborescence_test_SOURCES = test/min_cost_arborescence_test.cc
 test_min_cost_flow_test_SOURCES = test/min_cost_flow_test.cc
+test_min_mean_cycle_test_SOURCES = test/min_mean_cycle_test.cc
 test_path_test_SOURCES = test/path_test.cc
+test_planarity_test_SOURCES = test/planarity_test.cc
 test_preflow_test_SOURCES = test/preflow_test.cc
 test_radix_sort_test_SOURCES = test/radix_sort_test.cc
 test_suurballe_test_SOURCES = test/suurballe_test.cc

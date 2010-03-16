@@ -23,28 +23,32 @@
 /// \file
 /// \brief Bellman-Ford algorithm.
 
+#include <lemon/list_graph.h>
 #include <lemon/bits/path_dump.h>
 #include <lemon/core.h>
 #include <lemon/error.h>
 #include <lemon/maps.h>
+#include <lemon/tolerance.h>
 #include <lemon/path.h>
 
 #include <limits>
 
 namespace lemon {
 
-  /// \brief Default OperationTraits for the BellmanFord algorithm class.
+  /// \brief Default operation traits for the BellmanFord algorithm class.
   ///  
   /// This operation traits class defines all computational operations
   /// and constants that are used in the Bellman-Ford algorithm.
   /// The default implementation is based on the \c numeric_limits class.
   /// If the numeric type does not have infinity value, then the maximum
   /// value is used as extremal infinity value.
+  ///
+  /// \see BellmanFordToleranceOperationTraits
   template <
     typename V, 
     bool has_inf = std::numeric_limits<V>::has_infinity>
   struct BellmanFordDefaultOperationTraits {
-    /// \e
+    /// \brief Value type for the algorithm.
     typedef V Value;
     /// \brief Gives back the zero value of the type.
     static Value zero() {
@@ -83,6 +87,51 @@ namespace lemon {
     }
   };
   
+  /// \brief Operation traits for the BellmanFord algorithm class
+  /// using tolerance.
+  ///
+  /// This operation traits class defines all computational operations
+  /// and constants that are used in the Bellman-Ford algorithm.
+  /// The only difference between this implementation and
+  /// \ref BellmanFordDefaultOperationTraits is that this class uses
+  /// the \ref Tolerance "tolerance technique" in its \ref less()
+  /// function.
+  ///
+  /// \tparam V The value type.
+  /// \tparam eps The epsilon value for the \ref less() function.
+  /// By default, it is the epsilon value used by \ref Tolerance
+  /// "Tolerance<V>".
+  ///
+  /// \see BellmanFordDefaultOperationTraits
+#ifdef DOXYGEN
+  template <typename V, V eps>
+#else
+  template <
+    typename V,
+    V eps = Tolerance<V>::def_epsilon>
+#endif
+  struct BellmanFordToleranceOperationTraits {
+    /// \brief Value type for the algorithm.
+    typedef V Value;
+    /// \brief Gives back the zero value of the type.
+    static Value zero() {
+      return static_cast<Value>(0);
+    }
+    /// \brief Gives back the positive infinity value of the type.
+    static Value infinity() {
+      return std::numeric_limits<Value>::infinity();
+    }
+    /// \brief Gives back the sum of the given two elements.
+    static Value plus(const Value& left, const Value& right) {
+      return left + right;
+    }
+    /// \brief Gives back \c true only if the first value is less than
+    /// the second.
+    static bool less(const Value& left, const Value& right) {
+      return left + eps < right;
+    }
+  };
+
   /// \brief Default traits class of BellmanFord class.
   ///
   /// Default traits class of BellmanFord class.
@@ -106,7 +155,8 @@ namespace lemon {
     ///
     /// It defines the used operations and the infinity value for the
     /// given \c Value type.
-    /// \see BellmanFordDefaultOperationTraits
+    /// \see BellmanFordDefaultOperationTraits,
+    /// BellmanFordToleranceOperationTraits
     typedef BellmanFordDefaultOperationTraits<Value> OperationTraits;
  
     /// \brief The type of the map that stores the last arcs of the 
@@ -170,6 +220,11 @@ namespace lemon {
   /// \tparam LEN A \ref concepts::ReadMap "readable" arc map that specifies
   /// the lengths of the arcs. The default map type is
   /// \ref concepts::Digraph::ArcMap "GR::ArcMap<int>".
+  /// \tparam TR The traits class that defines various types used by the
+  /// algorithm. By default, it is \ref BellmanFordDefaultTraits
+  /// "BellmanFordDefaultTraits<GR, LEN>".
+  /// In most cases, this parameter should not be set directly,
+  /// consider to use the named template parameters instead.
 #ifdef DOXYGEN
   template <typename GR, typename LEN, typename TR>
 #else
@@ -236,7 +291,9 @@ namespace lemon {
 	_local_dist = true;
 	_dist = Traits::createDistMap(*_gr);
       }
-      _mask = new MaskMap(*_gr, false);
+      if(!_mask) {
+        _mask = new MaskMap(*_gr);
+      }
     }
     
   public :
@@ -299,7 +356,7 @@ namespace lemon {
     ///
     /// \ref named-templ-param "Named parameter" for setting
     /// \c OperationTraits type.
-    /// For more information see \ref BellmanFordDefaultOperationTraits.
+    /// For more information, see \ref BellmanFordDefaultOperationTraits.
     template <class T>
     struct SetOperationTraits
       : public BellmanFord< Digraph, LengthMap, SetOperationTraitsTraits<T> > {
@@ -402,6 +459,10 @@ namespace lemon {
 	for (NodeIt it(*_gr); it != INVALID; ++it) {
 	  _process.push_back(it);
 	  _mask->set(it, true);
+	}
+      } else {
+	for (NodeIt it(*_gr); it != INVALID; ++it) {
+	  _mask->set(it, false);
 	}
       }
     }
@@ -717,7 +778,7 @@ namespace lemon {
     /// is not reached from the root(s) or if \c v is a root.
     ///
     /// The shortest path tree used here is equal to the shortest path
-    /// tree used in \ref predNode() and \predMap().
+    /// tree used in \ref predNode() and \ref predMap().
     ///
     /// \pre Either \ref run() or \ref init() must be called before
     /// using this function.
@@ -732,7 +793,7 @@ namespace lemon {
     /// is not reached from the root(s) or if \c v is a root.
     ///
     /// The shortest path tree used here is equal to the shortest path
-    /// tree used in \ref predArc() and \predMap().
+    /// tree used in \ref predArc() and \ref predMap().
     ///
     /// \pre Either \ref run() or \ref init() must be called before
     /// using this function.
@@ -775,7 +836,7 @@ namespace lemon {
     /// This function gives back a directed cycle with negative total
     /// length if the algorithm has already found one.
     /// Otherwise it gives back an empty path.
-    lemon::Path<Digraph> negativeCycle() {
+    lemon::Path<Digraph> negativeCycle() const {
       typename Digraph::template NodeMap<int> state(*_gr, -1);
       lemon::Path<Digraph> cycle;
       for (int i = 0; i < int(_process.size()); ++i) {
@@ -825,7 +886,8 @@ namespace lemon {
     ///
     /// It defines the used operations and the infinity value for the
     /// given \c Value type.
-    /// \see BellmanFordDefaultOperationTraits
+    /// \see BellmanFordDefaultOperationTraits,
+    /// BellmanFordToleranceOperationTraits
     typedef BellmanFordDefaultOperationTraits<Value> OperationTraits;
 
     /// \brief The type of the map that stores the last
@@ -926,6 +988,9 @@ namespace lemon {
   ///
   /// This class should only be used through the \ref bellmanFord()
   /// function, which makes it easier to use the algorithm.
+  ///
+  /// \tparam TR The traits class that defines various types used by the
+  /// algorithm.
   template<class TR>
   class BellmanFordWizard : public TR {
     typedef TR Base;
