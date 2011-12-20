@@ -7,6 +7,10 @@ LINK_DIRECTORIES(
   ${PROJECT_BINARY_DIR}/lemon
 )
 
+SET(TEST_WITH_VALGRIND "NO" CACHE STRING
+  "Run the test with valgrind (YES/NO).")
+SET(VALGRIND_FLAGS "" CACHE STRING "Valgrind flags used by the tests.")
+
 SET(TESTS
   adaptors_test
   bfs_test
@@ -27,6 +31,7 @@ SET(TESTS
   hao_orlin_test
   heap_test
   kruskal_test
+  lgf_test
   maps_test
   matching_test
   min_cost_arborescence_test
@@ -61,6 +66,7 @@ IF(LEMON_HAVE_LP)
 
   TARGET_LINK_LIBRARIES(lp_test ${LP_TEST_LIBS})
   ADD_TEST(lp_test lp_test)
+  ADD_DEPENDENCIES(check lp_test)
 
   IF(WIN32 AND LEMON_HAVE_GLPK)
     GET_TARGET_PROPERTY(TARGET_LOC lp_test LOCATION)
@@ -102,6 +108,7 @@ IF(LEMON_HAVE_MIP)
 
   TARGET_LINK_LIBRARIES(mip_test ${MIP_TEST_LIBS})
   ADD_TEST(mip_test mip_test)
+  ADD_DEPENDENCIES(check mip_test)
 
   IF(WIN32 AND LEMON_HAVE_GLPK)
     GET_TARGET_PROPERTY(TARGET_LOC mip_test LOCATION)
@@ -129,6 +136,12 @@ FOREACH(TEST_NAME ${TESTS})
     ADD_EXECUTABLE(${TEST_NAME} EXCLUDE_FROM_ALL ${TEST_NAME}.cc)
   ENDIF()
   TARGET_LINK_LIBRARIES(${TEST_NAME} lemon)
-  ADD_TEST(${TEST_NAME} ${TEST_NAME})
+    IF(TEST_WITH_VALGRIND)
+      ADD_TEST(${TEST_NAME}
+        valgrind --error-exitcode=1 ${VALGRIND_FLAGS}
+        ${CMAKE_CURRENT_BINARY_DIR}/${TEST_NAME} )
+    ELSE()
+      ADD_TEST(${TEST_NAME} ${TEST_NAME})
+    ENDIF()
   ADD_DEPENDENCIES(check ${TEST_NAME})
 ENDFOREACH()
