@@ -12,29 +12,47 @@ ELSEIF(DEFINED ENV{LEMON_VERSION})
   SET(LEMON_VERSION $ENV{LEMON_VERSION} CACHE STRING "LEMON version string.")
 ELSE()
   EXECUTE_PROCESS(
-    COMMAND ${PYTHON_EXECUTABLE} ./scripts/chg-len.py
+    COMMAND
+    hg log -r. --template "{latesttag}"
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-    OUTPUT_VARIABLE HG_REVISION_PATH
+    OUTPUT_VARIABLE HG_REVISION_TAG
     ERROR_QUIET
     OUTPUT_STRIP_TRAILING_WHITESPACE
   )
   EXECUTE_PROCESS(
-    COMMAND hg id -i
+    COMMAND
+    hg log -r. --template "{latesttagdistance}"
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-    OUTPUT_VARIABLE HG_REVISION
+    OUTPUT_VARIABLE HG_REVISION_DIST
     ERROR_QUIET
     OUTPUT_STRIP_TRAILING_WHITESPACE
   )
-  IF(HG_REVISION STREQUAL "")
+  EXECUTE_PROCESS(
+    COMMAND
+    hg log -r. --template "{node|short}"
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    OUTPUT_VARIABLE HG_REVISION_ID
+    ERROR_QUIET
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+
+  IF(HG_REVISION_TAG STREQUAL "")
     SET(HG_REVISION_ID "hg-tip")
   ELSE()
-    IF(HG_REVISION_PATH STREQUAL "")
-      SET(HG_REVISION_ID ${HG_REVISION})
+    IF(HG_REVISION_TAG STREQUAL "null")
+      SET(HG_REVISION_TAG "trunk")
+    ELSEIF(HG_REVISION_TAG MATCHES "^r")
+      STRING(SUBSTRING ${HG_REVISION_TAG} 1 -1 HG_REVISION_TAG)
+    ENDIF()
+    IF(HG_REVISION_DIST STREQUAL "0")
+      SET(HG_REVISION ${HG_REVISION_TAG})
     ELSE()
-      SET(HG_REVISION_ID ${HG_REVISION_PATH}.${HG_REVISION})
+      SET(HG_REVISION
+	"${HG_REVISION_TAG}+${HG_REVISION_DIST}-${HG_REVISION_ID}")
     ENDIF()
   ENDIF()
-  SET(LEMON_VERSION ${HG_REVISION_ID} CACHE STRING "LEMON version string.")
+
+  SET(LEMON_VERSION ${HG_REVISION} CACHE STRING "LEMON version string.")
 ENDIF()
 
 SET(PROJECT_VERSION ${LEMON_VERSION})
@@ -51,7 +69,7 @@ IF(DEFINED ENV{LEMON_CXX_WARNING})
   SET(CXX_WARNING $ENV{LEMON_CXX_WARNING})
 ELSE()
   IF(CMAKE_COMPILER_IS_GNUCXX)
-    SET(CXX_WARNING "-Wall -W -Wunused -Wformat=2 -Wctor-dtor-privacy -Wnon-virtual-dtor -Wno-char-subscripts -Wwrite-strings -Wno-char-subscripts -Wreturn-type -Wcast-qual -Wcast-align -Wsign-promo -Woverloaded-virtual -ansi -fno-strict-aliasing -Wold-style-cast -Wno-unknown-pragmas")
+    SET(CXX_WARNING "-Wall -W -Wunused -Wformat=2 -Wctor-dtor-privacy -Wnon-virtual-dtor -Wno-char-subscripts -Wwrite-strings -Wno-char-subscripts -Wreturn-type -Wcast-qual -Wcast-align -Wsign-promo -Woverloaded-virtual -fno-strict-aliasing -Wold-style-cast -Wno-unknown-pragmas")
     SET(CMAKE_CXX_FLAGS_DEBUG CACHE STRING "-ggdb")
     SET(CMAKE_C_FLAGS_DEBUG CACHE STRING "-ggdb")
   ELSEIF(MSVC)
@@ -66,27 +84,45 @@ ELSE()
     #        (performance warning)
     # C4996: 'function': was declared deprecated
   ELSE()
-    SET(CXX_WARNING "-Wall -W")
+    SET(CXX_WARNING "-Wall")
   ENDIF()
 ENDIF()
 SET(LEMON_CXX_WARNING_FLAGS ${CXX_WARNING} CACHE STRING "LEMON warning flags.")
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LEMON_CXX_WARNING_FLAGS}")
 
-SET( CMAKE_CXX_FLAGS_MAINTAINER "-Werror -ggdb" CACHE STRING
+IF(MSVC)
+  SET( CMAKE_CXX_FLAGS_MAINTAINER "/WX ${CMAKE_CXX_FLAGS_DEBUG}" CACHE STRING
     "Flags used by the C++ compiler during maintainer builds."
-    FORCE )
-SET( CMAKE_C_FLAGS_MAINTAINER "-Werror" CACHE STRING
+    )
+  SET( CMAKE_C_FLAGS_MAINTAINER "/WX ${CMAKE_CXX_FLAGS_DEBUG}" CACHE STRING
     "Flags used by the C compiler during maintainer builds."
-    FORCE )
-SET( CMAKE_EXE_LINKER_FLAGS_MAINTAINER
+    )
+  SET( CMAKE_EXE_LINKER_FLAGS_MAINTAINER
+    "${CMAKE_EXE_LINKER_FLAGS_DEBUG}" CACHE STRING
+    "Flags used for linking binaries during maintainer builds."
+    )
+  SET( CMAKE_SHARED_LINKER_FLAGS_MAINTAINER
+    "${CMAKE_SHARED_LINKER_FLAGS_DEBUG}" CACHE STRING
+    "Flags used by the shared libraries linker during maintainer builds."
+    )
+ELSE()
+  SET( CMAKE_CXX_FLAGS_MAINTAINER "-Werror -ggdb -O0" CACHE STRING
+    "Flags used by the C++ compiler during maintainer builds."
+    )
+  SET( CMAKE_C_FLAGS_MAINTAINER "-Werror -O0" CACHE STRING
+    "Flags used by the C compiler during maintainer builds."
+    )
+  SET( CMAKE_EXE_LINKER_FLAGS_MAINTAINER
     "-Wl,--warn-unresolved-symbols,--warn-once" CACHE STRING
     "Flags used for linking binaries during maintainer builds."
-    FORCE )
-SET( CMAKE_SHARED_LINKER_FLAGS_MAINTAINER
+    )
+  SET( CMAKE_SHARED_LINKER_FLAGS_MAINTAINER
     "-Wl,--warn-unresolved-symbols,--warn-once" CACHE STRING
     "Flags used by the shared libraries linker during maintainer builds."
-    FORCE )
+    )
+ENDIF()
+
 MARK_AS_ADVANCED(
     CMAKE_CXX_FLAGS_MAINTAINER
     CMAKE_C_FLAGS_MAINTAINER
@@ -114,6 +150,28 @@ INCLUDE(CheckTypeSize)
 CHECK_TYPE_SIZE("long long" LONG_LONG)
 SET(LEMON_HAVE_LONG_LONG ${HAVE_LONG_LONG})
 
+INCLUDE(FindThreads)
+
+IF(NOT LEMON_THREADING)
+  IF(CMAKE_USE_PTHREADS_INIT)
+    SET(LEMON_THREADING "Pthread")
+  ELSEIF(CMAKE_USE_WIN32_THREADS_INIT)
+    SET(LEMON_THREADING "Win32")
+  ELSE()
+    SET(LEMON_THREADING "None")
+  ENDIF()
+ENDIF()
+
+SET( LEMON_THREADING "${LEMON_THREADING}" CACHE STRING
+  "Choose the threading library, options are: Pthread Win32 None."
+  FORCE )
+
+IF(LEMON_THREADING STREQUAL "Pthread")
+  SET(LEMON_USE_PTHREAD TRUE)
+ELSEIF(LEMON_THREADING STREQUAL "Win32")
+  SET(LEMON_USE_WIN32_THREADS TRUE)
+ENDIF()
+
 ENABLE_TESTING()
 
 IF(${CMAKE_BUILD_TYPE} STREQUAL "Maintainer")
@@ -124,6 +182,7 @@ ENDIF()
 
 ADD_SUBDIRECTORY(lemon)
 IF(${CMAKE_SOURCE_DIR} STREQUAL ${PROJECT_SOURCE_DIR})
+  ADD_SUBDIRECTORY(contrib)
   ADD_SUBDIRECTORY(demo)
   ADD_SUBDIRECTORY(tools)
   ADD_SUBDIRECTORY(doc)
@@ -147,6 +206,33 @@ ELSEIF(WIN32)
   )
 ENDIF()
 
+CONFIGURE_FILE(
+  ${PROJECT_SOURCE_DIR}/cmake/version.cmake.in
+  ${PROJECT_BINARY_DIR}/cmake/version.cmake
+  @ONLY
+)
+
+SET(ARCHIVE_BASE_NAME ${CMAKE_PROJECT_NAME})
+STRING(TOLOWER ${ARCHIVE_BASE_NAME} ARCHIVE_BASE_NAME)
+SET(ARCHIVE_NAME ${ARCHIVE_BASE_NAME}-${PROJECT_VERSION})
+ADD_CUSTOM_TARGET(dist
+  COMMAND cmake -E remove_directory ${ARCHIVE_NAME}
+  COMMAND hg archive ${ARCHIVE_NAME}
+  COMMAND cmake -E copy cmake/version.cmake ${ARCHIVE_NAME}/cmake/version.cmake
+  COMMAND tar -czf ${ARCHIVE_BASE_NAME}-nodoc-${PROJECT_VERSION}.tar.gz ${ARCHIVE_NAME}
+  COMMAND zip -r ${ARCHIVE_BASE_NAME}-nodoc-${PROJECT_VERSION}.zip ${ARCHIVE_NAME}
+  COMMAND cmake -E copy_directory doc/html ${ARCHIVE_NAME}/doc/html
+  COMMAND tar -czf ${ARCHIVE_NAME}.tar.gz ${ARCHIVE_NAME}
+  COMMAND zip -r ${ARCHIVE_NAME}.zip ${ARCHIVE_NAME}
+  COMMAND cmake -E copy_directory doc/html ${ARCHIVE_BASE_NAME}-doc-${PROJECT_VERSION}
+  COMMAND tar -czf ${ARCHIVE_BASE_NAME}-doc-${PROJECT_VERSION}.tar.gz ${ARCHIVE_BASE_NAME}-doc-${PROJECT_VERSION}
+  COMMAND zip -r ${ARCHIVE_BASE_NAME}-doc-${PROJECT_VERSION}.zip ${ARCHIVE_BASE_NAME}-doc-${PROJECT_VERSION}
+  COMMAND cmake -E remove_directory ${ARCHIVE_NAME}
+  COMMAND cmake -E remove_directory ${ARCHIVE_BASE_NAME}-doc-${PROJECT_VERSION}
+  DEPENDS html
+  WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
+
+# CPACK config (Basically for NSIS)
 IF(${CMAKE_SOURCE_DIR} STREQUAL ${PROJECT_SOURCE_DIR})
   SET(CPACK_PACKAGE_NAME ${PROJECT_NAME})
   SET(CPACK_PACKAGE_VENDOR "EGRES")

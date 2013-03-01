@@ -70,6 +70,11 @@ namespace lemon {
   /// \ref edmondskarp72theoretical. It is an efficient dual
   /// solution method.
   ///
+  /// This algorithm is typically slower than \ref CostScaling and
+  /// \ref NetworkSimplex, but in special cases, it can be more
+  /// efficient than them.
+  /// (For more information, see \ref min_cost_flow_algs "the module page".)
+  ///
   /// Most of the parameters of the problem (except for the digraph)
   /// can be given using separate functions, and the algorithm can be
   /// executed using the \ref run() function. If some parameters are not
@@ -86,10 +91,11 @@ namespace lemon {
   /// In most cases, this parameter should not be set directly,
   /// consider to use the named template parameters instead.
   ///
-  /// \warning Both number types must be signed and all input data must
-  /// be integer.
-  /// \warning This algorithm does not support negative costs for such
-  /// arcs that have infinite upper bound.
+  /// \warning Both \c V and \c C must be signed number types.
+  /// \warning Capacity bounds and supply values must be integer, but
+  /// arc costs can be arbitrary real numbers.
+  /// \warning This algorithm does not support negative costs for
+  /// arcs having infinite upper bound.
 #ifdef DOXYGEN
   template <typename GR, typename V, typename C, typename TR>
 #else
@@ -422,7 +428,7 @@ namespace lemon {
     /// calling \ref run(), the supply of each node will be set to zero.
     ///
     /// Using this function has the same effect as using \ref supplyMap()
-    /// with such a map in which \c k is assigned to \c s, \c -k is
+    /// with a map in which \c k is assigned to \c s, \c -k is
     /// assigned to \c t and all other nodes have zero supply value.
     ///
     /// \param s The source node.
@@ -675,7 +681,8 @@ namespace lemon {
       return _res_cap[_arc_idb[a]];
     }
 
-    /// \brief Return the flow map (the primal solution).
+    /// \brief Copy the flow values (the primal solution) into the
+    /// given map.
     ///
     /// This function copies the flow value on each arc into the given
     /// map. The \c Value type of the algorithm must be convertible to
@@ -699,7 +706,8 @@ namespace lemon {
       return _pi[_node_id[n]];
     }
 
-    /// \brief Return the potential map (the dual solution).
+    /// \brief Copy the potential values (the dual solution) into the
+    /// given map.
     ///
     /// This function copies the potential (dual value) of each node
     /// into the given map.

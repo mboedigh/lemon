@@ -40,6 +40,7 @@ namespace lemon {
   CplexEnv::CplexEnv() {
     int status;
     _cnt = new int;
+    (*_cnt) = 1;
     _env = CPXopenCPLEX(&status);
     if (_env == 0) {
       delete _cnt;
@@ -470,8 +471,6 @@ namespace lemon {
     CPXfreeprob(cplexEnv(),&_prob);
     int status;
     _prob = CPXcreateprob(cplexEnv(), &status, "Cplex problem");
-    rows.clear();
-    cols.clear();
   }
 
   void CplexBase::_messageLevel(MessageLevel level) {

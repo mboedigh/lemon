@@ -7,10 +7,16 @@ LINK_DIRECTORIES(
   ${PROJECT_BINARY_DIR}/lemon
 )
 
+SET(TEST_WITH_VALGRIND "NO" CACHE STRING
+  "Run the test with valgrind (YES/NO).")
+SET(VALGRIND_FLAGS "" CACHE STRING "Valgrind flags used by the tests.")
+
 SET(TESTS
   adaptors_test
+  arc_look_up_test
   bellman_ford_test
   bfs_test
+  bpgraph_test
   circulation_test
   connectivity_test
   counter_test
@@ -29,6 +35,8 @@ SET(TESTS
   hao_orlin_test
   heap_test
   kruskal_test
+  lgf_reader_writer_test
+  lgf_test
   maps_test
   matching_test
   max_cardinality_search_test
@@ -69,6 +77,7 @@ IF(LEMON_HAVE_LP)
 
   TARGET_LINK_LIBRARIES(lp_test ${LP_TEST_LIBS})
   ADD_TEST(lp_test lp_test)
+  ADD_DEPENDENCIES(check lp_test)
 
   IF(WIN32 AND LEMON_HAVE_GLPK)
     GET_TARGET_PROPERTY(TARGET_LOC lp_test LOCATION)
@@ -84,7 +93,7 @@ IF(LEMON_HAVE_LP)
     GET_TARGET_PROPERTY(TARGET_LOC lp_test LOCATION)
     GET_FILENAME_COMPONENT(TARGET_PATH ${TARGET_LOC} PATH)
     ADD_CUSTOM_COMMAND(TARGET lp_test POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy ${CPLEX_BIN_DIR}/cplex91.dll ${TARGET_PATH}
+      COMMAND ${CMAKE_COMMAND} -E copy ${CPLEX_BIN_DIR}/cplex.dll ${TARGET_PATH}
     )
   ENDIF()
 ENDIF()
@@ -110,6 +119,7 @@ IF(LEMON_HAVE_MIP)
 
   TARGET_LINK_LIBRARIES(mip_test ${MIP_TEST_LIBS})
   ADD_TEST(mip_test mip_test)
+  ADD_DEPENDENCIES(check mip_test)
 
   IF(WIN32 AND LEMON_HAVE_GLPK)
     GET_TARGET_PROPERTY(TARGET_LOC mip_test LOCATION)
@@ -125,7 +135,7 @@ IF(LEMON_HAVE_MIP)
     GET_TARGET_PROPERTY(TARGET_LOC mip_test LOCATION)
     GET_FILENAME_COMPONENT(TARGET_PATH ${TARGET_LOC} PATH)
     ADD_CUSTOM_COMMAND(TARGET mip_test POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy ${CPLEX_BIN_DIR}/cplex91.dll ${TARGET_PATH}
+      COMMAND ${CMAKE_COMMAND} -E copy ${CPLEX_BIN_DIR}/cplex.dll ${TARGET_PATH}
     )
   ENDIF()
 ENDIF()
@@ -137,6 +147,12 @@ FOREACH(TEST_NAME ${TESTS})
     ADD_EXECUTABLE(${TEST_NAME} EXCLUDE_FROM_ALL ${TEST_NAME}.cc)
   ENDIF()
   TARGET_LINK_LIBRARIES(${TEST_NAME} lemon)
-  ADD_TEST(${TEST_NAME} ${TEST_NAME})
+    IF(TEST_WITH_VALGRIND)
+      ADD_TEST(${TEST_NAME}
+        valgrind --error-exitcode=1 ${VALGRIND_FLAGS}
+        ${CMAKE_CURRENT_BINARY_DIR}/${TEST_NAME} )
+    ELSE()
+      ADD_TEST(${TEST_NAME} ${TEST_NAME})
+    ENDIF()
   ADD_DEPENDENCIES(check ${TEST_NAME})
 ENDFOREACH()

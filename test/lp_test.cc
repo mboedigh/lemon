@@ -41,10 +41,37 @@
 
 using namespace lemon;
 
+int countCols(LpBase & lp) {
+  int count=0;
+  for (LpBase::ColIt c(lp); c!=INVALID; ++c) ++count;
+  return count;
+}
+
+int countRows(LpBase & lp) {
+  int count=0;
+  for (LpBase::RowIt r(lp); r!=INVALID; ++r) ++count;
+  return count;
+}
+
+
 void lpTest(LpSolver& lp)
 {
 
   typedef LpSolver LP;
+
+  // Test LpBase::clear()
+  check(countRows(lp)==0, "Wrong number of rows");
+  check(countCols(lp)==0, "Wrong number of cols");
+  lp.addCol(); lp.addRow(); lp.addRow();
+  check(countRows(lp)==2, "Wrong number of rows");
+  check(countCols(lp)==1, "Wrong number of cols");
+  lp.clear();
+  check(countRows(lp)==0, "Wrong number of rows");
+  check(countCols(lp)==0, "Wrong number of cols");
+  lp.addCol(); lp.addCol(); lp.addCol(); lp.addRow();
+  check(countRows(lp)==1, "Wrong number of rows");
+  check(countCols(lp)==3, "Wrong number of cols");
+  lp.clear();
 
   std::vector<LP::Col> x(10);
   //  for(int i=0;i<10;i++) x.push_back(lp.addCol());
@@ -165,6 +192,14 @@ void lpTest(LpSolver& lp)
 
     c = ((2 >= e) >= 3);
     c = ((2 >= p1) >= 3);
+
+    { //Tests for #430
+      LP::Col v=lp.addCol();
+      LP::Constr c = v >= -3;
+      c = c <= 4;
+      LP::Constr c2;
+      c2 = -3 <= v <= 4;
+    }
 
     e[x[3]]=2;
     e[x[3]]=4;

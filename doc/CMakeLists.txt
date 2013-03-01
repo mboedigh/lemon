@@ -11,6 +11,21 @@ CONFIGURE_FILE(
   @ONLY
 )
 
+CONFIGURE_FILE(
+  ${PROJECT_SOURCE_DIR}/doc/mainpage.dox.in
+  ${PROJECT_BINARY_DIR}/doc/mainpage.dox
+  @ONLY
+)
+
+# Copy doc from source (if exists)
+IF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/html AND 
+    NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/html/index.html)
+  MESSAGE(STATUS "Copy doc from source tree")
+  EXECUTE_PROCESS(
+    COMMAND cmake -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/html ${CMAKE_CURRENT_BINARY_DIR}/html
+    )
+ENDIF()
+
 IF(DOXYGEN_EXECUTABLE AND PYTHONINTERP_FOUND AND GHOSTSCRIPT_EXECUTABLE)
   FILE(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/html/)
   SET(GHOSTSCRIPT_OPTIONS -dNOPAUSE -dBATCH -q -dEPSCrop -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sDEVICE=pngalpha)
