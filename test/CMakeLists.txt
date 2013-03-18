@@ -13,8 +13,10 @@ SET(VALGRIND_FLAGS "" CACHE STRING "Valgrind flags used by the tests.")
 
 SET(TESTS
   adaptors_test
+  arc_look_up_test
   bellman_ford_test
   bfs_test
+  bpgraph_test
   circulation_test
   connectivity_test
   counter_test
@@ -33,6 +35,7 @@ SET(TESTS
   hao_orlin_test
   heap_test
   kruskal_test
+  lgf_reader_writer_test
   lgf_test
   maps_test
   matching_test
@@ -49,6 +52,7 @@ SET(TESTS
   random_test
   suurballe_test
   time_measure_test
+  tsp_test
   unionfind_test
 )
 

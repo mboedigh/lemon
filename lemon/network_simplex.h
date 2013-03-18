@@ -41,14 +41,15 @@ namespace lemon {
   ///
   /// \ref NetworkSimplex implements the primal Network Simplex algorithm
   /// for finding a \ref min_cost_flow "minimum cost flow"
-  /// \ref amo93networkflows, \ref dantzig63linearprog,
-  /// \ref kellyoneill91netsimplex.
+  /// \cite amo93networkflows, \cite dantzig63linearprog,
+  /// \cite kellyoneill91netsimplex.
   /// This algorithm is a highly efficient specialized version of the
   /// linear programming simplex method directly for the minimum cost
   /// flow problem.
   ///
   /// In general, \ref NetworkSimplex and \ref CostScaling are the fastest
-  /// implementations available in LEMON for this problem.
+  /// implementations available in LEMON for solving this problem.
+  /// (For more information, see \ref min_cost_flow_algs "the module page".)
   /// Furthermore, this class supports both directions of the supply/demand
   /// inequality constraints. For more information, see \ref SupplyType.
   ///
@@ -1009,7 +1010,8 @@ namespace lemon {
       return _flow[_arc_id[a]];
     }
 
-    /// \brief Return the flow map (the primal solution).
+    /// \brief Copy the flow values (the primal solution) into the
+    /// given map.
     ///
     /// This function copies the flow value on each arc into the given
     /// map. The \c Value type of the algorithm must be convertible to
@@ -1033,7 +1035,8 @@ namespace lemon {
       return _pi[_node_id[n]];
     }
 
-    /// \brief Return the potential map (the dual solution).
+    /// \brief Copy the potential values (the dual solution) into the
+    /// given map.
     ///
     /// This function copies the potential (dual value) of each node
     /// into the given map.
@@ -1500,7 +1503,7 @@ namespace lemon {
             }
           }
         } else {
-          // Find the min. cost incomming arc for each demand node
+          // Find the min. cost incoming arc for each demand node
           for (int i = 0; i != int(demand_nodes.size()); ++i) {
             Node v = demand_nodes[i];
             Cost c, min_cost = std::numeric_limits<Cost>::max();

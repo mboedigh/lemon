@@ -98,7 +98,7 @@ namespace lemon {
   ///
   /// This class implements Karp's algorithm for finding a directed
   /// cycle of minimum mean cost in a digraph
-  /// \ref amo93networkflows, \ref dasdan98minmeancycle.
+  /// \cite karp78characterization, \cite dasdan98minmeancycle.
   /// It runs in time O(ne) and uses space O(n<sup>2</sup>+e).
   ///
   /// \tparam GR The type of the digraph the algorithm runs on.
@@ -270,8 +270,8 @@ namespace lemon {
     /// found cycle.
     ///
     /// If you don't call this function before calling \ref run() or
-    /// \ref findCycleMean(), it will allocate a local \ref Path "path"
-    /// structure. The destuctor deallocates this automatically
+    /// \ref findCycleMean(), a local \ref Path "path" structure
+    /// will be allocated. The destuctor deallocates this automatically
     /// allocated object, of course.
     ///
     /// \note The algorithm calls only the \ref lemon::Path::addFront()
