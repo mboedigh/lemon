@@ -20,8 +20,8 @@
 ///\file
 ///\brief The concept of undirected graphs.
 
-#ifndef LEMON_CONCEPTS_GRAPH_H
-#define LEMON_CONCEPTS_GRAPH_H
+#ifndef LEMON_CONCEPTS_BPGRAPH_H
+#define LEMON_CONCEPTS_BPGRAPH_H
 
 #include <lemon/concepts/graph_components.h>
 #include <lemon/concepts/maps.h>
@@ -33,54 +33,41 @@ namespace lemon {
 
     /// \ingroup graph_concepts
     ///
-    /// \brief Class describing the concept of undirected graphs.
+    /// \brief Class describing the concept of undirected bipartite graphs.
     ///
     /// This class describes the common interface of all undirected
-    /// graphs.
+    /// bipartite graphs.
     ///
     /// Like all concept classes, it only provides an interface
     /// without any sensible implementation. So any general algorithm for
-    /// undirected graphs should compile with this class, but it will not
-    /// run properly, of course.
-    /// An actual graph implementation like \ref ListGraph or
-    /// \ref SmartGraph may have additional functionality.
+    /// undirected bipartite graphs should compile with this class,
+    /// but it will not run properly, of course.
+    /// An actual graph implementation like \ref ListBpGraph or
+    /// \ref SmartBpGraph may have additional functionality.
     ///
-    /// The undirected graphs also fulfill the concept of \ref Digraph
-    /// "directed graphs", since each edge can also be regarded as two
-    /// oppositely directed arcs.
-    /// Undirected graphs provide an Edge type for the undirected edges and
-    /// an Arc type for the directed arcs. The Arc type is convertible to
-    /// Edge or inherited from it, i.e. the corresponding edge can be
-    /// obtained from an arc.
-    /// EdgeIt and EdgeMap classes can be used for the edges, while ArcIt
-    /// and ArcMap classes can be used for the arcs (just like in digraphs).
-    /// Both InArcIt and OutArcIt iterates on the same edges but with
-    /// opposite direction. IncEdgeIt also iterates on the same edges
-    /// as OutArcIt and InArcIt, but it is not convertible to Arc,
-    /// only to Edge.
+    /// The bipartite graphs also fulfill the concept of \ref Graph
+    /// "undirected graphs". Bipartite graphs provide a bipartition of
+    /// the node set, namely a red and blue set of the nodes. The
+    /// nodes can be iterated with the RedNodeIt and BlueNodeIt in the
+    /// two node sets. With RedNodeMap and BlueNodeMap values can be
+    /// assigned to the nodes in the two sets.
     ///
-    /// In LEMON, each undirected edge has an inherent orientation.
-    /// Thus it can defined if an arc is forward or backward oriented in
-    /// an undirected graph with respect to this default oriantation of
-    /// the represented edge.
-    /// With the direction() and direct() functions the direction
-    /// of an arc can be obtained and set, respectively.
+    /// The edges of the graph cannot connect two nodes of the same
+    /// set. The edges inherent orientation is from the red nodes to
+    /// the blue nodes.
     ///
-    /// Only nodes and edges can be added to or removed from an undirected
-    /// graph and the corresponding arcs are added or removed automatically.
-    ///
-    /// \sa Digraph
-    class Graph {
+    /// \sa Graph
+    class BpGraph {
     private:
-      /// Graphs are \e not copy constructible. Use GraphCopy instead.
-      Graph(const Graph&) {}
+      /// BpGraphs are \e not copy constructible. Use bpGraphCopy instead.
+      BpGraph(const BpGraph&) {}
       /// \brief Assignment of a graph to another one is \e not allowed.
-      /// Use GraphCopy instead.
-      void operator=(const Graph&) {}
+      /// Use bpGraphCopy instead.
+      void operator=(const BpGraph&) {}
 
     public:
       /// Default constructor.
-      Graph() {}
+      BpGraph() {}
 
       /// \brief Undirected graphs should be tagged with \c UndirectedTag.
       ///
@@ -137,14 +124,154 @@ namespace lemon {
 
       };
 
+      /// Class to represent red nodes.
+
+      /// This class represents the red nodes of the graph. It does
+      /// not supposed to be used directly, because the nodes can be
+      /// represented as Node instances. This class can be used as
+      /// template parameter for special map classes.
+      class RedNode : public Node {
+      public:
+        /// Default constructor
+
+        /// Default constructor.
+        /// \warning It sets the object to an undefined value.
+        RedNode() { }
+        /// Copy constructor.
+
+        /// Copy constructor.
+        ///
+        RedNode(const RedNode&) : Node() { }
+
+        /// %Invalid constructor \& conversion.
+
+        /// Initializes the object to be invalid.
+        /// \sa Invalid for more details.
+        RedNode(Invalid) { }
+
+      };
+
+      /// Class to represent blue nodes.
+
+      /// This class represents the blue nodes of the graph. It does
+      /// not supposed to be used directly, because the nodes can be
+      /// represented as Node instances. This class can be used as
+      /// template parameter for special map classes.
+      class BlueNode : public Node {
+      public:
+        /// Default constructor
+
+        /// Default constructor.
+        /// \warning It sets the object to an undefined value.
+        BlueNode() { }
+        /// Copy constructor.
+
+        /// Copy constructor.
+        ///
+        BlueNode(const BlueNode&) : Node() { }
+
+        /// %Invalid constructor \& conversion.
+
+        /// Initializes the object to be invalid.
+        /// \sa Invalid for more details.
+        BlueNode(Invalid) { }
+
+      };
+
+      /// Iterator class for the red nodes.
+
+      /// This iterator goes through each red node of the graph.
+      /// Its usage is quite simple, for example, you can count the number
+      /// of red nodes in a graph \c g of type \c %BpGraph like this:
+      ///\code
+      /// int count=0;
+      /// for (BpGraph::RedNodeIt n(g); n!=INVALID; ++n) ++count;
+      ///\endcode
+      class RedNodeIt : public RedNode {
+      public:
+        /// Default constructor
+
+        /// Default constructor.
+        /// \warning It sets the iterator to an undefined value.
+        RedNodeIt() { }
+        /// Copy constructor.
+
+        /// Copy constructor.
+        ///
+        RedNodeIt(const RedNodeIt& n) : RedNode(n) { }
+        /// %Invalid constructor \& conversion.
+
+        /// Initializes the iterator to be invalid.
+        /// \sa Invalid for more details.
+        RedNodeIt(Invalid) { }
+        /// Sets the iterator to the first red node.
+
+        /// Sets the iterator to the first red node of the given
+        /// digraph.
+        explicit RedNodeIt(const BpGraph&) { }
+        /// Sets the iterator to the given red node.
+
+        /// Sets the iterator to the given red node of the given
+        /// digraph.
+        RedNodeIt(const BpGraph&, const RedNode&) { }
+        /// Next node.
+
+        /// Assign the iterator to the next red node.
+        ///
+        RedNodeIt& operator++() { return *this; }
+      };
+
+      /// Iterator class for the blue nodes.
+
+      /// This iterator goes through each blue node of the graph.
+      /// Its usage is quite simple, for example, you can count the number
+      /// of blue nodes in a graph \c g of type \c %BpGraph like this:
+      ///\code
+      /// int count=0;
+      /// for (BpGraph::BlueNodeIt n(g); n!=INVALID; ++n) ++count;
+      ///\endcode
+      class BlueNodeIt : public BlueNode {
+      public:
+        /// Default constructor
+
+        /// Default constructor.
+        /// \warning It sets the iterator to an undefined value.
+        BlueNodeIt() { }
+        /// Copy constructor.
+
+        /// Copy constructor.
+        ///
+        BlueNodeIt(const BlueNodeIt& n) : BlueNode(n) { }
+        /// %Invalid constructor \& conversion.
+
+        /// Initializes the iterator to be invalid.
+        /// \sa Invalid for more details.
+        BlueNodeIt(Invalid) { }
+        /// Sets the iterator to the first blue node.
+
+        /// Sets the iterator to the first blue node of the given
+        /// digraph.
+        explicit BlueNodeIt(const BpGraph&) { }
+        /// Sets the iterator to the given blue node.
+
+        /// Sets the iterator to the given blue node of the given
+        /// digraph.
+        BlueNodeIt(const BpGraph&, const BlueNode&) { }
+        /// Next node.
+
+        /// Assign the iterator to the next blue node.
+        ///
+        BlueNodeIt& operator++() { return *this; }
+      };
+
       /// Iterator class for the nodes.
 
       /// This iterator goes through each node of the graph.
       /// Its usage is quite simple, for example, you can count the number
-      /// of nodes in a graph \c g of type \c %Graph like this:
+      /// of nodes in a graph \c g of type \c %BpGraph like this:
       ///\code
       /// int count=0;
-      /// for (Graph::NodeIt n(g); n!=INVALID; ++n) ++count;
+      /// for (BpGraph::NodeIt n(g); n!=INVALID; ++n) ++count;
       ///\endcode
       class NodeIt : public Node {
       public:
@@ -167,12 +294,12 @@ namespace lemon {
 
         /// Sets the iterator to the first node of the given digraph.
         ///
-        explicit NodeIt(const Graph&) { }
+        explicit NodeIt(const BpGraph&) { }
         /// Sets the iterator to the given node.
 
         /// Sets the iterator to the given node of the given digraph.
         ///
-        NodeIt(const Graph&, const Node&) { }
+        NodeIt(const BpGraph&, const Node&) { }
         /// Next node.
 
         /// Assign the iterator to the next node.
@@ -229,10 +356,10 @@ namespace lemon {
 
       /// This iterator goes through each edge of the graph.
       /// Its usage is quite simple, for example, you can count the number
-      /// of edges in a graph \c g of type \c %Graph as follows:
+      /// of edges in a graph \c g of type \c %BpGraph as follows:
       ///\code
       /// int count=0;
-      /// for(Graph::EdgeIt e(g); e!=INVALID; ++e) ++count;
+      /// for(BpGraph::EdgeIt e(g); e!=INVALID; ++e) ++count;
       ///\endcode
       class EdgeIt : public Edge {
       public:
@@ -255,12 +382,12 @@ namespace lemon {
 
         /// Sets the iterator to the first edge of the given graph.
         ///
-        explicit EdgeIt(const Graph&) { }
+        explicit EdgeIt(const BpGraph&) { }
         /// Sets the iterator to the given edge.
 
         /// Sets the iterator to the given edge of the given graph.
         ///
-        EdgeIt(const Graph&, const Edge&) { }
+        EdgeIt(const BpGraph&, const Edge&) { }
         /// Next edge
 
         /// Assign the iterator to the next edge.
@@ -274,11 +401,11 @@ namespace lemon {
       /// of a certain node of a graph.
       /// Its usage is quite simple, for example, you can compute the
       /// degree (i.e. the number of incident edges) of a node \c n
-      /// in a graph \c g of type \c %Graph as follows.
+      /// in a graph \c g of type \c %BpGraph as follows.
       ///
       ///\code
       /// int count=0;
-      /// for(Graph::IncEdgeIt e(g, n); e!=INVALID; ++e) ++count;
+      /// for(BpGraph::IncEdgeIt e(g, n); e!=INVALID; ++e) ++count;
       ///\endcode
       ///
       /// \warning Loop edges will be iterated twice.
@@ -303,12 +430,12 @@ namespace lemon {
 
         /// Sets the iterator to the first incident edge of the given node.
         ///
-        IncEdgeIt(const Graph&, const Node&) { }
+        IncEdgeIt(const BpGraph&, const Node&) { }
         /// Sets the iterator to the given edge.
 
         /// Sets the iterator to the given edge of the given graph.
         ///
-        IncEdgeIt(const Graph&, const Edge&) { }
+        IncEdgeIt(const BpGraph&, const Edge&) { }
         /// Next incident edge
 
         /// Assign the iterator to the next incident edge
@@ -370,10 +497,10 @@ namespace lemon {
 
       /// This iterator goes through each directed arc of the graph.
       /// Its usage is quite simple, for example, you can count the number
-      /// of arcs in a graph \c g of type \c %Graph as follows:
+      /// of arcs in a graph \c g of type \c %BpGraph as follows:
       ///\code
       /// int count=0;
-      /// for(Graph::ArcIt a(g); a!=INVALID; ++a) ++count;
+      /// for(BpGraph::ArcIt a(g); a!=INVALID; ++a) ++count;
       ///\endcode
       class ArcIt : public Arc {
       public:
@@ -396,12 +523,12 @@ namespace lemon {
 
         /// Sets the iterator to the first arc of the given graph.
         ///
-        explicit ArcIt(const Graph &g) { ignore_unused_variable_warning(g); }
+        explicit ArcIt(const BpGraph &g) { ignore_unused_variable_warning(g); }
         /// Sets the iterator to the given arc.
 
         /// Sets the iterator to the given arc of the given graph.
         ///
-        ArcIt(const Graph&, const Arc&) { }
+        ArcIt(const BpGraph&, const Arc&) { }
         /// Next arc
 
         /// Assign the iterator to the next arc.
@@ -415,7 +542,7 @@ namespace lemon {
       /// certain node of a graph.
       /// Its usage is quite simple, for example, you can count the number
       /// of outgoing arcs of a node \c n
-      /// in a graph \c g of type \c %Graph as follows.
+      /// in a graph \c g of type \c %BpGraph as follows.
       ///\code
       /// int count=0;
       /// for (Digraph::OutArcIt a(g, n); a!=INVALID; ++a) ++count;
@@ -441,7 +568,7 @@ namespace lemon {
 
         /// Sets the iterator to the first outgoing arc of the given node.
         ///
-        OutArcIt(const Graph& n, const Node& g) {
+        OutArcIt(const BpGraph& n, const Node& g) {
           ignore_unused_variable_warning(n);
           ignore_unused_variable_warning(g);
         }
@@ -449,7 +576,7 @@ namespace lemon {
 
         /// Sets the iterator to the given arc of the given graph.
         ///
-        OutArcIt(const Graph&, const Arc&) { }
+        OutArcIt(const BpGraph&, const Arc&) { }
         /// Next outgoing arc
 
         /// Assign the iterator to the next
@@ -463,7 +590,7 @@ namespace lemon {
       /// certain node of a graph.
       /// Its usage is quite simple, for example, you can count the number
       /// of incoming arcs of a node \c n
-      /// in a graph \c g of type \c %Graph as follows.
+      /// in a graph \c g of type \c %BpGraph as follows.
       ///\code
       /// int count=0;
       /// for (Digraph::InArcIt a(g, n); a!=INVALID; ++a) ++count;
@@ -489,7 +616,7 @@ namespace lemon {
 
         /// Sets the iterator to the first incoming arc of the given node.
         ///
-        InArcIt(const Graph& g, const Node& n) {
+        InArcIt(const BpGraph& g, const Node& n) {
           ignore_unused_variable_warning(n);
           ignore_unused_variable_warning(g);
         }
@@ -497,7 +624,7 @@ namespace lemon {
 
         /// Sets the iterator to the given arc of the given graph.
         ///
-        InArcIt(const Graph&, const Arc&) { }
+        InArcIt(const BpGraph&, const Arc&) { }
         /// Next incoming arc
 
         /// Assign the iterator to the next
@@ -515,9 +642,9 @@ namespace lemon {
       public:
 
         /// Constructor
-        explicit NodeMap(const Graph&) { }
+        explicit NodeMap(const BpGraph&) { }
         /// Constructor with given initial value
-        NodeMap(const Graph&, T) { }
+        NodeMap(const BpGraph&, T) { }
 
       private:
         ///Copy constructor
@@ -526,6 +653,58 @@ namespace lemon {
         ///Assignment operator
         template <typename CMap>
         NodeMap& operator=(const CMap&) {
+          checkConcept<ReadMap<Node, T>, CMap>();
+          return *this;
+        }
+      };
+
+      /// \brief Standard graph map type for the red nodes.
+      ///
+      /// Standard graph map type for the red nodes.
+      /// It conforms to the ReferenceMap concept.
+      template<class T>
+      class RedNodeMap : public ReferenceMap<Node, T, T&, const T&>
+      {
+      public:
+
+        /// Constructor
+        explicit RedNodeMap(const BpGraph&) { }
+        /// Constructor with given initial value
+        RedNodeMap(const BpGraph&, T) { }
+
+      private:
+        ///Copy constructor
+        RedNodeMap(const RedNodeMap& nm) :
+          ReferenceMap<Node, T, T&, const T&>(nm) { }
+        ///Assignment operator
+        template <typename CMap>
+        RedNodeMap& operator=(const CMap&) {
+          checkConcept<ReadMap<Node, T>, CMap>();
+          return *this;
+        }
+      };
+
+      /// \brief Standard graph map type for the blue nodes.
+      ///
+      /// Standard graph map type for the blue nodes.
+      /// It conforms to the ReferenceMap concept.
+      template<class T>
+      class BlueNodeMap : public ReferenceMap<Node, T, T&, const T&>
+      {
+      public:
+
+        /// Constructor
+        explicit BlueNodeMap(const BpGraph&) { }
+        /// Constructor with given initial value
+        BlueNodeMap(const BpGraph&, T) { }
+
+      private:
+        ///Copy constructor
+        BlueNodeMap(const BlueNodeMap& nm) :
+          ReferenceMap<Node, T, T&, const T&>(nm) { }
+        ///Assignment operator
+        template <typename CMap>
+        BlueNodeMap& operator=(const CMap&) {
           checkConcept<ReadMap<Node, T>, CMap>();
           return *this;
         }
@@ -541,9 +720,9 @@ namespace lemon {
       public:
 
         /// Constructor
-        explicit ArcMap(const Graph&) { }
+        explicit ArcMap(const BpGraph&) { }
         /// Constructor with given initial value
-        ArcMap(const Graph&, T) { }
+        ArcMap(const BpGraph&, T) { }
 
       private:
         ///Copy constructor
@@ -567,9 +746,9 @@ namespace lemon {
       public:
 
         /// Constructor
-        explicit EdgeMap(const Graph&) { }
+        explicit EdgeMap(const BpGraph&) { }
         /// Constructor with given initial value
-        EdgeMap(const Graph&, T) { }
+        EdgeMap(const BpGraph&, T) { }
 
       private:
         ///Copy constructor
@@ -583,30 +762,62 @@ namespace lemon {
         }
       };
 
+      /// \brief Gives back %true for red nodes.
+      ///
+      /// Gives back %true for red nodes.
+      bool red(const Node&) const { return true; }
+
+      /// \brief Gives back %true for blue nodes.
+      ///
+      /// Gives back %true for blue nodes.
+      bool blue(const Node&) const { return true; }
+
+      /// \brief Converts the node to red node object.
+      ///
+      /// This function converts unsafely the node to red node
+      /// object. It should be called only if the node is from the red
+      /// partition or INVALID.
+      RedNode asRedNodeUnsafe(const Node&) const { return RedNode(); }
+
+      /// \brief Converts the node to blue node object.
+      ///
+      /// This function converts unsafely the node to blue node
+      /// object. It should be called only if the node is from the red
+      /// partition or INVALID.
+      BlueNode asBlueNodeUnsafe(const Node&) const { return BlueNode(); }
+
+      /// \brief Converts the node to red node object.
+      ///
+      /// This function converts safely the node to red node
+      /// object. If the node is not from the red partition, then it
+      /// returns INVALID.
+      RedNode asRedNode(const Node&) const { return RedNode(); }
+
+      /// \brief Converts the node to blue node object.
+      ///
+      /// This function converts unsafely the node to blue node
+      /// object. If the node is not from the blue partition, then it
+      /// returns INVALID.
+      BlueNode asBlueNode(const Node&) const { return BlueNode(); }
+
+      /// \brief Gives back the red end node of the edge.
+      /// 
+      /// Gives back the red end node of the edge.
+      RedNode redNode(const Edge&) const { return RedNode(); }
+
+      /// \brief Gives back the blue end node of the edge.
+      /// 
+      /// Gives back the blue end node of the edge.
+      BlueNode blueNode(const Edge&) const { return BlueNode(); }
+
       /// \brief The first node of the edge.
       ///
-      /// Returns the first node of the given edge.
-      ///
-      /// Edges don't have source and target nodes, however, methods
-      /// u() and v() are used to query the two end-nodes of an edge.
-      /// The orientation of an edge that arises this way is called
-      /// the inherent direction, it is used to define the default
-      /// direction for the corresponding arcs.
-      /// \sa v()
-      /// \sa direction()
+      /// It is a synonim for the \c redNode().
       Node u(Edge) const { return INVALID; }
 
       /// \brief The second node of the edge.
       ///
-      /// Returns the second node of the given edge.
-      ///
-      /// Edges don't have source and target nodes, however, methods
-      /// u() and v() are used to query the two end-nodes of an edge.
-      /// The orientation of an edge that arises this way is called
-      /// the inherent direction, it is used to define the default
-      /// direction for the corresponding arcs.
-      /// \sa u()
-      /// \sa direction()
+      /// It is a synonim for the \c blueNode().
       Node v(Edge) const { return INVALID; }
 
       /// \brief The source node of the arc.
@@ -623,6 +834,16 @@ namespace lemon {
       ///
       /// Returns the ID of the given node.
       int id(Node) const { return -1; }
+
+      /// \brief The red ID of the node.
+      ///
+      /// Returns the red ID of the given node.
+      int id(RedNode) const { return -1; }
+
+      /// \brief The blue ID of the node.
+      ///
+      /// Returns the blue ID of the given node.
+      int id(BlueNode) const { return -1; }
 
       /// \brief The ID of the edge.
       ///
@@ -657,6 +878,16 @@ namespace lemon {
       /// Returns an upper bound on the node IDs.
       int maxNodeId() const { return -1; }
 
+      /// \brief An upper bound on the red IDs.
+      ///
+      /// Returns an upper bound on the red IDs.
+      int maxRedId() const { return -1; }
+
+      /// \brief An upper bound on the blue IDs.
+      ///
+      /// Returns an upper bound on the blue IDs.
+      int maxBlueId() const { return -1; }
+
       /// \brief An upper bound on the edge IDs.
       ///
       /// Returns an upper bound on the edge IDs.
@@ -669,16 +900,15 @@ namespace lemon {
 
       /// \brief The direction of the arc.
       ///
-      /// Returns \c true if the direction of the given arc is the same as
-      /// the inherent orientation of the represented edge.
+      /// Returns \c true if the given arc goes from a red node to a blue node.
       bool direction(Arc) const { return true; }
 
       /// \brief Direct the edge.
       ///
       /// Direct the given edge. The returned arc
       /// represents the given edge and its direction comes
-      /// from the bool parameter. If it is \c true, then the direction
-      /// of the arc is the same as the inherent orientation of the edge.
+      /// from the bool parameter. If it is \c true, then the source of the node
+      /// will be a red node.
       Arc direct(Edge, bool) const {
         return INVALID;
       }
@@ -704,6 +934,12 @@ namespace lemon {
       void first(Node&) const {}
       void next(Node&) const {}
 
+      void firstRed(RedNode&) const {}
+      void nextRed(RedNode&) const {}
+
+      void firstBlue(BlueNode&) const {}
+      void nextBlue(BlueNode&) const {}
+
       void first(Edge&) const {}
       void next(Edge&) const {}
 
@@ -728,6 +964,10 @@ namespace lemon {
 
       // Dummy parameter.
       int maxId(Node) const { return -1; }
+      // Dummy parameter.
+      int maxId(RedNode) const { return -1; }
+      // Dummy parameter.
+      int maxId(BlueNode) const { return -1; }
       // Dummy parameter.
       int maxId(Edge) const { return -1; }
       // Dummy parameter.
@@ -767,13 +1007,13 @@ namespace lemon {
       /// (i.e. the source node of the corresponding arc).
       Node runningNode(InArcIt) const { return INVALID; }
 
-      template <typename _Graph>
+      template <typename _BpGraph>
       struct Constraints {
         void constraints() {
-          checkConcept<BaseGraphComponent, _Graph>();
-          checkConcept<IterableGraphComponent<>, _Graph>();
-          checkConcept<IDableGraphComponent<>, _Graph>();
-          checkConcept<MappableGraphComponent<>, _Graph>();
+          checkConcept<BaseBpGraphComponent, _BpGraph>();
+          checkConcept<IterableBpGraphComponent<>, _BpGraph>();
+          checkConcept<IDableBpGraphComponent<>, _BpGraph>();
+          checkConcept<MappableBpGraphComponent<>, _BpGraph>();
         }
       };
 

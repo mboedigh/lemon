@@ -41,8 +41,8 @@ namespace lemon {
   ///
   /// \ref NetworkSimplex implements the primal Network Simplex algorithm
   /// for finding a \ref min_cost_flow "minimum cost flow"
-  /// \ref amo93networkflows, \ref dantzig63linearprog,
-  /// \ref kellyoneill91netsimplex.
+  /// \cite amo93networkflows, \cite dantzig63linearprog,
+  /// \cite kellyoneill91netsimplex.
   /// This algorithm is a highly efficient specialized version of the
   /// linear programming simplex method directly for the minimum cost
   /// flow problem.
@@ -1503,7 +1503,7 @@ namespace lemon {
             }
           }
         } else {
-          // Find the min. cost incomming arc for each demand node
+          // Find the min. cost incoming arc for each demand node
           for (int i = 0; i != int(demand_nodes.size()); ++i) {
             Node v = demand_nodes[i];
             Cost c, min_cost = std::numeric_limits<Cost>::max();
