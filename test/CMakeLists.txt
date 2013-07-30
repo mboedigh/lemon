@@ -41,13 +41,13 @@ SET(TESTS
   matching_test
   max_cardinality_search_test
   max_clique_test
+  max_flow_test
   min_cost_arborescence_test
   min_cost_flow_test
   min_mean_cycle_test
   nagamochi_ibaraki_test
   path_test
   planarity_test
-  preflow_test
   radix_sort_test
   random_test
   suurballe_test
@@ -69,7 +69,7 @@ IF(LEMON_HAVE_LP)
     SET(LP_TEST_LIBS ${LP_TEST_LIBS} ${GLPK_LIBRARIES})
   ENDIF()
   IF(LEMON_HAVE_CPLEX)
-    SET(LP_TEST_LIBS ${LP_TEST_LIBS} ${CPLEX_LIBRARIES})
+    SET(LP_TEST_LIBS ${LP_TEST_LIBS} ${ILOG_LIBRARIES})
   ENDIF()
   IF(LEMON_HAVE_CLP)
     SET(LP_TEST_LIBS ${LP_TEST_LIBS} ${COIN_CLP_LIBRARIES})
@@ -93,7 +93,7 @@ IF(LEMON_HAVE_LP)
     GET_TARGET_PROPERTY(TARGET_LOC lp_test LOCATION)
     GET_FILENAME_COMPONENT(TARGET_PATH ${TARGET_LOC} PATH)
     ADD_CUSTOM_COMMAND(TARGET lp_test POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy ${CPLEX_BIN_DIR}/cplex.dll ${TARGET_PATH}
+      COMMAND ${CMAKE_COMMAND} -E copy ${ILOG_CPLEX_DLL} ${TARGET_PATH}
     )
   ENDIF()
 ENDIF()
@@ -111,7 +111,7 @@ IF(LEMON_HAVE_MIP)
     SET(MIP_TEST_LIBS ${MIP_TEST_LIBS} ${GLPK_LIBRARIES})
   ENDIF()
   IF(LEMON_HAVE_CPLEX)
-    SET(MIP_TEST_LIBS ${MIP_TEST_LIBS} ${CPLEX_LIBRARIES})
+    SET(MIP_TEST_LIBS ${MIP_TEST_LIBS} ${ILOG_LIBRARIES})
   ENDIF()
   IF(LEMON_HAVE_CBC)
     SET(MIP_TEST_LIBS ${MIP_TEST_LIBS} ${COIN_CBC_LIBRARIES})
@@ -135,7 +135,7 @@ IF(LEMON_HAVE_MIP)
     GET_TARGET_PROPERTY(TARGET_LOC mip_test LOCATION)
     GET_FILENAME_COMPONENT(TARGET_PATH ${TARGET_LOC} PATH)
     ADD_CUSTOM_COMMAND(TARGET mip_test POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy ${CPLEX_BIN_DIR}/cplex.dll ${TARGET_PATH}
+      COMMAND ${CMAKE_COMMAND} -E copy ${ILOG_CPLEX_DLL} ${TARGET_PATH}
     )
   ENDIF()
 ENDIF()

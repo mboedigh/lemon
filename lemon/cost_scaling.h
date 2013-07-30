@@ -91,11 +91,13 @@ namespace lemon {
   ///
   /// \ref CostScaling implements a cost scaling algorithm that performs
   /// push/augment and relabel operations for finding a \ref min_cost_flow
-  /// "minimum cost flow" \ref amo93networkflows, \ref goldberg90approximation,
-  /// \ref goldberg97efficient, \ref bunnagel98efficient.
+  /// "minimum cost flow" \cite amo93networkflows, \cite goldberg90approximation,
+  /// \cite goldberg97efficient, \cite bunnagel98efficient.
   /// It is a highly efficient primal-dual solution method, which
   /// can be viewed as the generalization of the \ref Preflow
   /// "preflow push-relabel" algorithm for the maximum flow problem.
+  /// It is a polynomial algorithm, its running time complexity is
+  /// \f$O(n^2e\log(nK))\f$, where <i>K</i> denotes the maximum arc cost.
   ///
   /// In general, \ref NetworkSimplex and \ref CostScaling are the fastest
   /// implementations available in LEMON for solving this problem.
@@ -1282,7 +1284,7 @@ namespace lemon {
           int u = _buckets[r];
           _buckets[r] = _bucket_next[u];
 
-          // Search the incomming arcs of u
+          // Search the incoming arcs of u
           LargeCost pi_u = _pi[u];
           int last_out = _first_out[u+1];
           for (int a = _first_out[u]; a != last_out; ++a) {
