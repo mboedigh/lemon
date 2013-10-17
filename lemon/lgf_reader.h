@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2011
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -1230,9 +1230,10 @@ namespace lemon {
 
   /// \ingroup lemon_io
   ///
-  /// \brief Return a \ref DigraphReader class
+  /// \brief Return a \ref lemon::DigraphReader "DigraphReader" class
   ///
-  /// This function just returns a \ref DigraphReader class.
+  /// This function just returns a \ref lemon::DigraphReader
+  /// "DigraphReader" class.
   ///
   /// With this function a digraph can be read from an
   /// \ref lgf-format "LGF" file or input stream with several maps and
@@ -1252,9 +1253,10 @@ namespace lemon {
   ///  run();
   ///\endcode
   ///
-  /// For a complete documentation, please see the \ref DigraphReader
+  /// For a complete documentation, please see the
+  /// \ref lemon::DigraphReader "DigraphReader"
   /// class documentation.
-  /// \warning Don't forget to put the \ref DigraphReader::run() "run()"
+  /// \warning Don't forget to put the \ref lemon::DigraphReader::run() "run()"
   /// to the end of the parameter list.
   /// \relates DigraphReader
   /// \sa digraphReader(TDGR& digraph, const std::string& fn)
@@ -2108,9 +2110,9 @@ namespace lemon {
 
   /// \ingroup lemon_io
   ///
-  /// \brief Return a \ref GraphReader class
+  /// \brief Return a \ref lemon::GraphReader "GraphReader" class
   ///
-  /// This function just returns a \ref GraphReader class.
+  /// This function just returns a \ref lemon::GraphReader "GraphReader" class.
   ///
   /// With this function a graph can be read from an
   /// \ref lgf-format "LGF" file or input stream with several maps and
@@ -2126,9 +2128,10 @@ namespace lemon {
   ///  run();
   ///\endcode
   ///
-  /// For a complete documentation, please see the \ref GraphReader
+  /// For a complete documentation, please see the
+  /// \ref lemon::GraphReader "GraphReader"
   /// class documentation.
-  /// \warning Don't forget to put the \ref GraphReader::run() "run()"
+  /// \warning Don't forget to put the \ref lemon::GraphReader::run() "run()"
   /// to the end of the parameter list.
   /// \relates GraphReader
   /// \sa graphReader(TGR& graph, const std::string& fn)
@@ -2635,7 +2638,7 @@ namespace lemon {
       for (RedNodeIt n(_graph); n != INVALID; ++n) {
         _red_node_index.insert(std::make_pair(converter(map[n]), n));
       }
-      for (BlueNodeIt n(_graph); n != INVALID; ++n) {      
+      for (BlueNodeIt n(_graph); n != INVALID; ++n) {
         _blue_node_index.insert(std::make_pair(converter(map[n]), n));
       }
       return *this;
@@ -3174,9 +3177,10 @@ namespace lemon {
 
   /// \ingroup lemon_io
   ///
-  /// \brief Return a \ref BpGraphReader class
+  /// \brief Return a \ref lemon::BpGraphReader "BpGraphReader" class
   ///
-  /// This function just returns a \ref BpGraphReader class.
+  /// This function just returns a \ref lemon::BpGraphReader
+  /// "BpGraphReader" class.
   ///
   /// With this function a graph can be read from an
   /// \ref lgf-format "LGF" file or input stream with several maps and
@@ -3192,9 +3196,10 @@ namespace lemon {
   ///  run();
   ///\endcode
   ///
-  /// For a complete documentation, please see the \ref BpGraphReader
+  /// For a complete documentation, please see the
+  /// \ref lemon::BpGraphReader "BpGraphReader"
   /// class documentation.
-  /// \warning Don't forget to put the \ref BpGraphReader::run() "run()"
+  /// \warning Don't forget to put the \ref lemon::BpGraphReader::run() "run()"
   /// to the end of the parameter list.
   /// \relates BpGraphReader
   /// \sa bpGraphReader(TBGR& graph, const std::string& fn)

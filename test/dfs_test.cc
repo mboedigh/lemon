@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2010
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -67,7 +67,7 @@ void checkDfsCompile()
   Arc e;
   int l, i;
   bool b;
-  ignore_unused_variable_warning(l,i,b);
+  ::lemon::ignore_unused_variable_warning(l,i,b);
 
   DType::DistMap d(G);
   DType::PredMap p(G);
@@ -153,7 +153,7 @@ void checkDfsFunctionCompile()
 
   Digraph g;
   bool b;
-  ignore_unused_variable_warning(b);
+  ::lemon::ignore_unused_variable_warning(b);
 
   dfs(g).run(Node());
   b=dfs(g).run(Node(),Node());
@@ -223,7 +223,7 @@ void checkDfs() {
   Dfs<Digraph> dfs(G);
   check(dfs.run(s1,t1) && dfs.reached(t1),"Node 3 is reachable from Node 6.");
   }
-  
+
   {
     NullMap<Node,Arc> myPredMap;
     dfs(G).predMap(myPredMap).run(s);

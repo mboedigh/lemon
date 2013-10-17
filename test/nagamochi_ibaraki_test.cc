@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2010
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -65,7 +65,7 @@ void checkNagamochiIbarakiCompile()
   CutMap cut;
   Value v;
   bool b;
-  ignore_unused_variable_warning(v,b);
+  ::lemon::ignore_unused_variable_warning(v,b);
 
   NagamochiIbaraki<Graph, CapMap> ni_test(g, cap);
   const NagamochiIbaraki<Graph, CapMap>& const_ni_test = ni_test;

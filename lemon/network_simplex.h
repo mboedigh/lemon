@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2010
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -41,8 +41,8 @@ namespace lemon {
   ///
   /// \ref NetworkSimplex implements the primal Network Simplex algorithm
   /// for finding a \ref min_cost_flow "minimum cost flow"
-  /// \ref amo93networkflows, \ref dantzig63linearprog,
-  /// \ref kellyoneill91netsimplex.
+  /// \cite amo93networkflows, \cite dantzig63linearprog,
+  /// \cite kellyoneill91netsimplex.
   /// This algorithm is a highly efficient specialized version of the
   /// linear programming simplex method directly for the minimum cost
   /// flow problem.
@@ -973,7 +973,7 @@ namespace lemon {
     /// \brief Return the total cost of the found flow.
     ///
     /// This function returns the total cost of the found flow.
-    /// Its complexity is O(e).
+    /// Its complexity is O(m).
     ///
     /// \note The return type of the function can be specified as a
     /// template parameter. For example,
@@ -1234,7 +1234,7 @@ namespace lemon {
 
       return true;
     }
-    
+
     // Check if the upper bound is greater than or equal to the lower bound
     // on each arc.
     bool checkBoundMaps() {
@@ -1516,7 +1516,7 @@ namespace lemon {
             }
           }
         } else {
-          // Find the min. cost incomming arc for each demand node
+          // Find the min. cost incoming arc for each demand node
           for (int i = 0; i != int(demand_nodes.size()); ++i) {
             Node v = demand_nodes[i];
             Cost c, min_cost = std::numeric_limits<Cost>::max();

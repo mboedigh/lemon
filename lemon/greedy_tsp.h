@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2010
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -67,9 +67,9 @@ namespace lemon {
       const CostMap &_cost;
       Cost _sum;
       std::vector<Node> _path;
-      
+
     private:
-    
+
       // Functor class to compare edges by their costs
       class EdgeComp {
       private:
@@ -228,7 +228,7 @@ namespace lemon {
       /// \brief Gives back the found tour as a path.
       ///
       /// This function copies the found tour as a list of arcs/edges into
-      /// the given \ref concept::Path "path structure".
+      /// the given \ref lemon::concepts::Path "path structure".
       ///
       /// \pre run() must be called before using this function.
       template <typename Path>

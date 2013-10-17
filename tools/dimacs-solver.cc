@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2010
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -127,7 +127,8 @@ void solve_min(ArgParser &ap, std::istream &is, std::ostream &,
   typename MCF::ProblemType res = ns.run();
   if (report) {
     std::cerr << "Run NetworkSimplex: " << ti << "\n\n";
-    std::cerr << "Feasible flow: " << (res == MCF::OPTIMAL ? "found" : "not found") << '\n';
+    std::cerr << "Feasible flow: " << (res == MCF::OPTIMAL ? "found" :
+                                       "not found") << '\n';
     if (res) std::cerr << "Min flow cost: "
                        << ns.template totalCost<LargeValue>() << '\n';
   }

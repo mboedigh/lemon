@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2010
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -91,11 +91,14 @@ namespace lemon {
   ///
   /// \ref CostScaling implements a cost scaling algorithm that performs
   /// push/augment and relabel operations for finding a \ref min_cost_flow
-  /// "minimum cost flow" \ref amo93networkflows, \ref goldberg90approximation,
-  /// \ref goldberg97efficient, \ref bunnagel98efficient.
+  /// "minimum cost flow" \cite amo93networkflows,
+  /// \cite goldberg90approximation,
+  /// \cite goldberg97efficient, \cite bunnagel98efficient.
   /// It is a highly efficient primal-dual solution method, which
   /// can be viewed as the generalization of the \ref Preflow
   /// "preflow push-relabel" algorithm for the maximum flow problem.
+  /// It is a polynomial algorithm, its running time complexity is
+  /// \f$O(n^2m\log(nK))\f$, where <i>K</i> denotes the maximum arc cost.
   ///
   /// In general, \ref NetworkSimplex and \ref CostScaling are the fastest
   /// implementations available in LEMON for solving this problem.
@@ -150,7 +153,8 @@ namespace lemon {
     /// otherwise it is \c double.
     typedef typename TR::LargeCost LargeCost;
 
-    /// The \ref CostScalingDefaultTraits "traits class" of the algorithm
+    /// \brief The \ref lemon::CostScalingDefaultTraits "traits class"
+    /// of the algorithm
     typedef TR Traits;
 
   public:
@@ -210,7 +214,8 @@ namespace lemon {
     typedef std::vector<Cost> CostVector;
     typedef std::vector<LargeCost> LargeCostVector;
     typedef std::vector<char> BoolVector;
-    // Note: vector<char> is used instead of vector<bool> for efficiency reasons
+    // Note: vector<char> is used instead of vector<bool>
+    // for efficiency reasons
 
   private:
 
@@ -666,7 +671,7 @@ namespace lemon {
     /// \brief Return the total cost of the found flow.
     ///
     /// This function returns the total cost of the found flow.
-    /// Its complexity is O(e).
+    /// Its complexity is O(m).
     ///
     /// \note The return type of the function can be specified as a
     /// template parameter. For example,
@@ -900,7 +905,7 @@ namespace lemon {
 
       return OPTIMAL;
     }
-    
+
     // Check if the upper bound is greater than or equal to the lower bound
     // on each forward arc.
     bool checkBoundMaps() {
@@ -1281,7 +1286,7 @@ namespace lemon {
           int u = _buckets[r];
           _buckets[r] = _bucket_next[u];
 
-          // Search the incomming arcs of u
+          // Search the incoming arcs of u
           LargeCost pi_u = _pi[u];
           int last_out = _first_out[u+1];
           for (int a = _first_out[u]; a != last_out; ++a) {

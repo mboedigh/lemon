@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2010
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -317,7 +317,7 @@ namespace lemon {
 
       /// Constructor with starting point
       ArcIt(const SimplePath &_path, int _idx)
-        : idx(_idx), path(&_path) {}
+        : path(&_path), idx(_idx) {}
 
     public:
 

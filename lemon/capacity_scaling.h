@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2010
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -66,9 +66,11 @@ namespace lemon {
   ///
   /// \ref CapacityScaling implements the capacity scaling version
   /// of the successive shortest path algorithm for finding a
-  /// \ref min_cost_flow "minimum cost flow" \ref amo93networkflows,
-  /// \ref edmondskarp72theoretical. It is an efficient dual
-  /// solution method.
+  /// \ref min_cost_flow "minimum cost flow" \cite amo93networkflows,
+  /// \cite edmondskarp72theoretical. It is an efficient dual
+  /// solution method, which runs in polynomial time
+  /// \f$O(m\log U (n+m)\log n)\f$, where <i>U</i> denotes the maximum
+  /// of node supply and arc capacity values.
   ///
   /// This algorithm is typically slower than \ref CostScaling and
   /// \ref NetworkSimplex, but in special cases, it can be more
@@ -116,7 +118,8 @@ namespace lemon {
     /// The type of the heap used for internal Dijkstra computations
     typedef typename TR::Heap Heap;
 
-    /// The \ref CapacityScalingDefaultTraits "traits class" of the algorithm
+    /// \brief The \ref lemon::CapacityScalingDefaultTraits "traits class"
+    /// of the algorithm
     typedef TR Traits;
 
   public:
@@ -642,7 +645,7 @@ namespace lemon {
     /// \brief Return the total cost of the found flow.
     ///
     /// This function returns the total cost of the found flow.
-    /// Its complexity is O(e).
+    /// Its complexity is O(m).
     ///
     /// \note The return type of the function can be specified as a
     /// template parameter. For example,
@@ -834,7 +837,7 @@ namespace lemon {
 
       return OPTIMAL;
     }
-    
+
     // Check if the upper bound is greater than or equal to the lower bound
     // on each forward arc.
     bool checkBoundMaps() {

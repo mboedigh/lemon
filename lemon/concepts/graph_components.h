@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2010
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -108,7 +108,7 @@ namespace lemon {
           i1 = i2 = i3;
 
           bool b;
-          ignore_unused_variable_warning(b);
+          ::lemon::ignore_unused_variable_warning(b);
 
           b = (ia == ib) && (ia != ib);
           b = (ia == INVALID) && (ib != INVALID);
@@ -289,7 +289,7 @@ namespace lemon {
             e = graph.oppositeArc(e);
             ue = e;
             bool d = graph.direction(e);
-            ignore_unused_variable_warning(d);
+            ::lemon::ignore_unused_variable_warning(d);
           }
         }
 
@@ -391,12 +391,12 @@ namespace lemon {
       bool blue(const Node&) const { return true; }
 
       /// \brief Gives back the red end node of the edge.
-      /// 
+      ///
       /// Gives back the red end node of the edge.
       RedNode redNode(const Edge&) const { return RedNode(); }
 
       /// \brief Gives back the blue end node of the edge.
-      /// 
+      ///
       /// Gives back the blue end node of the edge.
       BlueNode blueNode(const Edge&) const { return BlueNode(); }
 
@@ -456,7 +456,7 @@ namespace lemon {
             bn = bpgraph.asBlueNodeUnsafe(bnan);
             rn = bpgraph.asRedNode(rnan);
             bn = bpgraph.asBlueNode(bnan);
-            ignore_unused_variable_warning(b);
+            ::lemon::ignore_unused_variable_warning(b);
           }
         }
 
@@ -534,9 +534,9 @@ namespace lemon {
           arc = digraph.arcFromId(eid);
 
           nid = digraph.maxNodeId();
-          ignore_unused_variable_warning(nid);
+          ::lemon::ignore_unused_variable_warning(nid);
           eid = digraph.maxArcId();
-          ignore_unused_variable_warning(eid);
+          ::lemon::ignore_unused_variable_warning(eid);
         }
 
         const _Digraph& digraph;
@@ -589,7 +589,7 @@ namespace lemon {
           ueid = graph.id(edge);
           edge = graph.edgeFromId(ueid);
           ueid = graph.maxEdgeId();
-          ignore_unused_variable_warning(ueid);
+          ::lemon::ignore_unused_variable_warning(ueid);
         }
 
         const _Graph& graph;
@@ -653,8 +653,8 @@ namespace lemon {
           int bid = bpgraph.id(blue);
           rid = bpgraph.maxRedId();
           bid = bpgraph.maxBlueId();
-          ignore_unused_variable_warning(rid);
-          ignore_unused_variable_warning(bid);
+          ::lemon::ignore_unused_variable_warning(rid);
+          ::lemon::ignore_unused_variable_warning(bid);
         }
 
         const _BpGraph& bpgraph;
@@ -726,8 +726,8 @@ namespace lemon {
           _GraphItemIt it2;
           _GraphItemIt it3 = it1;
           _GraphItemIt it4 = INVALID;
-          ignore_unused_variable_warning(it3);
-          ignore_unused_variable_warning(it4);
+          ::lemon::ignore_unused_variable_warning(it3);
+          ::lemon::ignore_unused_variable_warning(it4);
 
           it2 = ++it1;
           ++it2 = it1;
@@ -817,8 +817,8 @@ namespace lemon {
           _GraphIncIt it2;
           _GraphIncIt it3 = it1;
           _GraphIncIt it4 = INVALID;
-          ignore_unused_variable_warning(it3);
-          ignore_unused_variable_warning(it4);
+          ::lemon::ignore_unused_variable_warning(it3);
+          ::lemon::ignore_unused_variable_warning(it4);
 
           it2 = ++it1;
           ++it2 = it1;
@@ -875,15 +875,15 @@ namespace lemon {
       /// This function gives back the next arc in the iteration order.
       void next(Arc&) const {}
 
-      /// \brief Return the first arc incomming to the given node.
+      /// \brief Return the first arc incoming to the given node.
       ///
-      /// This function gives back the first arc incomming to the
+      /// This function gives back the first arc incoming to the
       /// given node.
       void firstIn(Arc&, const Node&) const {}
 
-      /// \brief Return the next arc incomming to the given node.
+      /// \brief Return the next arc incoming to the given node.
       ///
-      /// This function gives back the next arc incomming to the
+      /// This function gives back the next arc incoming to the
       /// given node.
       void nextIn(Arc&) const {}
 
@@ -1000,7 +1000,7 @@ namespace lemon {
             n = digraph.runningNode(iait);
             n = digraph.baseNode(oait);
             n = digraph.runningNode(oait);
-            ignore_unused_variable_warning(n);
+            ::lemon::ignore_unused_variable_warning(n);
           }
         }
 
@@ -1150,7 +1150,7 @@ namespace lemon {
       typedef typename Base::BlueNode BlueNode;
       typedef typename Base::Arc Arc;
       typedef typename Base::Edge Edge;
-      
+
       typedef IterableBpGraphComponent BpGraph;
 
       using IterableGraphComponent<BAS>::first;
@@ -1210,7 +1210,7 @@ namespace lemon {
 
           typename _BpGraph::RedNode rn(INVALID);
           bpgraph.first(rn);
-          bpgraph.next(rn); 
+          bpgraph.next(rn);
           typename _BpGraph::BlueNode bn(INVALID);
           bpgraph.first(bn);
           bpgraph.next(bn);
@@ -1277,8 +1277,8 @@ namespace lemon {
           typename _Digraph::ArcNotifier& en
             = digraph.notifier(typename _Digraph::Arc());
 
-          ignore_unused_variable_warning(nn);
-          ignore_unused_variable_warning(en);
+          ::lemon::ignore_unused_variable_warning(nn);
+          ::lemon::ignore_unused_variable_warning(en);
         }
 
         const _Digraph& digraph;
@@ -1325,7 +1325,7 @@ namespace lemon {
           checkConcept<AlterableDigraphComponent<Base>, _Graph>();
           typename _Graph::EdgeNotifier& uen
             = graph.notifier(typename _Graph::Edge());
-          ignore_unused_variable_warning(uen);
+          ::lemon::ignore_unused_variable_warning(uen);
         }
 
         const _Graph& graph;
@@ -1387,8 +1387,8 @@ namespace lemon {
             = bpgraph.notifier(typename _BpGraph::RedNode());
           typename _BpGraph::BlueNodeNotifier& bnn
             = bpgraph.notifier(typename _BpGraph::BlueNode());
-          ignore_unused_variable_warning(rnn);
-          ignore_unused_variable_warning(bnn);
+          ::lemon::ignore_unused_variable_warning(rnn);
+          ::lemon::ignore_unused_variable_warning(bnn);
         }
 
         const _BpGraph& bpgraph;
@@ -1461,9 +1461,9 @@ namespace lemon {
           // ReadMap<Key, Value> cmap;
           // m3 = cmap;
 
-          ignore_unused_variable_warning(m1);
-          ignore_unused_variable_warning(m2);
-          // ignore_unused_variable_warning(m3);
+          ::lemon::ignore_unused_variable_warning(m1);
+          ::lemon::ignore_unused_variable_warning(m2);
+          // ::lemon::ignore_unused_variable_warning(m3);
         }
 
         const _Map &m;

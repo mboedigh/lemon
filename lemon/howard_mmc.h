@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2010
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -98,7 +98,7 @@ namespace lemon {
   ///
   /// This class implements Howard's policy iteration algorithm for finding
   /// a directed cycle of minimum mean cost in a digraph
-  /// \ref dasdan98minmeancycle, \ref dasdan04experimental.
+  /// \cite dasdan98minmeancycle, \cite dasdan04experimental.
   /// This class provides the most efficient algorithm for the
   /// minimum mean cycle problem, though the best known theoretical
   /// bound on its running time is exponential.
@@ -142,11 +142,11 @@ namespace lemon {
     /// \brief The path type of the found cycles
     ///
     /// The path type of the found cycles.
-    /// Using the \ref HowardMmcDefaultTraits "default traits class",
+    /// Using the \ref lemon::HowardMmcDefaultTraits "default traits class",
     /// it is \ref lemon::Path "Path<Digraph>".
     typedef typename TR::Path Path;
 
-    /// The \ref HowardMmcDefaultTraits "traits class" of the algorithm
+    /// The \ref lemon::HowardMmcDefaultTraits "traits class" of the algorithm
     typedef TR Traits;
 
     /// \brief Constants for the causes of search termination.
@@ -155,10 +155,10 @@ namespace lemon {
     /// termination. The \ref findCycleMean() function returns one of
     /// these values.
     enum TerminationCause {
-      
+
       /// No directed cycle can be found in the digraph.
       NO_CYCLE = 0,
-    
+
       /// Optimal solution (minimum cycle mean) is found.
       OPTIMAL = 1,
 
@@ -282,8 +282,8 @@ namespace lemon {
     /// found cycle.
     ///
     /// If you don't call this function before calling \ref run() or
-    /// \ref findCycleMean(), it will allocate a local \ref Path "path"
-    /// structure. The destuctor deallocates this automatically
+    /// \ref findCycleMean(), a local \ref Path "path" structure
+    /// will be allocated. The destuctor deallocates this automatically
     /// allocated object, of course.
     ///
     /// \note The algorithm calls only the \ref lemon::Path::addBack()
@@ -356,12 +356,13 @@ namespace lemon {
     /// minimal.
     ///
     /// \param limit  The maximum allowed number of iterations during
-    /// the search process. Its default value implies that the algorithm 
+    /// the search process. Its default value implies that the algorithm
     /// runs until it finds the exact optimal solution.
     ///
     /// \return The termination cause of the search process.
-    /// For more information, see \ref TerminationCause. 
-    TerminationCause findCycleMean(int limit = std::numeric_limits<int>::max()) {
+    /// For more information, see \ref TerminationCause.
+    TerminationCause findCycleMean(int limit =
+                                   std::numeric_limits<int>::max()) {
       // Initialize and find strongly connected components
       init();
       findComponents();
@@ -389,7 +390,7 @@ namespace lemon {
           _best_size = _curr_size;
           _best_node = _curr_node;
         }
-        
+
         if (iter_limit_reached) break;
       }
 

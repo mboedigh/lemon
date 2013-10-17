@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2010
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -78,6 +78,7 @@ void checkBpGraphBuild() {
   Edge
     e2 = G.addEdge(bn1, rn1),
     e3 = G.addEdge(rn1, bn2);
+  ::lemon::ignore_unused_variable_warning(e2,e3);
 
   checkGraphNodeList(G, 3);
   checkGraphRedNodeList(G, 1);
@@ -113,12 +114,13 @@ void checkBpGraphErase() {
 
   BpGraph G;
   RedNode
-    n1 = G.addRedNode(), n4 = G.addRedNode(); 
+    n1 = G.addRedNode(), n4 = G.addRedNode();
   BlueNode
     n2 = G.addBlueNode(), n3 = G.addBlueNode();
   Edge
     e1 = G.addEdge(n1, n2), e2 = G.addEdge(n1, n3),
     e3 = G.addEdge(n4, n2), e4 = G.addEdge(n4, n3);
+  ::lemon::ignore_unused_variable_warning(e1,e3,e4);
 
   // Check edge deletion
   G.erase(e2);
@@ -161,12 +163,13 @@ void checkBpGraphAlter() {
 
   BpGraph G;
   RedNode
-    n1 = G.addRedNode(), n4 = G.addRedNode(); 
+    n1 = G.addRedNode(), n4 = G.addRedNode();
   BlueNode
     n2 = G.addBlueNode(), n3 = G.addBlueNode();
   Edge
     e1 = G.addEdge(n1, n2), e2 = G.addEdge(n1, n3),
     e3 = G.addEdge(n4, n2), e4 = G.addEdge(n4, n3);
+  ::lemon::ignore_unused_variable_warning(e1,e3,e4);
 
   G.changeRed(e2, n4);
   check(G.redNode(e2) == n4, "Wrong red node");
@@ -216,9 +219,10 @@ void checkBpGraphSnapshot() {
   BlueNode
     n2 = G.addBlueNode(),
     n3 = G.addBlueNode();
-  Edge 
+  Edge
     e1 = G.addEdge(n1, n2),
     e2 = G.addEdge(n1, n3);
+  ::lemon::ignore_unused_variable_warning(e1,e2);
 
   checkGraphNodeList(G, 3);
   checkGraphRedNodeList(G, 1);
@@ -304,6 +308,7 @@ void checkBpGraphValidity() {
   Edge
     e1 = g.addEdge(n1, n2),
     e2 = g.addEdge(n1, n3);
+  ::lemon::ignore_unused_variable_warning(e2);
 
   check(g.valid(n1), "Wrong validity check");
   check(g.valid(e1), "Wrong validity check");

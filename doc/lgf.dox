@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2009
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -64,7 +64,7 @@ associated to the current node.
 \endcode
 
 The \e LGF files can also contain bipartite graphs, in this case a
-\c @red_nodes and a \c @blue_nodes sections describe the node set of the
+\c \@red_nodes and a \c \@blue_nodes sections describe the node set of the
 graph. If a map is in both of these sections, then it can be used as a
 regular node map.
 

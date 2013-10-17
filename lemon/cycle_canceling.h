@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2010
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -47,13 +47,13 @@ namespace lemon {
   ///
   /// \ref CycleCanceling implements three different cycle-canceling
   /// algorithms for finding a \ref min_cost_flow "minimum cost flow"
-  /// \ref amo93networkflows, \ref klein67primal,
-  /// \ref goldberg89cyclecanceling.
+  /// \cite amo93networkflows, \cite klein67primal,
+  /// \cite goldberg89cyclecanceling.
   /// The most efficent one is the \ref CANCEL_AND_TIGHTEN
   /// "Cancel-and-Tighten" algorithm, thus it is the default method.
-  /// It runs in strongly polynomial time, but in practice, it is typically
-  /// orders of magnitude slower than the scaling algorithms and
-  /// \ref NetworkSimplex.
+  /// It runs in strongly polynomial time \f$O(n^2 m^2 \log n)\f$,
+  /// but in practice, it is typically orders of magnitude slower than
+  /// the scaling algorithms and \ref NetworkSimplex.
   /// (For more information, see \ref min_cost_flow_algs "the module page".)
   ///
   /// Most of the parameters of the problem (except for the digraph)
@@ -131,15 +131,15 @@ namespace lemon {
       SIMPLE_CYCLE_CANCELING,
       /// The "Minimum Mean Cycle-Canceling" algorithm, which is a
       /// well-known strongly polynomial method
-      /// \ref goldberg89cyclecanceling. It improves along a
+      /// \cite goldberg89cyclecanceling. It improves along a
       /// \ref min_mean_cycle "minimum mean cycle" in each iteration.
-      /// Its running time complexity is O(n<sup>2</sup>e<sup>3</sup>log(n)).
+      /// Its running time complexity is \f$O(n^2 m^3 \log n)\f$.
       MINIMUM_MEAN_CYCLE_CANCELING,
       /// The "Cancel-and-Tighten" algorithm, which can be viewed as an
       /// improved version of the previous method
-      /// \ref goldberg89cyclecanceling.
+      /// \cite goldberg89cyclecanceling.
       /// It is faster both in theory and in practice, its running time
-      /// complexity is O(n<sup>2</sup>e<sup>2</sup>log(n)).
+      /// complexity is \f$O(n^2 m^2 \log n)\f$.
       CANCEL_AND_TIGHTEN
     };
 
@@ -575,7 +575,7 @@ namespace lemon {
     /// \brief Return the total cost of the found flow.
     ///
     /// This function returns the total cost of the found flow.
-    /// Its complexity is O(e).
+    /// Its complexity is O(m).
     ///
     /// \note The return type of the function can be specified as a
     /// template parameter. For example,
@@ -782,7 +782,7 @@ namespace lemon {
 
       return OPTIMAL;
     }
-    
+
     // Check if the upper bound is greater than or equal to the lower bound
     // on each forward arc.
     bool checkBoundMaps() {
@@ -959,7 +959,7 @@ namespace lemon {
       hw_mmc.cycle(cycle);
       buildResidualNetwork();
       while (true) {
-        
+
         typename HwMmc::TerminationCause hw_tc =
             hw_mmc.findCycleMean(hw_iter_limit);
         if (hw_tc == HwMmc::ITERATION_LIMIT) {
@@ -975,7 +975,7 @@ namespace lemon {
           if (!(hw_tc == HwMmc::OPTIMAL && hw_mmc.cycleCost() < 0)) break;
           hw_mmc.findCycle();
         }
-        
+
         // Compute delta value
         Value delta = INF;
         for (SPathArcIt a(cycle); a != INVALID; ++a) {

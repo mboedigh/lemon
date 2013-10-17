@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2010
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -445,7 +445,7 @@ namespace lemon {
     ///\note The moved arcs are joined to node \c u using changeSource()
     ///or changeTarget(), thus \c ArcIt and \c OutArcIt iterators are
     ///invalidated for the outgoing arcs of node \c v and \c InArcIt
-    ///iterators are invalidated for the incomming arcs of \c v.
+    ///iterators are invalidated for the incoming arcs of \c v.
     ///Moreover all iterators referencing node \c v or the removed
     ///loops are also invalidated. Other iterators remain valid.
     ///
@@ -1765,7 +1765,7 @@ namespace lemon {
 
     void next(BlueNode& node) const {
       node.id = nodes[node.id].partition_next;
-    }    
+    }
 
     void first(Arc& e) const {
       int n = first_node;

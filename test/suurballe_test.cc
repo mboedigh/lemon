@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2010
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -117,7 +117,7 @@ void checkSuurballeCompile()
 
   int f;
   VType c;
-  ignore_unused_variable_warning(f,c);
+  ::lemon::ignore_unused_variable_warning(f,c);
 
   c = const_suurb_test.totalLength();
   f = const_suurb_test.flow(e);
@@ -129,8 +129,8 @@ void checkSuurballeCompile()
   k = const_suurb_test.pathNum();
   Path<Digraph> p = const_suurb_test.path(k);
 
-  ignore_unused_variable_warning(fm);
-  ignore_unused_variable_warning(pm);
+  ::lemon::ignore_unused_variable_warning(fm);
+  ::lemon::ignore_unused_variable_warning(pm);
 }
 
 // Check the feasibility of the flow
