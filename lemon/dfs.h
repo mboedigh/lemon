@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2010
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -152,7 +152,7 @@ namespace lemon {
     ///The type of the paths.
     typedef PredMapPath<Digraph, PredMap> Path;
 
-    ///The \ref DfsDefaultTraits "traits class" of the algorithm.
+    ///The \ref lemon::DfsDefaultTraits "traits class" of the algorithm.
     typedef TR Traits;
 
   private:
@@ -565,7 +565,7 @@ namespace lemon {
     ///added with addSource() before using this function.
     void start(Node t)
     {
-      while ( !emptyQueue() && G->target(_stack[_stack_head])!=t )
+      while ( !emptyQueue() && !(*_reached)[t] )
         processNextArc();
     }
 
@@ -1193,6 +1193,7 @@ namespace lemon {
         visitor.backtrack(arc);
       }
       _Visitor& visitor;
+      Constraints() {}
     };
   };
 #endif
@@ -1512,7 +1513,7 @@ namespace lemon {
     /// \pre init() must be called and a root node should be added
     /// with addSource() before using this function.
     void start(Node t) {
-      while ( !emptyQueue() && _digraph->target(_stack[_stack_head]) != t )
+      while ( !emptyQueue() && !(*_reached)[t] )
         processNextArc();
     }
 

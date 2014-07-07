@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2009
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -271,6 +271,40 @@ int main() {
     typedef SimpleBucketHeap<ItemIntMap> SimpleIntHeap;
     heapSortTest<SimpleIntHeap>();
   }
+
+  {
+    typedef FibHeap<Prio, ItemIntMap> IntHeap;
+    checkConcept<Heap<Prio, ItemIntMap>, IntHeap>();
+    heapSortTest<IntHeap>();
+    heapIncreaseTest<IntHeap>();
+
+    typedef FibHeap<Prio, IntNodeMap > NodeHeap;
+    checkConcept<Heap<Prio, IntNodeMap >, NodeHeap>();
+    dijkstraHeapTest<NodeHeap>(digraph, length, source);
+  }
+
+  {
+    typedef RadixHeap<ItemIntMap> IntHeap;
+    checkConcept<Heap<Prio, ItemIntMap>, IntHeap>();
+    heapSortTest<IntHeap>();
+    heapIncreaseTest<IntHeap>();
+
+    typedef RadixHeap<IntNodeMap > NodeHeap;
+    checkConcept<Heap<Prio, IntNodeMap >, NodeHeap>();
+    dijkstraHeapTest<NodeHeap>(digraph, length, source);
+  }
+
+  {
+    typedef BucketHeap<ItemIntMap> IntHeap;
+    checkConcept<Heap<Prio, ItemIntMap>, IntHeap>();
+    heapSortTest<IntHeap>();
+    heapIncreaseTest<IntHeap>();
+
+    typedef BucketHeap<IntNodeMap > NodeHeap;
+    checkConcept<Heap<Prio, IntNodeMap >, NodeHeap>();
+    dijkstraHeapTest<NodeHeap>(digraph, length, source);
+  }
+
 
   return 0;
 }

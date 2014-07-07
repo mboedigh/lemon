@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2010
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -1371,7 +1371,7 @@ namespace lemon {
     /// Creates a subgraph for the given graph with the given node
     /// and edge filter maps.
     SubGraph(GR& graph, NF& node_filter, EF& edge_filter) {
-      initialize(graph, node_filter, edge_filter);
+      this->initialize(graph, node_filter, edge_filter);
     }
 
     /// \brief Sets the status of the given node
@@ -2277,7 +2277,7 @@ namespace lemon {
     ///
     /// Creates an undirected graph from the given digraph.
     Undirector(DGR& digraph) {
-      initialize(digraph);
+      this->initialize(digraph);
     }
 
     /// \brief Arc map combined from two original arc maps

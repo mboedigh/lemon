@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2010
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -50,7 +50,10 @@ char test_lgf[] =
   "6 3  7\n"
   "@attributes\n"
   "source 0\n"
-  "target 5\n";
+  "target 5\n"
+  "source1 6\n"
+  "target1 3\n";
+
 
 void checkDfsCompile()
 {
@@ -64,6 +67,8 @@ void checkDfsCompile()
   Arc e;
   int l, i;
   bool b;
+  ::lemon::ignore_unused_variable_warning(l,i,b);
+
   DType::DistMap d(G);
   DType::PredMap p(G);
   Path<Digraph> pp;
@@ -148,6 +153,8 @@ void checkDfsFunctionCompile()
 
   Digraph g;
   bool b;
+  ::lemon::ignore_unused_variable_warning(b);
+
   dfs(g).run(Node());
   b=dfs(g).run(Node(),Node());
   dfs(g).run();
@@ -179,11 +186,14 @@ void checkDfs() {
 
   Digraph G;
   Node s, t;
+  Node s1, t1;
 
   std::istringstream input(test_lgf);
   digraphReader(G, input).
     node("source", s).
     node("target", t).
+    node("source1", s1).
+    node("target1", t1).
     run();
 
   Dfs<Digraph> dfs_test(G);
@@ -207,6 +217,11 @@ void checkDfs() {
               << dfs_test.dist(v) << ")");
       }
     }
+  }
+
+  {
+  Dfs<Digraph> dfs(G);
+  check(dfs.run(s1,t1) && dfs.reached(t1),"Node 3 is reachable from Node 6.");
   }
 
   {
