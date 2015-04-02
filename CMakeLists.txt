@@ -1,4 +1,8 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+
+IF(POLICY CMP0048) 
+  CMAKE_POLICY(SET CMP0048 OLD) 
+ENDIF(POLICY CMP0048)
 
 IF(POLICY CMP0043) 
   CMAKE_POLICY(SET CMP0043 OLD) 
@@ -125,6 +129,9 @@ IF(NOT LEMON_DEFAULT_LP OR
     (NOT SOPLEX_FOUND AND (LEMON_DEFAULT_LP STREQUAL "SOPLEX")))
   SET(LEMON_DEFAULT_LP ${DEFAULT_LP} CACHE STRING
     "Default LP solver backend (GLPK, CPLEX, CLP or SOPLEX)" FORCE)
+ELSE()
+  SET(LEMON_DEFAULT_LP ${DEFAULT_LP} CACHE STRING
+    "Default LP solver backend (GLPK, CPLEX, CLP or SOPLEX)")
 ENDIF()
 IF(NOT LEMON_DEFAULT_MIP OR
     (NOT ILOG_FOUND AND (LEMON_DEFAULT_MIP STREQUAL "CPLEX")) OR
@@ -132,6 +139,9 @@ IF(NOT LEMON_DEFAULT_MIP OR
     (NOT GLPK_FOUND AND (LEMON_DEFAULT_MIP STREQUAL "GLPK")))
   SET(LEMON_DEFAULT_MIP ${DEFAULT_MIP} CACHE STRING
     "Default MIP solver backend (GLPK, CPLEX or CBC)" FORCE)
+ELSE()
+  SET(LEMON_DEFAULT_MIP ${DEFAULT_MIP} CACHE STRING
+    "Default MIP solver backend (GLPK, CPLEX or CBC)")
 ENDIF()
 
 
@@ -144,10 +154,13 @@ ELSE()
     SET(CMAKE_C_FLAGS_DEBUG CACHE STRING "-ggdb")
   ELSEIF(MSVC)
     # This part is unnecessary 'casue the same is set by the lemon/core.h.
-    # Still keep it as an example.
-    SET(CXX_WARNING "/wd4250 /wd4355 /wd4503 /wd4800 /wd4996")
+    # Still kept as an example.
+
+    # SET(CXX_WARNING "/wd4250 /wd4267 /wd4355 /wd4503 /wd4800 /wd4996")
+
     # Suppressed warnings:
     # C4250: 'class1' : inherits 'class2::member' via dominance
+    # C4267: conversion from 'size_t' to 'type', possible loss of data
     # C4355: 'this' : used in base member initializer list
     # C4503: 'function' : decorated name length exceeded, name was truncated
     # C4800: 'type' : forcing value to bool 'true' or 'false'
@@ -162,6 +175,7 @@ SET(LEMON_CXX_WARNING_FLAGS ${CXX_WARNING} CACHE STRING "LEMON warning flags.")
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LEMON_CXX_WARNING_FLAGS}")
 
 IF(MSVC)
+  SET(CMAKE_CXX_FLAGS "/bigobj ${CMAKE_CXX_FLAGS}")
   SET( CMAKE_CXX_FLAGS_MAINTAINER "/WX ${CMAKE_CXX_FLAGS_DEBUG}" CACHE STRING
     "Flags used by the C++ compiler during maintainer builds."
     )
@@ -184,11 +198,11 @@ ELSE()
     "Flags used by the C compiler during maintainer builds."
     )
   SET( CMAKE_EXE_LINKER_FLAGS_MAINTAINER
-    "-Wl,--warn-unresolved-symbols,--warn-once" CACHE STRING
+    "${CMAKE_EXE_LINKER_FLAGS_DEBUG}" CACHE STRING
     "Flags used for linking binaries during maintainer builds."
     )
   SET( CMAKE_SHARED_LINKER_FLAGS_MAINTAINER
-    "-Wl,--warn-unresolved-symbols,--warn-once" CACHE STRING
+    "${CMAKE_SHARED_LINKER_FLAGS_DEBUG}" CACHE STRING
     "Flags used by the shared libraries linker during maintainer builds."
     )
 ENDIF()
