@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2010
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -102,12 +102,12 @@ namespace lemon {
   ///
   /// This class provides an implementation of Goldberg-Tarjan's \e preflow
   /// \e push-relabel algorithm producing a \ref max_flow
-  /// "flow of maximum value" in a digraph \ref clrs01algorithms,
-  /// \ref amo93networkflows, \ref goldberg88newapproach.
+  /// "flow of maximum value" in a digraph \cite clrs01algorithms,
+  /// \cite amo93networkflows, \cite goldberg88newapproach.
   /// The preflow algorithms are the fastest known maximum
   /// flow algorithms. The current implementation uses a mixture of the
   /// \e "highest label" and the \e "bound decrease" heuristics.
-  /// The worst case time complexity of the algorithm is \f$O(n^2\sqrt{e})\f$.
+  /// The worst case time complexity of the algorithm is \f$O(n^2\sqrt{m})\f$.
   ///
   /// The algorithm consists of two phases. After the first phase
   /// the maximum flow value and the minimum cut is obtained. The
@@ -134,7 +134,7 @@ namespace lemon {
   class Preflow {
   public:
 
-    ///The \ref PreflowDefaultTraits "traits class" of the algorithm.
+    ///The \ref lemon::PreflowDefaultTraits "traits class" of the algorithm.
     typedef TR Traits;
     ///The type of the digraph the algorithm runs on.
     typedef typename Traits::Digraph Digraph;
@@ -554,10 +554,10 @@ namespace lemon {
           (*_excess)[v] += rem;
         }
       }
-      for (NodeIt n(_graph); n != INVALID; ++n) 
+      for (NodeIt n(_graph); n != INVALID; ++n)
         if(n!=_source && n!=_target && _tolerance.positive((*_excess)[n]))
           _level->activate(n);
-          
+
       return true;
     }
 
@@ -585,7 +585,7 @@ namespace lemon {
           if (n == INVALID) goto first_phase_done;
           level = _level->highestActiveLevel();
           --num;
-          
+
           Value excess = (*_excess)[n];
           int new_level = _level->maxLevel();
 

@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2010
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -25,7 +25,7 @@
 #include<algorithm>
 #include<vector>
 
-#ifndef WIN32
+#ifndef LEMON_WIN32
 #include<sys/time.h>
 #include<ctime>
 #else
@@ -674,7 +674,7 @@ public:
 
     {
       os << "%%CreationDate: ";
-#ifndef WIN32
+#ifndef LEMON_WIN32
       timeval tv;
       gettimeofday(&tv, 0);
 

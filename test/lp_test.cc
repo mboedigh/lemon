@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2009
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -39,6 +39,9 @@
 #include <lemon/clp.h>
 #endif
 
+#ifdef LEMON_HAVE_LP
+#include <lemon/lp.h>
+#endif
 using namespace lemon;
 
 int countCols(LpBase & lp) {
@@ -415,6 +418,15 @@ int main()
 {
   LpSkeleton lp_skel;
   lpTest(lp_skel);
+
+#ifdef LEMON_HAVE_LP
+  {
+    Lp lp,lp2;
+    lpTest(lp);
+    aTest(lp2);
+    cloneTest<Lp>();
+  }
+#endif
 
 #ifdef LEMON_HAVE_GLPK
   {
