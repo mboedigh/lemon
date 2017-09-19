@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2009
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -19,20 +19,38 @@
 #ifndef LEMON_CORE_H
 #define LEMON_CORE_H
 
-#include <vector>
-#include <algorithm>
-
-#include <lemon/core.h>
-#include <lemon/bits/enable_if.h>
-#include <lemon/bits/traits.h>
-#include <lemon/assert.h>
-
 ///\file
 ///\brief LEMON core utilities.
 ///
 ///This header file contains core utilities for LEMON.
 ///It is automatically included by all graph types, therefore it usually
 ///do not have to be included directly.
+
+// Disable the following warnings when compiling with MSVC:
+// C4250: 'class1' : inherits 'class2::member' via dominance
+// C4267: conversion from 'size_t' to 'type', possible loss of data
+// C4355: 'this' : used in base member initializer list
+// C4503: 'function' : decorated name length exceeded, name was truncated
+// C4800: 'type' : forcing value to bool 'true' or 'false' (performance warning)
+// C4996: 'function': was declared deprecated
+#ifdef _MSC_VER
+#pragma warning( disable : 4250 4267 4355 4503 4800 4996 )
+#endif
+
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)
+// Needed by the [DI]GRAPH_TYPEDEFS marcos for gcc 4.8
+#pragma GCC diagnostic ignored "-Wunused-local-typedefs"
+#endif
+
+#include <vector>
+#include <algorithm>
+
+#include <lemon/config.h>
+#include <lemon/bits/enable_if.h>
+#include <lemon/bits/traits.h>
+#include <lemon/assert.h>
+
+
 
 namespace lemon {
 
@@ -138,6 +156,49 @@ namespace lemon {
   typedef typename Graph::template EdgeMap<int> IntEdgeMap;             \
   typedef typename Graph::template EdgeMap<double> DoubleEdgeMap
 
+  ///Create convenience typedefs for the bipartite graph types and iterators
+
+  ///This \c \#define creates the same convenient type definitions as
+  ///defined by \ref GRAPH_TYPEDEFS(BpGraph) and ten more, namely it
+  ///creates \c RedNode, \c RedNodeIt, \c BoolRedNodeMap,
+  ///\c IntRedNodeMap, \c DoubleRedNodeMap, \c BlueNode, \c BlueNodeIt,
+  ///\c BoolBlueNodeMap, \c IntBlueNodeMap, \c DoubleBlueNodeMap.
+  ///
+  ///\note If the graph type is a dependent type, ie. the graph type depend
+  ///on a template parameter, then use \c TEMPLATE_BPGRAPH_TYPEDEFS()
+  ///macro.
+#define BPGRAPH_TYPEDEFS(BpGraph)                                       \
+  GRAPH_TYPEDEFS(BpGraph);                                              \
+  typedef BpGraph::RedNode RedNode;                                     \
+  typedef BpGraph::RedNodeIt RedNodeIt;                                 \
+  typedef BpGraph::RedNodeMap<bool> BoolRedNodeMap;                     \
+  typedef BpGraph::RedNodeMap<int> IntRedNodeMap;                       \
+  typedef BpGraph::RedNodeMap<double> DoubleRedNodeMap;                 \
+  typedef BpGraph::BlueNode BlueNode;                                   \
+  typedef BpGraph::BlueNodeIt BlueNodeIt;                               \
+  typedef BpGraph::BlueNodeMap<bool> BoolBlueNodeMap;                   \
+  typedef BpGraph::BlueNodeMap<int> IntBlueNodeMap;                     \
+  typedef BpGraph::BlueNodeMap<double> DoubleBlueNodeMap
+
+  ///Create convenience typedefs for the bipartite graph types and iterators
+
+  ///\see BPGRAPH_TYPEDEFS
+  ///
+  ///\note Use this macro, if the graph type is a dependent type,
+  ///ie. the graph type depend on a template parameter.
+#define TEMPLATE_BPGRAPH_TYPEDEFS(BpGraph)                                  \
+  TEMPLATE_GRAPH_TYPEDEFS(BpGraph);                                         \
+  typedef typename BpGraph::RedNode RedNode;                                \
+  typedef typename BpGraph::RedNodeIt RedNodeIt;                            \
+  typedef typename BpGraph::template RedNodeMap<bool> BoolRedNodeMap;       \
+  typedef typename BpGraph::template RedNodeMap<int> IntRedNodeMap;         \
+  typedef typename BpGraph::template RedNodeMap<double> DoubleRedNodeMap;   \
+  typedef typename BpGraph::BlueNode BlueNode;                              \
+  typedef typename BpGraph::BlueNodeIt BlueNodeIt;                          \
+  typedef typename BpGraph::template BlueNodeMap<bool> BoolBlueNodeMap;     \
+  typedef typename BpGraph::template BlueNodeMap<int> IntBlueNodeMap;       \
+  typedef typename BpGraph::template BlueNodeMap<double> DoubleBlueNodeMap
+
   /// \brief Function to count the items in a graph.
   ///
   /// This function counts the items (nodes, arcs etc.) in a graph.
@@ -187,6 +248,74 @@ namespace lemon {
   template <typename Graph>
   inline int countNodes(const Graph& g) {
     return _core_bits::CountNodesSelector<Graph>::count(g);
+  }
+
+  namespace _graph_utils_bits {
+
+    template <typename Graph, typename Enable = void>
+    struct CountRedNodesSelector {
+      static int count(const Graph &g) {
+        return countItems<Graph, typename Graph::RedNode>(g);
+      }
+    };
+
+    template <typename Graph>
+    struct CountRedNodesSelector<
+      Graph, typename
+      enable_if<typename Graph::NodeNumTag, void>::type>
+    {
+      static int count(const Graph &g) {
+        return g.redNum();
+      }
+    };
+  }
+
+  /// \brief Function to count the red nodes in the graph.
+  ///
+  /// This function counts the red nodes in the graph.
+  /// The complexity of the function is O(n) but for some
+  /// graph structures it is specialized to run in O(1).
+  ///
+  /// If the graph contains a \e redNum() member function and a
+  /// \e NodeNumTag tag then this function calls directly the member
+  /// function to query the cardinality of the node set.
+  template <typename Graph>
+  inline int countRedNodes(const Graph& g) {
+    return _graph_utils_bits::CountRedNodesSelector<Graph>::count(g);
+  }
+
+  namespace _graph_utils_bits {
+
+    template <typename Graph, typename Enable = void>
+    struct CountBlueNodesSelector {
+      static int count(const Graph &g) {
+        return countItems<Graph, typename Graph::BlueNode>(g);
+      }
+    };
+
+    template <typename Graph>
+    struct CountBlueNodesSelector<
+      Graph, typename
+      enable_if<typename Graph::NodeNumTag, void>::type>
+    {
+      static int count(const Graph &g) {
+        return g.blueNum();
+      }
+    };
+  }
+
+  /// \brief Function to count the blue nodes in the graph.
+  ///
+  /// This function counts the blue nodes in the graph.
+  /// The complexity of the function is O(n) but for some
+  /// graph structures it is specialized to run in O(1).
+  ///
+  /// If the graph contains a \e blueNum() member function and a
+  /// \e NodeNumTag tag then this function calls directly the member
+  /// function to query the cardinality of the node set.
+  template <typename Graph>
+  inline int countBlueNodes(const Graph& g) {
+    return _graph_utils_bits::CountBlueNodesSelector<Graph>::count(g);
   }
 
   // Arc counting:
@@ -384,6 +513,7 @@ namespace lemon {
       template <typename From, typename NodeRefMap, typename ArcRefMap>
       static void copy(const From& from, Digraph &to,
                        NodeRefMap& nodeRefMap, ArcRefMap& arcRefMap) {
+        to.clear();
         for (typename From::NodeIt it(from); it != INVALID; ++it) {
           nodeRefMap[it] = to.addNode();
         }
@@ -411,6 +541,7 @@ namespace lemon {
       template <typename From, typename NodeRefMap, typename EdgeRefMap>
       static void copy(const From& from, Graph &to,
                        NodeRefMap& nodeRefMap, EdgeRefMap& edgeRefMap) {
+        to.clear();
         for (typename From::NodeIt it(from); it != INVALID; ++it) {
           nodeRefMap[it] = to.addNode();
         }
@@ -428,12 +559,69 @@ namespace lemon {
     {
       template <typename From, typename NodeRefMap, typename EdgeRefMap>
       static void copy(const From& from, Graph &to,
-                       NodeRefMap& nodeRefMap, EdgeRefMap& edgeRefMap) {
+                       NodeRefMap& nodeRefMap,
+                       EdgeRefMap& edgeRefMap) {
         to.build(from, nodeRefMap, edgeRefMap);
       }
     };
 
+    template <typename BpGraph, typename Enable = void>
+    struct BpGraphCopySelector {
+      template <typename From, typename RedNodeRefMap,
+                typename BlueNodeRefMap, typename EdgeRefMap>
+      static void copy(const From& from, BpGraph &to,
+                       RedNodeRefMap& redNodeRefMap,
+                       BlueNodeRefMap& blueNodeRefMap,
+                       EdgeRefMap& edgeRefMap) {
+        to.clear();
+        for (typename From::RedNodeIt it(from); it != INVALID; ++it) {
+          redNodeRefMap[it] = to.addRedNode();
+        }
+        for (typename From::BlueNodeIt it(from); it != INVALID; ++it) {
+          blueNodeRefMap[it] = to.addBlueNode();
+        }
+        for (typename From::EdgeIt it(from); it != INVALID; ++it) {
+          edgeRefMap[it] = to.addEdge(redNodeRefMap[from.redNode(it)],
+                                      blueNodeRefMap[from.blueNode(it)]);
+        }
+      }
+    };
+
+    template <typename BpGraph>
+    struct BpGraphCopySelector<
+      BpGraph,
+      typename enable_if<typename BpGraph::BuildTag, void>::type>
+    {
+      template <typename From, typename RedNodeRefMap,
+                typename BlueNodeRefMap, typename EdgeRefMap>
+      static void copy(const From& from, BpGraph &to,
+                       RedNodeRefMap& redNodeRefMap,
+                       BlueNodeRefMap& blueNodeRefMap,
+                       EdgeRefMap& edgeRefMap) {
+        to.build(from, redNodeRefMap, blueNodeRefMap, edgeRefMap);
+      }
+    };
+
   }
+
+  /// \brief Check whether a graph is undirected.
+  ///
+  /// This function returns \c true if the given graph is undirected.
+#ifdef DOXYGEN
+  template <typename GR>
+  bool undirected(const GR& g) { return false; }
+#else
+  template <typename GR>
+  typename enable_if<UndirectedTagIndicator<GR>, bool>::type
+  undirected(const GR&) {
+    return true;
+  }
+  template <typename GR>
+  typename disable_if<UndirectedTagIndicator<GR>, bool>::type
+  undirected(const GR&) {
+    return false;
+  }
+#endif
 
   /// \brief Class to copy a digraph.
   ///
@@ -960,6 +1148,454 @@ namespace lemon {
     return GraphCopy<From, To>(from, to);
   }
 
+  /// \brief Class to copy a bipartite graph.
+  ///
+  /// Class to copy a bipartite graph to another graph (duplicate a
+  /// graph). The simplest way of using it is through the
+  /// \c bpGraphCopy() function.
+  ///
+  /// This class not only make a copy of a bipartite graph, but it can
+  /// create references and cross references between the nodes, edges
+  /// and arcs of the two graphs, and it can copy maps for using with
+  /// the newly created graph.
+  ///
+  /// To make a copy from a graph, first an instance of BpGraphCopy
+  /// should be created, then the data belongs to the graph should
+  /// assigned to copy. In the end, the \c run() member should be
+  /// called.
+  ///
+  /// The next code copies a graph with several data:
+  ///\code
+  ///  BpGraphCopy<OrigBpGraph, NewBpGraph> cg(orig_graph, new_graph);
+  ///  // Create references for the nodes
+  ///  OrigBpGraph::NodeMap<NewBpGraph::Node> nr(orig_graph);
+  ///  cg.nodeRef(nr);
+  ///  // Create cross references (inverse) for the edges
+  ///  NewBpGraph::EdgeMap<OrigBpGraph::Edge> ecr(new_graph);
+  ///  cg.edgeCrossRef(ecr);
+  ///  // Copy a red node map
+  ///  OrigBpGraph::RedNodeMap<double> ormap(orig_graph);
+  ///  NewBpGraph::RedNodeMap<double> nrmap(new_graph);
+  ///  cg.redNodeMap(ormap, nrmap);
+  ///  // Copy a node
+  ///  OrigBpGraph::Node on;
+  ///  NewBpGraph::Node nn;
+  ///  cg.node(on, nn);
+  ///  // Execute copying
+  ///  cg.run();
+  ///\endcode
+  template <typename From, typename To>
+  class BpGraphCopy {
+  private:
+
+    typedef typename From::Node Node;
+    typedef typename From::RedNode RedNode;
+    typedef typename From::BlueNode BlueNode;
+    typedef typename From::NodeIt NodeIt;
+    typedef typename From::Arc Arc;
+    typedef typename From::ArcIt ArcIt;
+    typedef typename From::Edge Edge;
+    typedef typename From::EdgeIt EdgeIt;
+
+    typedef typename To::Node TNode;
+    typedef typename To::RedNode TRedNode;
+    typedef typename To::BlueNode TBlueNode;
+    typedef typename To::Arc TArc;
+    typedef typename To::Edge TEdge;
+
+    typedef typename From::template RedNodeMap<TRedNode> RedNodeRefMap;
+    typedef typename From::template BlueNodeMap<TBlueNode> BlueNodeRefMap;
+    typedef typename From::template EdgeMap<TEdge> EdgeRefMap;
+
+    struct NodeRefMap {
+      NodeRefMap(const From& from, const RedNodeRefMap& red_node_ref,
+                 const BlueNodeRefMap& blue_node_ref)
+        : _from(from), _red_node_ref(red_node_ref),
+          _blue_node_ref(blue_node_ref) {}
+
+      typedef typename From::Node Key;
+      typedef typename To::Node Value;
+
+      Value operator[](const Key& key) const {
+        if (_from.red(key)) {
+          return _red_node_ref[_from.asRedNodeUnsafe(key)];
+        } else {
+          return _blue_node_ref[_from.asBlueNodeUnsafe(key)];
+        }
+      }
+
+      const From& _from;
+      const RedNodeRefMap& _red_node_ref;
+      const BlueNodeRefMap& _blue_node_ref;
+    };
+
+    struct ArcRefMap {
+      ArcRefMap(const From& from, const To& to, const EdgeRefMap& edge_ref)
+        : _from(from), _to(to), _edge_ref(edge_ref) {}
+
+      typedef typename From::Arc Key;
+      typedef typename To::Arc Value;
+
+      Value operator[](const Key& key) const {
+        return _to.direct(_edge_ref[key], _from.direction(key));
+      }
+
+      const From& _from;
+      const To& _to;
+      const EdgeRefMap& _edge_ref;
+    };
+
+  public:
+
+    /// \brief Constructor of BpGraphCopy.
+    ///
+    /// Constructor of BpGraphCopy for copying the content of the
+    /// \c from graph into the \c to graph.
+    BpGraphCopy(const From& from, To& to)
+      : _from(from), _to(to) {}
+
+    /// \brief Destructor of BpGraphCopy
+    ///
+    /// Destructor of BpGraphCopy.
+    ~BpGraphCopy() {
+      for (int i = 0; i < int(_node_maps.size()); ++i) {
+        delete _node_maps[i];
+      }
+      for (int i = 0; i < int(_red_maps.size()); ++i) {
+        delete _red_maps[i];
+      }
+      for (int i = 0; i < int(_blue_maps.size()); ++i) {
+        delete _blue_maps[i];
+      }
+      for (int i = 0; i < int(_arc_maps.size()); ++i) {
+        delete _arc_maps[i];
+      }
+      for (int i = 0; i < int(_edge_maps.size()); ++i) {
+        delete _edge_maps[i];
+      }
+    }
+
+    /// \brief Copy the node references into the given map.
+    ///
+    /// This function copies the node references into the given map.
+    /// The parameter should be a map, whose key type is the Node type of
+    /// the source graph, while the value type is the Node type of the
+    /// destination graph.
+    template <typename NodeRef>
+    BpGraphCopy& nodeRef(NodeRef& map) {
+      _node_maps.push_back(new _core_bits::RefCopy<From, Node,
+                           NodeRefMap, NodeRef>(map));
+      return *this;
+    }
+
+    /// \brief Copy the node cross references into the given map.
+    ///
+    /// This function copies the node cross references (reverse references)
+    /// into the given map. The parameter should be a map, whose key type
+    /// is the Node type of the destination graph, while the value type is
+    /// the Node type of the source graph.
+    template <typename NodeCrossRef>
+    BpGraphCopy& nodeCrossRef(NodeCrossRef& map) {
+      _node_maps.push_back(new _core_bits::CrossRefCopy<From, Node,
+                           NodeRefMap, NodeCrossRef>(map));
+      return *this;
+    }
+
+    /// \brief Make a copy of the given node map.
+    ///
+    /// This function makes a copy of the given node map for the newly
+    /// created graph.
+    /// The key type of the new map \c tmap should be the Node type of the
+    /// destination graph, and the key type of the original map \c map
+    /// should be the Node type of the source graph.
+    template <typename FromMap, typename ToMap>
+    BpGraphCopy& nodeMap(const FromMap& map, ToMap& tmap) {
+      _node_maps.push_back(new _core_bits::MapCopy<From, Node,
+                           NodeRefMap, FromMap, ToMap>(map, tmap));
+      return *this;
+    }
+
+    /// \brief Make a copy of the given node.
+    ///
+    /// This function makes a copy of the given node.
+    BpGraphCopy& node(const Node& node, TNode& tnode) {
+      _node_maps.push_back(new _core_bits::ItemCopy<From, Node,
+                           NodeRefMap, TNode>(node, tnode));
+      return *this;
+    }
+
+    /// \brief Copy the red node references into the given map.
+    ///
+    /// This function copies the red node references into the given
+    /// map.  The parameter should be a map, whose key type is the
+    /// Node type of the source graph with the red item set, while the
+    /// value type is the Node type of the destination graph.
+    template <typename RedRef>
+    BpGraphCopy& redRef(RedRef& map) {
+      _red_maps.push_back(new _core_bits::RefCopy<From, RedNode,
+                          RedNodeRefMap, RedRef>(map));
+      return *this;
+    }
+
+    /// \brief Copy the red node cross references into the given map.
+    ///
+    /// This function copies the red node cross references (reverse
+    /// references) into the given map. The parameter should be a map,
+    /// whose key type is the Node type of the destination graph with
+    /// the red item set, while the value type is the Node type of the
+    /// source graph.
+    template <typename RedCrossRef>
+    BpGraphCopy& redCrossRef(RedCrossRef& map) {
+      _red_maps.push_back(new _core_bits::CrossRefCopy<From, RedNode,
+                          RedNodeRefMap, RedCrossRef>(map));
+      return *this;
+    }
+
+    /// \brief Make a copy of the given red node map.
+    ///
+    /// This function makes a copy of the given red node map for the newly
+    /// created graph.
+    /// The key type of the new map \c tmap should be the Node type of
+    /// the destination graph with the red items, and the key type of
+    /// the original map \c map should be the Node type of the source
+    /// graph.
+    template <typename FromMap, typename ToMap>
+    BpGraphCopy& redNodeMap(const FromMap& map, ToMap& tmap) {
+      _red_maps.push_back(new _core_bits::MapCopy<From, RedNode,
+                          RedNodeRefMap, FromMap, ToMap>(map, tmap));
+      return *this;
+    }
+
+    /// \brief Make a copy of the given red node.
+    ///
+    /// This function makes a copy of the given red node.
+    BpGraphCopy& redNode(const RedNode& node, TRedNode& tnode) {
+      _red_maps.push_back(new _core_bits::ItemCopy<From, RedNode,
+                          RedNodeRefMap, TRedNode>(node, tnode));
+      return *this;
+    }
+
+    /// \brief Copy the blue node references into the given map.
+    ///
+    /// This function copies the blue node references into the given
+    /// map.  The parameter should be a map, whose key type is the
+    /// Node type of the source graph with the blue item set, while the
+    /// value type is the Node type of the destination graph.
+    template <typename BlueRef>
+    BpGraphCopy& blueRef(BlueRef& map) {
+      _blue_maps.push_back(new _core_bits::RefCopy<From, BlueNode,
+                           BlueNodeRefMap, BlueRef>(map));
+      return *this;
+    }
+
+    /// \brief Copy the blue node cross references into the given map.
+    ///
+    /// This function copies the blue node cross references (reverse
+    /// references) into the given map. The parameter should be a map,
+    /// whose key type is the Node type of the destination graph with
+    /// the blue item set, while the value type is the Node type of the
+    /// source graph.
+    template <typename BlueCrossRef>
+    BpGraphCopy& blueCrossRef(BlueCrossRef& map) {
+      _blue_maps.push_back(new _core_bits::CrossRefCopy<From, BlueNode,
+                           BlueNodeRefMap, BlueCrossRef>(map));
+      return *this;
+    }
+
+    /// \brief Make a copy of the given blue node map.
+    ///
+    /// This function makes a copy of the given blue node map for the newly
+    /// created graph.
+    /// The key type of the new map \c tmap should be the Node type of
+    /// the destination graph with the blue items, and the key type of
+    /// the original map \c map should be the Node type of the source
+    /// graph.
+    template <typename FromMap, typename ToMap>
+    BpGraphCopy& blueNodeMap(const FromMap& map, ToMap& tmap) {
+      _blue_maps.push_back(new _core_bits::MapCopy<From, BlueNode,
+                           BlueNodeRefMap, FromMap, ToMap>(map, tmap));
+      return *this;
+    }
+
+    /// \brief Make a copy of the given blue node.
+    ///
+    /// This function makes a copy of the given blue node.
+    BpGraphCopy& blueNode(const BlueNode& node, TBlueNode& tnode) {
+      _blue_maps.push_back(new _core_bits::ItemCopy<From, BlueNode,
+                           BlueNodeRefMap, TBlueNode>(node, tnode));
+      return *this;
+    }
+
+    /// \brief Copy the arc references into the given map.
+    ///
+    /// This function copies the arc references into the given map.
+    /// The parameter should be a map, whose key type is the Arc type of
+    /// the source graph, while the value type is the Arc type of the
+    /// destination graph.
+    template <typename ArcRef>
+    BpGraphCopy& arcRef(ArcRef& map) {
+      _arc_maps.push_back(new _core_bits::RefCopy<From, Arc,
+                          ArcRefMap, ArcRef>(map));
+      return *this;
+    }
+
+    /// \brief Copy the arc cross references into the given map.
+    ///
+    /// This function copies the arc cross references (reverse references)
+    /// into the given map. The parameter should be a map, whose key type
+    /// is the Arc type of the destination graph, while the value type is
+    /// the Arc type of the source graph.
+    template <typename ArcCrossRef>
+    BpGraphCopy& arcCrossRef(ArcCrossRef& map) {
+      _arc_maps.push_back(new _core_bits::CrossRefCopy<From, Arc,
+                          ArcRefMap, ArcCrossRef>(map));
+      return *this;
+    }
+
+    /// \brief Make a copy of the given arc map.
+    ///
+    /// This function makes a copy of the given arc map for the newly
+    /// created graph.
+    /// The key type of the new map \c tmap should be the Arc type of the
+    /// destination graph, and the key type of the original map \c map
+    /// should be the Arc type of the source graph.
+    template <typename FromMap, typename ToMap>
+    BpGraphCopy& arcMap(const FromMap& map, ToMap& tmap) {
+      _arc_maps.push_back(new _core_bits::MapCopy<From, Arc,
+                          ArcRefMap, FromMap, ToMap>(map, tmap));
+      return *this;
+    }
+
+    /// \brief Make a copy of the given arc.
+    ///
+    /// This function makes a copy of the given arc.
+    BpGraphCopy& arc(const Arc& arc, TArc& tarc) {
+      _arc_maps.push_back(new _core_bits::ItemCopy<From, Arc,
+                          ArcRefMap, TArc>(arc, tarc));
+      return *this;
+    }
+
+    /// \brief Copy the edge references into the given map.
+    ///
+    /// This function copies the edge references into the given map.
+    /// The parameter should be a map, whose key type is the Edge type of
+    /// the source graph, while the value type is the Edge type of the
+    /// destination graph.
+    template <typename EdgeRef>
+    BpGraphCopy& edgeRef(EdgeRef& map) {
+      _edge_maps.push_back(new _core_bits::RefCopy<From, Edge,
+                           EdgeRefMap, EdgeRef>(map));
+      return *this;
+    }
+
+    /// \brief Copy the edge cross references into the given map.
+    ///
+    /// This function copies the edge cross references (reverse references)
+    /// into the given map. The parameter should be a map, whose key type
+    /// is the Edge type of the destination graph, while the value type is
+    /// the Edge type of the source graph.
+    template <typename EdgeCrossRef>
+    BpGraphCopy& edgeCrossRef(EdgeCrossRef& map) {
+      _edge_maps.push_back(new _core_bits::CrossRefCopy<From,
+                           Edge, EdgeRefMap, EdgeCrossRef>(map));
+      return *this;
+    }
+
+    /// \brief Make a copy of the given edge map.
+    ///
+    /// This function makes a copy of the given edge map for the newly
+    /// created graph.
+    /// The key type of the new map \c tmap should be the Edge type of the
+    /// destination graph, and the key type of the original map \c map
+    /// should be the Edge type of the source graph.
+    template <typename FromMap, typename ToMap>
+    BpGraphCopy& edgeMap(const FromMap& map, ToMap& tmap) {
+      _edge_maps.push_back(new _core_bits::MapCopy<From, Edge,
+                           EdgeRefMap, FromMap, ToMap>(map, tmap));
+      return *this;
+    }
+
+    /// \brief Make a copy of the given edge.
+    ///
+    /// This function makes a copy of the given edge.
+    BpGraphCopy& edge(const Edge& edge, TEdge& tedge) {
+      _edge_maps.push_back(new _core_bits::ItemCopy<From, Edge,
+                           EdgeRefMap, TEdge>(edge, tedge));
+      return *this;
+    }
+
+    /// \brief Execute copying.
+    ///
+    /// This function executes the copying of the graph along with the
+    /// copying of the assigned data.
+    void run() {
+      RedNodeRefMap redNodeRefMap(_from);
+      BlueNodeRefMap blueNodeRefMap(_from);
+      NodeRefMap nodeRefMap(_from, redNodeRefMap, blueNodeRefMap);
+      EdgeRefMap edgeRefMap(_from);
+      ArcRefMap arcRefMap(_from, _to, edgeRefMap);
+      _core_bits::BpGraphCopySelector<To>::
+        copy(_from, _to, redNodeRefMap, blueNodeRefMap, edgeRefMap);
+      for (int i = 0; i < int(_node_maps.size()); ++i) {
+        _node_maps[i]->copy(_from, nodeRefMap);
+      }
+      for (int i = 0; i < int(_red_maps.size()); ++i) {
+        _red_maps[i]->copy(_from, redNodeRefMap);
+      }
+      for (int i = 0; i < int(_blue_maps.size()); ++i) {
+        _blue_maps[i]->copy(_from, blueNodeRefMap);
+      }
+      for (int i = 0; i < int(_edge_maps.size()); ++i) {
+        _edge_maps[i]->copy(_from, edgeRefMap);
+      }
+      for (int i = 0; i < int(_arc_maps.size()); ++i) {
+        _arc_maps[i]->copy(_from, arcRefMap);
+      }
+    }
+
+  private:
+
+    const From& _from;
+    To& _to;
+
+    std::vector<_core_bits::MapCopyBase<From, Node, NodeRefMap>* >
+      _node_maps;
+
+    std::vector<_core_bits::MapCopyBase<From, RedNode, RedNodeRefMap>* >
+      _red_maps;
+
+    std::vector<_core_bits::MapCopyBase<From, BlueNode, BlueNodeRefMap>* >
+      _blue_maps;
+
+    std::vector<_core_bits::MapCopyBase<From, Arc, ArcRefMap>* >
+      _arc_maps;
+
+    std::vector<_core_bits::MapCopyBase<From, Edge, EdgeRefMap>* >
+      _edge_maps;
+
+  };
+
+  /// \brief Copy a graph to another graph.
+  ///
+  /// This function copies a graph to another graph.
+  /// The complete usage of it is detailed in the BpGraphCopy class,
+  /// but a short example shows a basic work:
+  ///\code
+  /// graphCopy(src, trg).nodeRef(nr).edgeCrossRef(ecr).run();
+  ///\endcode
+  ///
+  /// After the copy the \c nr map will contain the mapping from the
+  /// nodes of the \c from graph to the nodes of the \c to graph and
+  /// \c ecr will contain the mapping from the edges of the \c to graph
+  /// to the edges of the \c from graph.
+  ///
+  /// \see BpGraphCopy
+  template <typename From, typename To>
+  BpGraphCopy<From, To>
+  bpGraphCopy(const From& from, To& to) {
+    return BpGraphCopy<From, To>(from, to);
+  }
+
   namespace _core_bits {
 
     template <typename Graph, typename Enable = void>
@@ -1036,26 +1672,25 @@ namespace lemon {
   ///\sa ArcLookUp, AllArcLookUp, DynArcLookUp
   template <typename GR>
   class ConArcIt : public GR::Arc {
+    typedef typename GR::Arc Parent;
+
   public:
 
-    typedef GR Graph;
-    typedef typename Graph::Arc Parent;
-
-    typedef typename Graph::Arc Arc;
-    typedef typename Graph::Node Node;
+    typedef typename GR::Arc Arc;
+    typedef typename GR::Node Node;
 
     /// \brief Constructor.
     ///
     /// Construct a new ConArcIt iterating on the arcs that
     /// connects nodes \c u and \c v.
-    ConArcIt(const Graph& g, Node u, Node v) : _graph(g) {
+    ConArcIt(const GR& g, Node u, Node v) : _graph(g) {
       Parent::operator=(findArc(_graph, u, v));
     }
 
     /// \brief Constructor.
     ///
     /// Construct a new ConArcIt that continues the iterating from arc \c a.
-    ConArcIt(const Graph& g, Arc a) : Parent(a), _graph(g) {}
+    ConArcIt(const GR& g, Arc a) : Parent(a), _graph(g) {}
 
     /// \brief Increment operator.
     ///
@@ -1066,7 +1701,7 @@ namespace lemon {
       return *this;
     }
   private:
-    const Graph& _graph;
+    const GR& _graph;
   };
 
   namespace _core_bits {
@@ -1159,26 +1794,25 @@ namespace lemon {
   ///\sa findEdge()
   template <typename GR>
   class ConEdgeIt : public GR::Edge {
+    typedef typename GR::Edge Parent;
+
   public:
 
-    typedef GR Graph;
-    typedef typename Graph::Edge Parent;
-
-    typedef typename Graph::Edge Edge;
-    typedef typename Graph::Node Node;
+    typedef typename GR::Edge Edge;
+    typedef typename GR::Node Node;
 
     /// \brief Constructor.
     ///
     /// Construct a new ConEdgeIt iterating on the edges that
     /// connects nodes \c u and \c v.
-    ConEdgeIt(const Graph& g, Node u, Node v) : _graph(g), _u(u), _v(v) {
+    ConEdgeIt(const GR& g, Node u, Node v) : _graph(g), _u(u), _v(v) {
       Parent::operator=(findEdge(_graph, _u, _v));
     }
 
     /// \brief Constructor.
     ///
     /// Construct a new ConEdgeIt that continues iterating from edge \c e.
-    ConEdgeIt(const Graph& g, Edge e) : Parent(e), _graph(g) {}
+    ConEdgeIt(const GR& g, Edge e) : Parent(e), _graph(g) {}
 
     /// \brief Increment operator.
     ///
@@ -1188,7 +1822,7 @@ namespace lemon {
       return *this;
     }
   private:
-    const Graph& _graph;
+    const GR& _graph;
     Node _u, _v;
   };
 
@@ -1219,19 +1853,23 @@ namespace lemon {
   class DynArcLookUp
     : protected ItemSetTraits<GR, typename GR::Arc>::ItemNotifier::ObserverBase
   {
-  public:
     typedef typename ItemSetTraits<GR, typename GR::Arc>
     ::ItemNotifier::ObserverBase Parent;
 
     TEMPLATE_DIGRAPH_TYPEDEFS(GR);
+
+  public:
+
+    /// The Digraph type
     typedef GR Digraph;
 
   protected:
 
-    class AutoNodeMap : public ItemSetTraits<GR, Node>::template Map<Arc>::Type {
-    public:
-
+    class AutoNodeMap : public ItemSetTraits<GR, Node>::template Map<Arc>::Type
+    {
       typedef typename ItemSetTraits<GR, Node>::template Map<Arc>::Type Parent;
+
+    public:
 
       AutoNodeMap(const GR& digraph) : Parent(digraph, INVALID) {}
 
@@ -1257,12 +1895,6 @@ namespace lemon {
       }
     };
 
-    const Digraph &_g;
-    AutoNodeMap _head;
-    typename Digraph::template ArcMap<Arc> _parent;
-    typename Digraph::template ArcMap<Arc> _left;
-    typename Digraph::template ArcMap<Arc> _right;
-
     class ArcLess {
       const Digraph &g;
     public:
@@ -1272,6 +1904,14 @@ namespace lemon {
         return g.target(a)<g.target(b);
       }
     };
+
+  protected:
+
+    const Digraph &_g;
+    AutoNodeMap _head;
+    typename Digraph::template ArcMap<Arc> _parent;
+    typename Digraph::template ArcMap<Arc> _left;
+    typename Digraph::template ArcMap<Arc> _right;
 
   public:
 
@@ -1315,27 +1955,27 @@ namespace lemon {
 
     virtual void clear() {
       for(NodeIt n(_g);n!=INVALID;++n) {
-        _head.set(n, INVALID);
+        _head[n] = INVALID;
       }
     }
 
     void insert(Arc arc) {
       Node s = _g.source(arc);
       Node t = _g.target(arc);
-      _left.set(arc, INVALID);
-      _right.set(arc, INVALID);
+      _left[arc] = INVALID;
+      _right[arc] = INVALID;
 
       Arc e = _head[s];
       if (e == INVALID) {
-        _head.set(s, arc);
-        _parent.set(arc, INVALID);
+        _head[s] = arc;
+        _parent[arc] = INVALID;
         return;
       }
       while (true) {
         if (t < _g.target(e)) {
           if (_left[e] == INVALID) {
-            _left.set(e, arc);
-            _parent.set(arc, e);
+            _left[e] = arc;
+            _parent[arc] = e;
             splay(arc);
             return;
           } else {
@@ -1343,8 +1983,8 @@ namespace lemon {
           }
         } else {
           if (_right[e] == INVALID) {
-            _right.set(e, arc);
-            _parent.set(arc, e);
+            _right[e] = arc;
+            _parent[arc] = e;
             splay(arc);
             return;
           } else {
@@ -1357,27 +1997,27 @@ namespace lemon {
     void remove(Arc arc) {
       if (_left[arc] == INVALID) {
         if (_right[arc] != INVALID) {
-          _parent.set(_right[arc], _parent[arc]);
+          _parent[_right[arc]] = _parent[arc];
         }
         if (_parent[arc] != INVALID) {
           if (_left[_parent[arc]] == arc) {
-            _left.set(_parent[arc], _right[arc]);
+            _left[_parent[arc]] = _right[arc];
           } else {
-            _right.set(_parent[arc], _right[arc]);
+            _right[_parent[arc]] = _right[arc];
           }
         } else {
-          _head.set(_g.source(arc), _right[arc]);
+          _head[_g.source(arc)] = _right[arc];
         }
       } else if (_right[arc] == INVALID) {
-        _parent.set(_left[arc], _parent[arc]);
+        _parent[_left[arc]] = _parent[arc];
         if (_parent[arc] != INVALID) {
           if (_left[_parent[arc]] == arc) {
-            _left.set(_parent[arc], _left[arc]);
+            _left[_parent[arc]] = _left[arc];
           } else {
-            _right.set(_parent[arc], _left[arc]);
+            _right[_parent[arc]] = _left[arc];
           }
         } else {
-          _head.set(_g.source(arc), _left[arc]);
+          _head[_g.source(arc)] = _left[arc];
         }
       } else {
         Arc e = _left[arc];
@@ -1387,38 +2027,38 @@ namespace lemon {
             e = _right[e];
           }
           Arc s = _parent[e];
-          _right.set(_parent[e], _left[e]);
+          _right[_parent[e]] = _left[e];
           if (_left[e] != INVALID) {
-            _parent.set(_left[e], _parent[e]);
+            _parent[_left[e]] = _parent[e];
           }
 
-          _left.set(e, _left[arc]);
-          _parent.set(_left[arc], e);
-          _right.set(e, _right[arc]);
-          _parent.set(_right[arc], e);
+          _left[e] = _left[arc];
+          _parent[_left[arc]] = e;
+          _right[e] = _right[arc];
+          _parent[_right[arc]] = e;
 
-          _parent.set(e, _parent[arc]);
+          _parent[e] = _parent[arc];
           if (_parent[arc] != INVALID) {
             if (_left[_parent[arc]] == arc) {
-              _left.set(_parent[arc], e);
+              _left[_parent[arc]] = e;
             } else {
-              _right.set(_parent[arc], e);
+              _right[_parent[arc]] = e;
             }
           }
           splay(s);
         } else {
-          _right.set(e, _right[arc]);
-          _parent.set(_right[arc], e);
-          _parent.set(e, _parent[arc]);
+          _right[e] = _right[arc];
+          _parent[_right[arc]] = e;
+          _parent[e] = _parent[arc];
 
           if (_parent[arc] != INVALID) {
             if (_left[_parent[arc]] == arc) {
-              _left.set(_parent[arc], e);
+              _left[_parent[arc]] = e;
             } else {
-              _right.set(_parent[arc], e);
+              _right[_parent[arc]] = e;
             }
           } else {
-            _head.set(_g.source(arc), e);
+            _head[_g.source(arc)] = e;
           }
         }
       }
@@ -1430,17 +2070,17 @@ namespace lemon {
       Arc me=v[m];
       if (a < m) {
         Arc left = refreshRec(v,a,m-1);
-        _left.set(me, left);
-        _parent.set(left, me);
+        _left[me] = left;
+        _parent[left] = me;
       } else {
-        _left.set(me, INVALID);
+        _left[me] = INVALID;
       }
       if (m < b) {
         Arc right = refreshRec(v,m+1,b);
-        _right.set(me, right);
-        _parent.set(right, me);
+        _right[me] = right;
+        _parent[right] = me;
       } else {
-        _right.set(me, INVALID);
+        _right[me] = INVALID;
       }
       return me;
     }
@@ -1452,46 +2092,46 @@ namespace lemon {
         if (!v.empty()) {
           std::sort(v.begin(),v.end(),ArcLess(_g));
           Arc head = refreshRec(v,0,v.size()-1);
-          _head.set(n, head);
-          _parent.set(head, INVALID);
+          _head[n] = head;
+          _parent[head] = INVALID;
         }
-        else _head.set(n, INVALID);
+        else _head[n] = INVALID;
       }
     }
 
     void zig(Arc v) {
       Arc w = _parent[v];
-      _parent.set(v, _parent[w]);
-      _parent.set(w, v);
-      _left.set(w, _right[v]);
-      _right.set(v, w);
+      _parent[v] = _parent[w];
+      _parent[w] = v;
+      _left[w] = _right[v];
+      _right[v] = w;
       if (_parent[v] != INVALID) {
         if (_right[_parent[v]] == w) {
-          _right.set(_parent[v], v);
+          _right[_parent[v]] = v;
         } else {
-          _left.set(_parent[v], v);
+          _left[_parent[v]] = v;
         }
       }
       if (_left[w] != INVALID){
-        _parent.set(_left[w], w);
+        _parent[_left[w]] = w;
       }
     }
 
     void zag(Arc v) {
       Arc w = _parent[v];
-      _parent.set(v, _parent[w]);
-      _parent.set(w, v);
-      _right.set(w, _left[v]);
-      _left.set(v, w);
+      _parent[v] = _parent[w];
+      _parent[w] = v;
+      _right[w] = _left[v];
+      _left[v] = w;
       if (_parent[v] != INVALID){
         if (_left[_parent[v]] == w) {
-          _left.set(_parent[v], v);
+          _left[_parent[v]] = v;
         } else {
-          _right.set(_parent[v], v);
+          _right[_parent[v]] = v;
         }
       }
       if (_right[w] != INVALID){
-        _parent.set(_right[w], w);
+        _parent[_right[w]] = w;
       }
     }
 
@@ -1630,8 +2270,11 @@ namespace lemon {
   template<class GR>
   class ArcLookUp
   {
-  public:
     TEMPLATE_DIGRAPH_TYPEDEFS(GR);
+
+  public:
+
+    /// The Digraph type
     typedef GR Digraph;
 
   protected:
@@ -1746,9 +2389,8 @@ namespace lemon {
     using ArcLookUp<GR>::_head;
 
     TEMPLATE_DIGRAPH_TYPEDEFS(GR);
-    typedef GR Digraph;
 
-    typename Digraph::template ArcMap<Arc> _next;
+    typename GR::template ArcMap<Arc> _next;
 
     Arc refreshNext(Arc head,Arc next=INVALID)
     {
@@ -1767,6 +2409,10 @@ namespace lemon {
     }
 
   public:
+
+    /// The Digraph type
+    typedef GR Digraph;
+
     ///Constructor
 
     ///Constructor.
@@ -1827,15 +2473,26 @@ namespace lemon {
     ///this operator. If you change the outgoing arcs of
     ///a single node \c n, then \ref refresh(Node) "refresh(n)" is enough.
     ///
-#ifdef DOXYGEN
-    Arc operator()(Node s, Node t, Arc prev=INVALID) const {}
-#else
-    using ArcLookUp<GR>::operator() ;
-    Arc operator()(Node s, Node t, Arc prev) const
+    Arc operator()(Node s, Node t, Arc prev=INVALID) const
     {
-      return prev==INVALID?(*this)(s,t):_next[prev];
+      if(prev==INVALID)
+        {
+          Arc f=INVALID;
+          Arc e;
+          for(e=_head[s];
+              e!=INVALID&&_g.target(e)!=t;
+              e = t < _g.target(e)?_left[e]:_right[e]) ;
+          while(e!=INVALID)
+            if(_g.target(e)==t)
+              {
+                f = e;
+                e = _left[e];
+              }
+            else e = _right[e];
+          return f;
+        }
+      else return _next[prev];
     }
-#endif
 
   };
 

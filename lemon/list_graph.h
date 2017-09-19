@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2009
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -21,7 +21,7 @@
 
 ///\ingroup graphs
 ///\file
-///\brief ListDigraph, ListGraph classes.
+///\brief ListDigraph and ListGraph classes.
 
 #include <lemon/core.h>
 #include <lemon/error.h>
@@ -31,6 +31,8 @@
 #include <list>
 
 namespace lemon {
+
+  class ListDigraph;
 
   class ListDigraphBase {
 
@@ -46,13 +48,13 @@ namespace lemon {
       int next_in, next_out;
     };
 
-    std::vector<NodeT> nodes;
+    std::vector<NodeT> _nodes;
 
     int first_node;
 
     int first_free_node;
 
-    std::vector<ArcT> arcs;
+    std::vector<ArcT> _arcs;
 
     int first_free_arc;
 
@@ -62,6 +64,7 @@ namespace lemon {
 
     class Node {
       friend class ListDigraphBase;
+      friend class ListDigraph;
     protected:
 
       int id;
@@ -77,6 +80,7 @@ namespace lemon {
 
     class Arc {
       friend class ListDigraphBase;
+      friend class ListDigraph;
     protected:
 
       int id;
@@ -93,15 +97,15 @@ namespace lemon {
 
 
     ListDigraphBase()
-      : nodes(), first_node(-1),
-        first_free_node(-1), arcs(), first_free_arc(-1) {}
+      : _nodes(), first_node(-1),
+        first_free_node(-1), _arcs(), first_free_arc(-1) {}
 
 
-    int maxNodeId() const { return nodes.size()-1; }
-    int maxArcId() const { return arcs.size()-1; }
+    int maxNodeId() const { return _nodes.size()-1; }
+    int maxArcId() const { return _arcs.size()-1; }
 
-    Node source(Arc e) const { return Node(arcs[e.id].source); }
-    Node target(Arc e) const { return Node(arcs[e.id].target); }
+    Node source(Arc e) const { return Node(_arcs[e.id].source); }
+    Node target(Arc e) const { return Node(_arcs[e.id].target); }
 
 
     void first(Node& node) const {
@@ -109,42 +113,42 @@ namespace lemon {
     }
 
     void next(Node& node) const {
-      node.id = nodes[node.id].next;
+      node.id = _nodes[node.id].next;
     }
 
 
     void first(Arc& arc) const {
       int n;
       for(n = first_node;
-          n!=-1 && nodes[n].first_in == -1;
-          n = nodes[n].next) {}
-      arc.id = (n == -1) ? -1 : nodes[n].first_in;
+          n != -1 && _nodes[n].first_out == -1;
+          n = _nodes[n].next) {}
+      arc.id = (n == -1) ? -1 : _nodes[n].first_out;
     }
 
     void next(Arc& arc) const {
-      if (arcs[arc.id].next_in != -1) {
-        arc.id = arcs[arc.id].next_in;
+      if (_arcs[arc.id].next_out != -1) {
+        arc.id = _arcs[arc.id].next_out;
       } else {
         int n;
-        for(n = nodes[arcs[arc.id].target].next;
-            n!=-1 && nodes[n].first_in == -1;
-            n = nodes[n].next) {}
-        arc.id = (n == -1) ? -1 : nodes[n].first_in;
+        for(n = _nodes[_arcs[arc.id].source].next;
+            n != -1 && _nodes[n].first_out == -1;
+            n = _nodes[n].next) {}
+        arc.id = (n == -1) ? -1 : _nodes[n].first_out;
       }
     }
 
     void firstOut(Arc &e, const Node& v) const {
-      e.id = nodes[v.id].first_out;
+      e.id = _nodes[v.id].first_out;
     }
     void nextOut(Arc &e) const {
-      e.id=arcs[e.id].next_out;
+      e.id=_arcs[e.id].next_out;
     }
 
     void firstIn(Arc &e, const Node& v) const {
-      e.id = nodes[v.id].first_in;
+      e.id = _nodes[v.id].first_in;
     }
     void nextIn(Arc &e) const {
-      e.id=arcs[e.id].next_in;
+      e.id=_arcs[e.id].next_in;
     }
 
 
@@ -155,32 +159,32 @@ namespace lemon {
     static Arc arcFromId(int id) { return Arc(id);}
 
     bool valid(Node n) const {
-      return n.id >= 0 && n.id < static_cast<int>(nodes.size()) &&
-        nodes[n.id].prev != -2;
+      return n.id >= 0 && n.id < static_cast<int>(_nodes.size()) &&
+        _nodes[n.id].prev != -2;
     }
 
     bool valid(Arc a) const {
-      return a.id >= 0 && a.id < static_cast<int>(arcs.size()) &&
-        arcs[a.id].prev_in != -2;
+      return a.id >= 0 && a.id < static_cast<int>(_arcs.size()) &&
+        _arcs[a.id].prev_in != -2;
     }
 
     Node addNode() {
       int n;
 
       if(first_free_node==-1) {
-        n = nodes.size();
-        nodes.push_back(NodeT());
+        n = _nodes.size();
+        _nodes.push_back(NodeT());
       } else {
         n = first_free_node;
-        first_free_node = nodes[n].next;
+        first_free_node = _nodes[n].next;
       }
 
-      nodes[n].next = first_node;
-      if(first_node != -1) nodes[first_node].prev = n;
+      _nodes[n].next = first_node;
+      if(first_node != -1) _nodes[first_node].prev = n;
       first_node = n;
-      nodes[n].prev = -1;
+      _nodes[n].prev = -1;
 
-      nodes[n].first_in = nodes[n].first_out = -1;
+      _nodes[n].first_in = _nodes[n].first_out = -1;
 
       return Node(n);
     }
@@ -189,29 +193,29 @@ namespace lemon {
       int n;
 
       if (first_free_arc == -1) {
-        n = arcs.size();
-        arcs.push_back(ArcT());
+        n = _arcs.size();
+        _arcs.push_back(ArcT());
       } else {
         n = first_free_arc;
-        first_free_arc = arcs[n].next_in;
+        first_free_arc = _arcs[n].next_in;
       }
 
-      arcs[n].source = u.id;
-      arcs[n].target = v.id;
+      _arcs[n].source = u.id;
+      _arcs[n].target = v.id;
 
-      arcs[n].next_out = nodes[u.id].first_out;
-      if(nodes[u.id].first_out != -1) {
-        arcs[nodes[u.id].first_out].prev_out = n;
+      _arcs[n].next_out = _nodes[u.id].first_out;
+      if(_nodes[u.id].first_out != -1) {
+        _arcs[_nodes[u.id].first_out].prev_out = n;
       }
 
-      arcs[n].next_in = nodes[v.id].first_in;
-      if(nodes[v.id].first_in != -1) {
-        arcs[nodes[v.id].first_in].prev_in = n;
+      _arcs[n].next_in = _nodes[v.id].first_in;
+      if(_nodes[v.id].first_in != -1) {
+        _arcs[_nodes[v.id].first_in].prev_in = n;
       }
 
-      arcs[n].prev_in = arcs[n].prev_out = -1;
+      _arcs[n].prev_in = _arcs[n].prev_out = -1;
 
-      nodes[u.id].first_out = nodes[v.id].first_in = n;
+      _nodes[u.id].first_out = _nodes[v.id].first_in = n;
 
       return Arc(n);
     }
@@ -219,87 +223,87 @@ namespace lemon {
     void erase(const Node& node) {
       int n = node.id;
 
-      if(nodes[n].next != -1) {
-        nodes[nodes[n].next].prev = nodes[n].prev;
+      if(_nodes[n].next != -1) {
+        _nodes[_nodes[n].next].prev = _nodes[n].prev;
       }
 
-      if(nodes[n].prev != -1) {
-        nodes[nodes[n].prev].next = nodes[n].next;
+      if(_nodes[n].prev != -1) {
+        _nodes[_nodes[n].prev].next = _nodes[n].next;
       } else {
-        first_node = nodes[n].next;
+        first_node = _nodes[n].next;
       }
 
-      nodes[n].next = first_free_node;
+      _nodes[n].next = first_free_node;
       first_free_node = n;
-      nodes[n].prev = -2;
+      _nodes[n].prev = -2;
 
     }
 
     void erase(const Arc& arc) {
       int n = arc.id;
 
-      if(arcs[n].next_in!=-1) {
-        arcs[arcs[n].next_in].prev_in = arcs[n].prev_in;
+      if(_arcs[n].next_in!=-1) {
+        _arcs[_arcs[n].next_in].prev_in = _arcs[n].prev_in;
       }
 
-      if(arcs[n].prev_in!=-1) {
-        arcs[arcs[n].prev_in].next_in = arcs[n].next_in;
+      if(_arcs[n].prev_in!=-1) {
+        _arcs[_arcs[n].prev_in].next_in = _arcs[n].next_in;
       } else {
-        nodes[arcs[n].target].first_in = arcs[n].next_in;
+        _nodes[_arcs[n].target].first_in = _arcs[n].next_in;
       }
 
 
-      if(arcs[n].next_out!=-1) {
-        arcs[arcs[n].next_out].prev_out = arcs[n].prev_out;
+      if(_arcs[n].next_out!=-1) {
+        _arcs[_arcs[n].next_out].prev_out = _arcs[n].prev_out;
       }
 
-      if(arcs[n].prev_out!=-1) {
-        arcs[arcs[n].prev_out].next_out = arcs[n].next_out;
+      if(_arcs[n].prev_out!=-1) {
+        _arcs[_arcs[n].prev_out].next_out = _arcs[n].next_out;
       } else {
-        nodes[arcs[n].source].first_out = arcs[n].next_out;
+        _nodes[_arcs[n].source].first_out = _arcs[n].next_out;
       }
 
-      arcs[n].next_in = first_free_arc;
+      _arcs[n].next_in = first_free_arc;
       first_free_arc = n;
-      arcs[n].prev_in = -2;
+      _arcs[n].prev_in = -2;
     }
 
     void clear() {
-      arcs.clear();
-      nodes.clear();
+      _arcs.clear();
+      _nodes.clear();
       first_node = first_free_node = first_free_arc = -1;
     }
 
   protected:
     void changeTarget(Arc e, Node n)
     {
-      if(arcs[e.id].next_in != -1)
-        arcs[arcs[e.id].next_in].prev_in = arcs[e.id].prev_in;
-      if(arcs[e.id].prev_in != -1)
-        arcs[arcs[e.id].prev_in].next_in = arcs[e.id].next_in;
-      else nodes[arcs[e.id].target].first_in = arcs[e.id].next_in;
-      if (nodes[n.id].first_in != -1) {
-        arcs[nodes[n.id].first_in].prev_in = e.id;
+      if(_arcs[e.id].next_in != -1)
+        _arcs[_arcs[e.id].next_in].prev_in = _arcs[e.id].prev_in;
+      if(_arcs[e.id].prev_in != -1)
+        _arcs[_arcs[e.id].prev_in].next_in = _arcs[e.id].next_in;
+      else _nodes[_arcs[e.id].target].first_in = _arcs[e.id].next_in;
+      if (_nodes[n.id].first_in != -1) {
+        _arcs[_nodes[n.id].first_in].prev_in = e.id;
       }
-      arcs[e.id].target = n.id;
-      arcs[e.id].prev_in = -1;
-      arcs[e.id].next_in = nodes[n.id].first_in;
-      nodes[n.id].first_in = e.id;
+      _arcs[e.id].target = n.id;
+      _arcs[e.id].prev_in = -1;
+      _arcs[e.id].next_in = _nodes[n.id].first_in;
+      _nodes[n.id].first_in = e.id;
     }
     void changeSource(Arc e, Node n)
     {
-      if(arcs[e.id].next_out != -1)
-        arcs[arcs[e.id].next_out].prev_out = arcs[e.id].prev_out;
-      if(arcs[e.id].prev_out != -1)
-        arcs[arcs[e.id].prev_out].next_out = arcs[e.id].next_out;
-      else nodes[arcs[e.id].source].first_out = arcs[e.id].next_out;
-      if (nodes[n.id].first_out != -1) {
-        arcs[nodes[n.id].first_out].prev_out = e.id;
+      if(_arcs[e.id].next_out != -1)
+        _arcs[_arcs[e.id].next_out].prev_out = _arcs[e.id].prev_out;
+      if(_arcs[e.id].prev_out != -1)
+        _arcs[_arcs[e.id].prev_out].next_out = _arcs[e.id].next_out;
+      else _nodes[_arcs[e.id].source].first_out = _arcs[e.id].next_out;
+      if (_nodes[n.id].first_out != -1) {
+        _arcs[_nodes[n.id].first_out].prev_out = e.id;
       }
-      arcs[e.id].source = n.id;
-      arcs[e.id].prev_out = -1;
-      arcs[e.id].next_out = nodes[n.id].first_out;
-      nodes[n.id].first_out = e.id;
+      _arcs[e.id].source = n.id;
+      _arcs[e.id].prev_out = -1;
+      _arcs[e.id].next_out = _nodes[n.id].first_out;
+      _nodes[n.id].first_out = e.id;
     }
 
   };
@@ -311,36 +315,29 @@ namespace lemon {
 
   ///A general directed graph structure.
 
-  ///\ref ListDigraph is a simple and fast <em>directed graph</em>
-  ///implementation based on static linked lists that are stored in
+  ///\ref ListDigraph is a versatile and fast directed graph
+  ///implementation based on linked lists that are stored in
   ///\c std::vector structures.
   ///
-  ///It conforms to the \ref concepts::Digraph "Digraph concept" and it
-  ///also provides several useful additional functionalities.
-  ///Most of the member functions and nested classes are documented
+  ///This type fully conforms to the \ref concepts::Digraph "Digraph concept"
+  ///and it also provides several useful additional functionalities.
+  ///Most of its member functions and nested classes are documented
   ///only in the concept class.
   ///
-  ///An important extra feature of this digraph implementation is that
-  ///its maps are real \ref concepts::ReferenceMap "reference map"s.
+  ///This class provides only linear time counting for nodes and arcs.
   ///
   ///\sa concepts::Digraph
-
+  ///\sa ListGraph
   class ListDigraph : public ExtendedListDigraphBase {
+    typedef ExtendedListDigraphBase Parent;
+
   private:
-    ///ListDigraph is \e not copy constructible. Use copyDigraph() instead.
-
-    ///ListDigraph is \e not copy constructible. Use copyDigraph() instead.
-    ///
+    /// Digraphs are \e not copy constructible. Use DigraphCopy instead.
     ListDigraph(const ListDigraph &) :ExtendedListDigraphBase() {};
-    ///\brief Assignment of ListDigraph to another one is \e not allowed.
-    ///Use copyDigraph() instead.
-
-    ///Assignment of ListDigraph to another one is \e not allowed.
-    ///Use copyDigraph() instead.
+    /// \brief Assignment of a digraph to another one is \e not allowed.
+    /// Use DigraphCopy instead.
     void operator=(const ListDigraph &) {}
   public:
-
-    typedef ExtendedListDigraphBase Parent;
 
     /// Constructor
 
@@ -350,71 +347,72 @@ namespace lemon {
 
     ///Add a new node to the digraph.
 
-    ///Add a new node to the digraph.
+    ///This function adds a new node to the digraph.
     ///\return The new node.
     Node addNode() { return Parent::addNode(); }
 
     ///Add a new arc to the digraph.
 
-    ///Add a new arc to the digraph with source node \c s
+    ///This function adds a new arc to the digraph with source node \c s
     ///and target node \c t.
     ///\return The new arc.
-    Arc addArc(const Node& s, const Node& t) {
+    Arc addArc(Node s, Node t) {
       return Parent::addArc(s, t);
     }
 
     ///\brief Erase a node from the digraph.
     ///
-    ///Erase a node from the digraph.
+    ///This function erases the given node along with its outgoing and
+    ///incoming arcs from the digraph.
     ///
-    void erase(const Node& n) { Parent::erase(n); }
+    ///\note All iterators referencing the removed node or the connected
+    ///arcs are invalidated, of course.
+    void erase(Node n) { Parent::erase(n); }
 
     ///\brief Erase an arc from the digraph.
     ///
-    ///Erase an arc from the digraph.
+    ///This function erases the given arc from the digraph.
     ///
-    void erase(const Arc& a) { Parent::erase(a); }
+    ///\note All iterators referencing the removed arc are invalidated,
+    ///of course.
+    void erase(Arc a) { Parent::erase(a); }
 
     /// Node validity check
 
-    /// This function gives back true if the given node is valid,
-    /// ie. it is a real node of the graph.
+    /// This function gives back \c true if the given node is valid,
+    /// i.e. it is a real node of the digraph.
     ///
-    /// \warning A Node pointing to a removed item
-    /// could become valid again later if new nodes are
-    /// added to the graph.
+    /// \warning A removed node could become valid again if new nodes are
+    /// added to the digraph.
     bool valid(Node n) const { return Parent::valid(n); }
 
     /// Arc validity check
 
-    /// This function gives back true if the given arc is valid,
-    /// ie. it is a real arc of the graph.
+    /// This function gives back \c true if the given arc is valid,
+    /// i.e. it is a real arc of the digraph.
     ///
-    /// \warning An Arc pointing to a removed item
-    /// could become valid again later if new nodes are
-    /// added to the graph.
+    /// \warning A removed arc could become valid again if new arcs are
+    /// added to the digraph.
     bool valid(Arc a) const { return Parent::valid(a); }
 
-    /// Change the target of \c a to \c n
+    /// Change the target node of an arc
 
-    /// Change the target of \c a to \c n
+    /// This function changes the target node of the given arc \c a to \c n.
     ///
-    ///\note The <tt>ArcIt</tt>s and <tt>OutArcIt</tt>s referencing
-    ///the changed arc remain valid. However <tt>InArcIt</tt>s are
-    ///invalidated.
+    ///\note \c ArcIt and \c OutArcIt iterators referencing the changed
+    ///arc remain valid, but \c InArcIt iterators are invalidated.
     ///
     ///\warning This functionality cannot be used together with the Snapshot
     ///feature.
     void changeTarget(Arc a, Node n) {
       Parent::changeTarget(a,n);
     }
-    /// Change the source of \c a to \c n
+    /// Change the source node of an arc
 
-    /// Change the source of \c a to \c n
+    /// This function changes the source node of the given arc \c a to \c n.
     ///
-    ///\note The <tt>InArcIt</tt>s referencing the changed arc remain
-    ///valid. However the <tt>ArcIt</tt>s and <tt>OutArcIt</tt>s are
-    ///invalidated.
+    ///\note \c InArcIt iterators referencing the changed arc remain
+    ///valid, but \c ArcIt and \c OutArcIt iterators are invalidated.
     ///
     ///\warning This functionality cannot be used together with the Snapshot
     ///feature.
@@ -422,94 +420,76 @@ namespace lemon {
       Parent::changeSource(a,n);
     }
 
-    /// Invert the direction of an arc.
+    /// Reverse the direction of an arc.
 
-    ///\note The <tt>ArcIt</tt>s referencing the changed arc remain
-    ///valid. However <tt>OutArcIt</tt>s and <tt>InArcIt</tt>s are
-    ///invalidated.
+    /// This function reverses the direction of the given arc.
+    ///\note \c ArcIt, \c OutArcIt and \c InArcIt iterators referencing
+    ///the changed arc are invalidated.
     ///
     ///\warning This functionality cannot be used together with the Snapshot
     ///feature.
-    void reverseArc(Arc e) {
-      Node t=target(e);
-      changeTarget(e,source(e));
-      changeSource(e,t);
+    void reverseArc(Arc a) {
+      Node t=target(a);
+      changeTarget(a,source(a));
+      changeSource(a,t);
     }
-
-    /// Reserve memory for nodes.
-
-    /// Using this function it is possible to avoid the superfluous memory
-    /// allocation: if you know that the digraph you want to build will
-    /// be very large (e.g. it will contain millions of nodes and/or arcs)
-    /// then it is worth reserving space for this amount before starting
-    /// to build the digraph.
-    /// \sa reserveArc
-    void reserveNode(int n) { nodes.reserve(n); };
-
-    /// Reserve memory for arcs.
-
-    /// Using this function it is possible to avoid the superfluous memory
-    /// allocation: if you know that the digraph you want to build will
-    /// be very large (e.g. it will contain millions of nodes and/or arcs)
-    /// then it is worth reserving space for this amount before starting
-    /// to build the digraph.
-    /// \sa reserveNode
-    void reserveArc(int m) { arcs.reserve(m); };
 
     ///Contract two nodes.
 
-    ///This function contracts two nodes.
-    ///Node \p b will be removed but instead of deleting
-    ///incident arcs, they will be joined to \p a.
-    ///The last parameter \p r controls whether to remove loops. \c true
-    ///means that loops will be removed.
+    ///This function contracts the given two nodes.
+    ///Node \c v is removed, but instead of deleting its
+    ///incident arcs, they are joined to node \c u.
+    ///If the last parameter \c r is \c true (this is the default value),
+    ///then the newly created loops are removed.
     ///
-    ///\note The <tt>ArcIt</tt>s referencing a moved arc remain
-    ///valid. However <tt>InArcIt</tt>s and <tt>OutArcIt</tt>s
-    ///may be invalidated.
+    ///\note The moved arcs are joined to node \c u using changeSource()
+    ///or changeTarget(), thus \c ArcIt and \c OutArcIt iterators are
+    ///invalidated for the outgoing arcs of node \c v and \c InArcIt
+    ///iterators are invalidated for the incoming arcs of \c v.
+    ///Moreover all iterators referencing node \c v or the removed
+    ///loops are also invalidated. Other iterators remain valid.
     ///
     ///\warning This functionality cannot be used together with the Snapshot
     ///feature.
-    void contract(Node a, Node b, bool r = true)
+    void contract(Node u, Node v, bool r = true)
     {
-      for(OutArcIt e(*this,b);e!=INVALID;) {
+      for(OutArcIt e(*this,v);e!=INVALID;) {
         OutArcIt f=e;
         ++f;
-        if(r && target(e)==a) erase(e);
-        else changeSource(e,a);
+        if(r && target(e)==u) erase(e);
+        else changeSource(e,u);
         e=f;
       }
-      for(InArcIt e(*this,b);e!=INVALID;) {
+      for(InArcIt e(*this,v);e!=INVALID;) {
         InArcIt f=e;
         ++f;
-        if(r && source(e)==a) erase(e);
-        else changeTarget(e,a);
+        if(r && source(e)==u) erase(e);
+        else changeTarget(e,u);
         e=f;
       }
-      erase(b);
+      erase(v);
     }
 
     ///Split a node.
 
-    ///This function splits a node. First a new node is added to the digraph,
-    ///then the source of each outgoing arc of \c n is moved to this new node.
-    ///If \c connect is \c true (this is the default value), then a new arc
-    ///from \c n to the newly created node is also added.
+    ///This function splits the given node. First, a new node is added
+    ///to the digraph, then the source of each outgoing arc of node \c n
+    ///is moved to this new node.
+    ///If the second parameter \c connect is \c true (this is the default
+    ///value), then a new arc from node \c n to the newly created node
+    ///is also added.
     ///\return The newly created node.
     ///
-    ///\note The <tt>ArcIt</tt>s referencing a moved arc remain
-    ///valid. However <tt>InArcIt</tt>s and <tt>OutArcIt</tt>s may
-    ///be invalidated.
+    ///\note All iterators remain valid.
     ///
-    ///\warning This functionality cannot be used in conjunction with the
+    ///\warning This functionality cannot be used together with the
     ///Snapshot feature.
     Node split(Node n, bool connect = true) {
       Node b = addNode();
-      for(OutArcIt e(*this,n);e!=INVALID;) {
-        OutArcIt f=e;
-        ++f;
-        changeSource(e,b);
-        e=f;
+      _nodes[b.id].first_out=_nodes[n.id].first_out;
+      _nodes[n.id].first_out=-1;
+      for(int i=_nodes[b.id].first_out; i!=-1; i=_arcs[i].next_out) {
+        _arcs[i].source=b.id;
       }
       if (connect) addArc(n,b);
       return b;
@@ -517,20 +497,52 @@ namespace lemon {
 
     ///Split an arc.
 
-    ///This function splits an arc. First a new node \c b is added to
-    ///the digraph, then the original arc is re-targeted to \c
-    ///b. Finally an arc from \c b to the original target is added.
-    ///
+    ///This function splits the given arc. First, a new node \c v is
+    ///added to the digraph, then the target node of the original arc
+    ///is set to \c v. Finally, an arc from \c v to the original target
+    ///is added.
     ///\return The newly created node.
+    ///
+    ///\note \c InArcIt iterators referencing the original arc are
+    ///invalidated. Other iterators remain valid.
     ///
     ///\warning This functionality cannot be used together with the
     ///Snapshot feature.
-    Node split(Arc e) {
-      Node b = addNode();
-      addArc(b,target(e));
-      changeTarget(e,b);
-      return b;
+    Node split(Arc a) {
+      Node v = addNode();
+      addArc(v,target(a));
+      changeTarget(a,v);
+      return v;
     }
+
+    ///Clear the digraph.
+
+    ///This function erases all nodes and arcs from the digraph.
+    ///
+    ///\note All iterators of the digraph are invalidated, of course.
+    void clear() {
+      Parent::clear();
+    }
+
+    /// Reserve memory for nodes.
+
+    /// Using this function, it is possible to avoid superfluous memory
+    /// allocation: if you know that the digraph you want to build will
+    /// be large (e.g. it will contain millions of nodes and/or arcs),
+    /// then it is worth reserving space for this amount before starting
+    /// to build the digraph.
+    /// \sa reserveArc()
+    void reserveNode(int n) { _nodes.reserve(n); };
+
+    /// Reserve memory for arcs.
+
+    /// Using this function, it is possible to avoid superfluous memory
+    /// allocation: if you know that the digraph you want to build will
+    /// be large (e.g. it will contain millions of nodes and/or arcs),
+    /// then it is worth reserving space for this amount before starting
+    /// to build the digraph.
+    /// \sa reserveNode()
+    void reserveArc(int m) { _arcs.reserve(m); };
 
     /// \brief Class to make a snapshot of the digraph and restore
     /// it later.
@@ -540,9 +552,15 @@ namespace lemon {
     /// The newly added nodes and arcs can be removed using the
     /// restore() function.
     ///
-    /// \warning Arc and node deletions and other modifications (e.g.
-    /// contracting, splitting, reversing arcs or nodes) cannot be
+    /// \note After a state is restored, you cannot restore a later state,
+    /// i.e. you cannot add the removed nodes and arcs again using
+    /// another Snapshot instance.
+    ///
+    /// \warning Node and arc deletions and other modifications (e.g.
+    /// reversing, contracting, splitting arcs or nodes) cannot be
     /// restored. These events invalidate the snapshot.
+    /// However, the arcs and nodes that were added to the digraph after
+    /// making the current snapshot can be removed without invalidating it.
     class Snapshot {
     protected:
 
@@ -564,7 +582,7 @@ namespace lemon {
           snapshot.addNode(node);
         }
         virtual void add(const std::vector<Node>& nodes) {
-          for (int i = nodes.size() - 1; i >= 0; ++i) {
+          for (int i = nodes.size() - 1; i >= 0; --i) {
             snapshot.addNode(nodes[i]);
           }
         }
@@ -614,7 +632,7 @@ namespace lemon {
           snapshot.addArc(arc);
         }
         virtual void add(const std::vector<Arc>& arcs) {
-          for (int i = arcs.size() - 1; i >= 0; ++i) {
+          for (int i = arcs.size() - 1; i >= 0; --i) {
             snapshot.addArc(arcs[i]);
           }
         }
@@ -712,39 +730,40 @@ namespace lemon {
       /// \brief Default constructor.
       ///
       /// Default constructor.
-      /// To actually make a snapshot you must call save().
+      /// You have to call save() to actually make a snapshot.
       Snapshot()
         : digraph(0), node_observer_proxy(*this),
           arc_observer_proxy(*this) {}
 
       /// \brief Constructor that immediately makes a snapshot.
       ///
-      /// This constructor immediately makes a snapshot of the digraph.
-      /// \param _digraph The digraph we make a snapshot of.
-      Snapshot(ListDigraph &_digraph)
+      /// This constructor immediately makes a snapshot of the given digraph.
+      Snapshot(ListDigraph &gr)
         : node_observer_proxy(*this),
           arc_observer_proxy(*this) {
-        attach(_digraph);
+        attach(gr);
       }
 
       /// \brief Make a snapshot.
       ///
-      /// Make a snapshot of the digraph.
-      ///
-      /// This function can be called more than once. In case of a repeated
+      /// This function makes a snapshot of the given digraph.
+      /// It can be called more than once. In case of a repeated
       /// call, the previous snapshot gets lost.
-      /// \param _digraph The digraph we make the snapshot of.
-      void save(ListDigraph &_digraph) {
+      void save(ListDigraph &gr) {
         if (attached()) {
           detach();
           clear();
         }
-        attach(_digraph);
+        attach(gr);
       }
 
       /// \brief Undo the changes until the last snapshot.
-      //
-      /// Undo the changes until the last snapshot created by save().
+      ///
+      /// This function undos the changes until the last snapshot
+      /// created by save() or Snapshot(ListDigraph&).
+      ///
+      /// \warning This method invalidates the snapshot, i.e. repeated
+      /// restoring is not supported unless you call save() again.
       void restore() {
         detach();
         for(std::list<Arc>::iterator it = added_arcs.begin();
@@ -758,9 +777,9 @@ namespace lemon {
         clear();
       }
 
-      /// \brief Gives back true when the snapshot is valid.
+      /// \brief Returns \c true if the snapshot is valid.
       ///
-      /// Gives back true when the snapshot is valid.
+      /// This function returns \c true if the snapshot is valid.
       bool valid() const {
         return attached();
       }
@@ -784,23 +803,19 @@ namespace lemon {
       int prev_out, next_out;
     };
 
-    std::vector<NodeT> nodes;
+    std::vector<NodeT> _nodes;
 
     int first_node;
 
     int first_free_node;
 
-    std::vector<ArcT> arcs;
+    std::vector<ArcT> _arcs;
 
     int first_free_arc;
 
   public:
 
-    typedef ListGraphBase Digraph;
-
-    class Node;
-    class Arc;
-    class Edge;
+    typedef ListGraphBase Graph;
 
     class Node {
       friend class ListGraphBase;
@@ -851,22 +866,20 @@ namespace lemon {
       bool operator<(const Arc& arc) const {return id < arc.id;}
     };
 
-
-
     ListGraphBase()
-      : nodes(), first_node(-1),
-        first_free_node(-1), arcs(), first_free_arc(-1) {}
+      : _nodes(), first_node(-1),
+        first_free_node(-1), _arcs(), first_free_arc(-1) {}
 
 
-    int maxNodeId() const { return nodes.size()-1; }
-    int maxEdgeId() const { return arcs.size() / 2 - 1; }
-    int maxArcId() const { return arcs.size()-1; }
+    int maxNodeId() const { return _nodes.size()-1; }
+    int maxEdgeId() const { return _arcs.size() / 2 - 1; }
+    int maxArcId() const { return _arcs.size()-1; }
 
-    Node source(Arc e) const { return Node(arcs[e.id ^ 1].target); }
-    Node target(Arc e) const { return Node(arcs[e.id].target); }
+    Node source(Arc e) const { return Node(_arcs[e.id ^ 1].target); }
+    Node target(Arc e) const { return Node(_arcs[e.id].target); }
 
-    Node u(Edge e) const { return Node(arcs[2 * e.id].target); }
-    Node v(Edge e) const { return Node(arcs[2 * e.id + 1].target); }
+    Node u(Edge e) const { return Node(_arcs[2 * e.id].target); }
+    Node v(Edge e) const { return Node(_arcs[2 * e.id + 1].target); }
 
     static bool direction(Arc e) {
       return (e.id & 1) == 1;
@@ -881,88 +894,88 @@ namespace lemon {
     }
 
     void next(Node& node) const {
-      node.id = nodes[node.id].next;
+      node.id = _nodes[node.id].next;
     }
 
     void first(Arc& e) const {
       int n = first_node;
-      while (n != -1 && nodes[n].first_out == -1) {
-        n = nodes[n].next;
+      while (n != -1 && _nodes[n].first_out == -1) {
+        n = _nodes[n].next;
       }
-      e.id = (n == -1) ? -1 : nodes[n].first_out;
+      e.id = (n == -1) ? -1 : _nodes[n].first_out;
     }
 
     void next(Arc& e) const {
-      if (arcs[e.id].next_out != -1) {
-        e.id = arcs[e.id].next_out;
+      if (_arcs[e.id].next_out != -1) {
+        e.id = _arcs[e.id].next_out;
       } else {
-        int n = nodes[arcs[e.id ^ 1].target].next;
-        while(n != -1 && nodes[n].first_out == -1) {
-          n = nodes[n].next;
+        int n = _nodes[_arcs[e.id ^ 1].target].next;
+        while(n != -1 && _nodes[n].first_out == -1) {
+          n = _nodes[n].next;
         }
-        e.id = (n == -1) ? -1 : nodes[n].first_out;
+        e.id = (n == -1) ? -1 : _nodes[n].first_out;
       }
     }
 
     void first(Edge& e) const {
       int n = first_node;
       while (n != -1) {
-        e.id = nodes[n].first_out;
+        e.id = _nodes[n].first_out;
         while ((e.id & 1) != 1) {
-          e.id = arcs[e.id].next_out;
+          e.id = _arcs[e.id].next_out;
         }
         if (e.id != -1) {
           e.id /= 2;
           return;
         }
-        n = nodes[n].next;
+        n = _nodes[n].next;
       }
       e.id = -1;
     }
 
     void next(Edge& e) const {
-      int n = arcs[e.id * 2].target;
-      e.id = arcs[(e.id * 2) | 1].next_out;
+      int n = _arcs[e.id * 2].target;
+      e.id = _arcs[(e.id * 2) | 1].next_out;
       while ((e.id & 1) != 1) {
-        e.id = arcs[e.id].next_out;
+        e.id = _arcs[e.id].next_out;
       }
       if (e.id != -1) {
         e.id /= 2;
         return;
       }
-      n = nodes[n].next;
+      n = _nodes[n].next;
       while (n != -1) {
-        e.id = nodes[n].first_out;
+        e.id = _nodes[n].first_out;
         while ((e.id & 1) != 1) {
-          e.id = arcs[e.id].next_out;
+          e.id = _arcs[e.id].next_out;
         }
         if (e.id != -1) {
           e.id /= 2;
           return;
         }
-        n = nodes[n].next;
+        n = _nodes[n].next;
       }
       e.id = -1;
     }
 
     void firstOut(Arc &e, const Node& v) const {
-      e.id = nodes[v.id].first_out;
+      e.id = _nodes[v.id].first_out;
     }
     void nextOut(Arc &e) const {
-      e.id = arcs[e.id].next_out;
+      e.id = _arcs[e.id].next_out;
     }
 
     void firstIn(Arc &e, const Node& v) const {
-      e.id = ((nodes[v.id].first_out) ^ 1);
+      e.id = ((_nodes[v.id].first_out) ^ 1);
       if (e.id == -2) e.id = -1;
     }
     void nextIn(Arc &e) const {
-      e.id = ((arcs[e.id ^ 1].next_out) ^ 1);
+      e.id = ((_arcs[e.id ^ 1].next_out) ^ 1);
       if (e.id == -2) e.id = -1;
     }
 
     void firstInc(Edge &e, bool& d, const Node& v) const {
-      int a = nodes[v.id].first_out;
+      int a = _nodes[v.id].first_out;
       if (a != -1 ) {
         e.id = a / 2;
         d = ((a & 1) == 1);
@@ -972,7 +985,7 @@ namespace lemon {
       }
     }
     void nextInc(Edge &e, bool& d) const {
-      int a = (arcs[(e.id * 2) | (d ? 1 : 0)].next_out);
+      int a = (_arcs[(e.id * 2) | (d ? 1 : 0)].next_out);
       if (a != -1 ) {
         e.id = a / 2;
         d = ((a & 1) == 1);
@@ -991,37 +1004,37 @@ namespace lemon {
     static Edge edgeFromId(int id) { return Edge(id);}
 
     bool valid(Node n) const {
-      return n.id >= 0 && n.id < static_cast<int>(nodes.size()) &&
-        nodes[n.id].prev != -2;
+      return n.id >= 0 && n.id < static_cast<int>(_nodes.size()) &&
+        _nodes[n.id].prev != -2;
     }
 
     bool valid(Arc a) const {
-      return a.id >= 0 && a.id < static_cast<int>(arcs.size()) &&
-        arcs[a.id].prev_out != -2;
+      return a.id >= 0 && a.id < static_cast<int>(_arcs.size()) &&
+        _arcs[a.id].prev_out != -2;
     }
 
     bool valid(Edge e) const {
-      return e.id >= 0 && 2 * e.id < static_cast<int>(arcs.size()) &&
-        arcs[2 * e.id].prev_out != -2;
+      return e.id >= 0 && 2 * e.id < static_cast<int>(_arcs.size()) &&
+        _arcs[2 * e.id].prev_out != -2;
     }
 
     Node addNode() {
       int n;
 
       if(first_free_node==-1) {
-        n = nodes.size();
-        nodes.push_back(NodeT());
+        n = _nodes.size();
+        _nodes.push_back(NodeT());
       } else {
         n = first_free_node;
-        first_free_node = nodes[n].next;
+        first_free_node = _nodes[n].next;
       }
 
-      nodes[n].next = first_node;
-      if (first_node != -1) nodes[first_node].prev = n;
+      _nodes[n].next = first_node;
+      if (first_node != -1) _nodes[first_node].prev = n;
       first_node = n;
-      nodes[n].prev = -1;
+      _nodes[n].prev = -1;
 
-      nodes[n].first_out = -1;
+      _nodes[n].first_out = -1;
 
       return Node(n);
     }
@@ -1030,30 +1043,30 @@ namespace lemon {
       int n;
 
       if (first_free_arc == -1) {
-        n = arcs.size();
-        arcs.push_back(ArcT());
-        arcs.push_back(ArcT());
+        n = _arcs.size();
+        _arcs.push_back(ArcT());
+        _arcs.push_back(ArcT());
       } else {
         n = first_free_arc;
-        first_free_arc = arcs[n].next_out;
+        first_free_arc = _arcs[n].next_out;
       }
 
-      arcs[n].target = u.id;
-      arcs[n | 1].target = v.id;
+      _arcs[n].target = u.id;
+      _arcs[n | 1].target = v.id;
 
-      arcs[n].next_out = nodes[v.id].first_out;
-      if (nodes[v.id].first_out != -1) {
-        arcs[nodes[v.id].first_out].prev_out = n;
+      _arcs[n].next_out = _nodes[v.id].first_out;
+      if (_nodes[v.id].first_out != -1) {
+        _arcs[_nodes[v.id].first_out].prev_out = n;
       }
-      arcs[n].prev_out = -1;
-      nodes[v.id].first_out = n;
+      _arcs[n].prev_out = -1;
+      _nodes[v.id].first_out = n;
 
-      arcs[n | 1].next_out = nodes[u.id].first_out;
-      if (nodes[u.id].first_out != -1) {
-        arcs[nodes[u.id].first_out].prev_out = (n | 1);
+      _arcs[n | 1].next_out = _nodes[u.id].first_out;
+      if (_nodes[u.id].first_out != -1) {
+        _arcs[_nodes[u.id].first_out].prev_out = (n | 1);
       }
-      arcs[n | 1].prev_out = -1;
-      nodes[u.id].first_out = (n | 1);
+      _arcs[n | 1].prev_out = -1;
+      _nodes[u.id].first_out = (n | 1);
 
       return Edge(n / 2);
     }
@@ -1061,100 +1074,100 @@ namespace lemon {
     void erase(const Node& node) {
       int n = node.id;
 
-      if(nodes[n].next != -1) {
-        nodes[nodes[n].next].prev = nodes[n].prev;
+      if(_nodes[n].next != -1) {
+        _nodes[_nodes[n].next].prev = _nodes[n].prev;
       }
 
-      if(nodes[n].prev != -1) {
-        nodes[nodes[n].prev].next = nodes[n].next;
+      if(_nodes[n].prev != -1) {
+        _nodes[_nodes[n].prev].next = _nodes[n].next;
       } else {
-        first_node = nodes[n].next;
+        first_node = _nodes[n].next;
       }
 
-      nodes[n].next = first_free_node;
+      _nodes[n].next = first_free_node;
       first_free_node = n;
-      nodes[n].prev = -2;
+      _nodes[n].prev = -2;
     }
 
     void erase(const Edge& edge) {
       int n = edge.id * 2;
 
-      if (arcs[n].next_out != -1) {
-        arcs[arcs[n].next_out].prev_out = arcs[n].prev_out;
+      if (_arcs[n].next_out != -1) {
+        _arcs[_arcs[n].next_out].prev_out = _arcs[n].prev_out;
       }
 
-      if (arcs[n].prev_out != -1) {
-        arcs[arcs[n].prev_out].next_out = arcs[n].next_out;
+      if (_arcs[n].prev_out != -1) {
+        _arcs[_arcs[n].prev_out].next_out = _arcs[n].next_out;
       } else {
-        nodes[arcs[n | 1].target].first_out = arcs[n].next_out;
+        _nodes[_arcs[n | 1].target].first_out = _arcs[n].next_out;
       }
 
-      if (arcs[n | 1].next_out != -1) {
-        arcs[arcs[n | 1].next_out].prev_out = arcs[n | 1].prev_out;
+      if (_arcs[n | 1].next_out != -1) {
+        _arcs[_arcs[n | 1].next_out].prev_out = _arcs[n | 1].prev_out;
       }
 
-      if (arcs[n | 1].prev_out != -1) {
-        arcs[arcs[n | 1].prev_out].next_out = arcs[n | 1].next_out;
+      if (_arcs[n | 1].prev_out != -1) {
+        _arcs[_arcs[n | 1].prev_out].next_out = _arcs[n | 1].next_out;
       } else {
-        nodes[arcs[n].target].first_out = arcs[n | 1].next_out;
+        _nodes[_arcs[n].target].first_out = _arcs[n | 1].next_out;
       }
 
-      arcs[n].next_out = first_free_arc;
+      _arcs[n].next_out = first_free_arc;
       first_free_arc = n;
-      arcs[n].prev_out = -2;
-      arcs[n | 1].prev_out = -2;
+      _arcs[n].prev_out = -2;
+      _arcs[n | 1].prev_out = -2;
 
     }
 
     void clear() {
-      arcs.clear();
-      nodes.clear();
+      _arcs.clear();
+      _nodes.clear();
       first_node = first_free_node = first_free_arc = -1;
     }
 
   protected:
 
     void changeV(Edge e, Node n) {
-      if(arcs[2 * e.id].next_out != -1) {
-        arcs[arcs[2 * e.id].next_out].prev_out = arcs[2 * e.id].prev_out;
+      if(_arcs[2 * e.id].next_out != -1) {
+        _arcs[_arcs[2 * e.id].next_out].prev_out = _arcs[2 * e.id].prev_out;
       }
-      if(arcs[2 * e.id].prev_out != -1) {
-        arcs[arcs[2 * e.id].prev_out].next_out =
-          arcs[2 * e.id].next_out;
+      if(_arcs[2 * e.id].prev_out != -1) {
+        _arcs[_arcs[2 * e.id].prev_out].next_out =
+          _arcs[2 * e.id].next_out;
       } else {
-        nodes[arcs[(2 * e.id) | 1].target].first_out =
-          arcs[2 * e.id].next_out;
+        _nodes[_arcs[(2 * e.id) | 1].target].first_out =
+          _arcs[2 * e.id].next_out;
       }
 
-      if (nodes[n.id].first_out != -1) {
-        arcs[nodes[n.id].first_out].prev_out = 2 * e.id;
+      if (_nodes[n.id].first_out != -1) {
+        _arcs[_nodes[n.id].first_out].prev_out = 2 * e.id;
       }
-      arcs[(2 * e.id) | 1].target = n.id;
-      arcs[2 * e.id].prev_out = -1;
-      arcs[2 * e.id].next_out = nodes[n.id].first_out;
-      nodes[n.id].first_out = 2 * e.id;
+      _arcs[(2 * e.id) | 1].target = n.id;
+      _arcs[2 * e.id].prev_out = -1;
+      _arcs[2 * e.id].next_out = _nodes[n.id].first_out;
+      _nodes[n.id].first_out = 2 * e.id;
     }
 
     void changeU(Edge e, Node n) {
-      if(arcs[(2 * e.id) | 1].next_out != -1) {
-        arcs[arcs[(2 * e.id) | 1].next_out].prev_out =
-          arcs[(2 * e.id) | 1].prev_out;
+      if(_arcs[(2 * e.id) | 1].next_out != -1) {
+        _arcs[_arcs[(2 * e.id) | 1].next_out].prev_out =
+          _arcs[(2 * e.id) | 1].prev_out;
       }
-      if(arcs[(2 * e.id) | 1].prev_out != -1) {
-        arcs[arcs[(2 * e.id) | 1].prev_out].next_out =
-          arcs[(2 * e.id) | 1].next_out;
+      if(_arcs[(2 * e.id) | 1].prev_out != -1) {
+        _arcs[_arcs[(2 * e.id) | 1].prev_out].next_out =
+          _arcs[(2 * e.id) | 1].next_out;
       } else {
-        nodes[arcs[2 * e.id].target].first_out =
-          arcs[(2 * e.id) | 1].next_out;
+        _nodes[_arcs[2 * e.id].target].first_out =
+          _arcs[(2 * e.id) | 1].next_out;
       }
 
-      if (nodes[n.id].first_out != -1) {
-        arcs[nodes[n.id].first_out].prev_out = ((2 * e.id) | 1);
+      if (_nodes[n.id].first_out != -1) {
+        _arcs[_nodes[n.id].first_out].prev_out = ((2 * e.id) | 1);
       }
-      arcs[2 * e.id].target = n.id;
-      arcs[(2 * e.id) | 1].prev_out = -1;
-      arcs[(2 * e.id) | 1].next_out = nodes[n.id].first_out;
-      nodes[n.id].first_out = ((2 * e.id) | 1);
+      _arcs[2 * e.id].target = n.id;
+      _arcs[(2 * e.id) | 1].prev_out = -1;
+      _arcs[(2 * e.id) | 1].next_out = _nodes[n.id].first_out;
+      _nodes[n.id].first_out = ((2 * e.id) | 1);
     }
 
   };
@@ -1167,32 +1180,27 @@ namespace lemon {
 
   ///A general undirected graph structure.
 
-  ///\ref ListGraph is a simple and fast <em>undirected graph</em>
-  ///implementation based on static linked lists that are stored in
+  ///\ref ListGraph is a versatile and fast undirected graph
+  ///implementation based on linked lists that are stored in
   ///\c std::vector structures.
   ///
-  ///It conforms to the \ref concepts::Graph "Graph concept" and it
-  ///also provides several useful additional functionalities.
-  ///Most of the member functions and nested classes are documented
+  ///This type fully conforms to the \ref concepts::Graph "Graph concept"
+  ///and it also provides several useful additional functionalities.
+  ///Most of its member functions and nested classes are documented
   ///only in the concept class.
   ///
-  ///An important extra feature of this graph implementation is that
-  ///its maps are real \ref concepts::ReferenceMap "reference map"s.
+  ///This class provides only linear time counting for nodes, edges and arcs.
   ///
   ///\sa concepts::Graph
-
+  ///\sa ListDigraph
   class ListGraph : public ExtendedListGraphBase {
+    typedef ExtendedListGraphBase Parent;
+
   private:
-    ///ListGraph is \e not copy constructible. Use copyGraph() instead.
-
-    ///ListGraph is \e not copy constructible. Use copyGraph() instead.
-    ///
+    /// Graphs are \e not copy constructible. Use GraphCopy instead.
     ListGraph(const ListGraph &) :ExtendedListGraphBase()  {};
-    ///\brief Assignment of ListGraph to another one is \e not allowed.
-    ///Use copyGraph() instead.
-
-    ///Assignment of ListGraph to another one is \e not allowed.
-    ///Use copyGraph() instead.
+    /// \brief Assignment of a graph to another one is \e not allowed.
+    /// Use GraphCopy instead.
     void operator=(const ListGraph &) {}
   public:
     /// Constructor
@@ -1201,100 +1209,106 @@ namespace lemon {
     ///
     ListGraph() {}
 
-    typedef ExtendedListGraphBase Parent;
-
-    typedef Parent::OutArcIt IncEdgeIt;
+    typedef Parent::IncEdgeIt IncEdgeIt;
 
     /// \brief Add a new node to the graph.
     ///
-    /// Add a new node to the graph.
+    /// This function adds a new node to the graph.
     /// \return The new node.
     Node addNode() { return Parent::addNode(); }
 
     /// \brief Add a new edge to the graph.
     ///
-    /// Add a new edge to the graph with source node \c s
-    /// and target node \c t.
+    /// This function adds a new edge to the graph between nodes
+    /// \c u and \c v with inherent orientation from node \c u to
+    /// node \c v.
     /// \return The new edge.
-    Edge addEdge(const Node& s, const Node& t) {
-      return Parent::addEdge(s, t);
+    Edge addEdge(Node u, Node v) {
+      return Parent::addEdge(u, v);
     }
 
-    /// \brief Erase a node from the graph.
+    ///\brief Erase a node from the graph.
     ///
-    /// Erase a node from the graph.
+    /// This function erases the given node along with its incident arcs
+    /// from the graph.
     ///
-    void erase(const Node& n) { Parent::erase(n); }
+    /// \note All iterators referencing the removed node or the incident
+    /// edges are invalidated, of course.
+    void erase(Node n) { Parent::erase(n); }
 
-    /// \brief Erase an edge from the graph.
+    ///\brief Erase an edge from the graph.
     ///
-    /// Erase an edge from the graph.
+    /// This function erases the given edge from the graph.
     ///
-    void erase(const Edge& e) { Parent::erase(e); }
+    /// \note All iterators referencing the removed edge are invalidated,
+    /// of course.
+    void erase(Edge e) { Parent::erase(e); }
     /// Node validity check
 
-    /// This function gives back true if the given node is valid,
-    /// ie. it is a real node of the graph.
+    /// This function gives back \c true if the given node is valid,
+    /// i.e. it is a real node of the graph.
     ///
-    /// \warning A Node pointing to a removed item
-    /// could become valid again later if new nodes are
+    /// \warning A removed node could become valid again if new nodes are
     /// added to the graph.
     bool valid(Node n) const { return Parent::valid(n); }
-    /// Arc validity check
-
-    /// This function gives back true if the given arc is valid,
-    /// ie. it is a real arc of the graph.
-    ///
-    /// \warning An Arc pointing to a removed item
-    /// could become valid again later if new edges are
-    /// added to the graph.
-    bool valid(Arc a) const { return Parent::valid(a); }
     /// Edge validity check
 
-    /// This function gives back true if the given edge is valid,
-    /// ie. it is a real arc of the graph.
+    /// This function gives back \c true if the given edge is valid,
+    /// i.e. it is a real edge of the graph.
     ///
-    /// \warning A Edge pointing to a removed item
-    /// could become valid again later if new edges are
+    /// \warning A removed edge could become valid again if new edges are
     /// added to the graph.
     bool valid(Edge e) const { return Parent::valid(e); }
-    /// \brief Change the end \c u of \c e to \c n
+    /// Arc validity check
+
+    /// This function gives back \c true if the given arc is valid,
+    /// i.e. it is a real arc of the graph.
     ///
-    /// This function changes the end \c u of \c e to node \c n.
+    /// \warning A removed arc could become valid again if new edges are
+    /// added to the graph.
+    bool valid(Arc a) const { return Parent::valid(a); }
+
+    /// \brief Change the first node of an edge.
     ///
-    ///\note The <tt>EdgeIt</tt>s and <tt>ArcIt</tt>s referencing the
-    ///changed edge are invalidated and if the changed node is the
-    ///base node of an iterator then this iterator is also
-    ///invalidated.
+    /// This function changes the first node of the given edge \c e to \c n.
+    ///
+    ///\note \c EdgeIt and \c ArcIt iterators referencing the
+    ///changed edge are invalidated and all other iterators whose
+    ///base node is the changed node are also invalidated.
     ///
     ///\warning This functionality cannot be used together with the
     ///Snapshot feature.
     void changeU(Edge e, Node n) {
       Parent::changeU(e,n);
     }
-    /// \brief Change the end \c v of \c e to \c n
+    /// \brief Change the second node of an edge.
     ///
-    /// This function changes the end \c v of \c e to \c n.
+    /// This function changes the second node of the given edge \c e to \c n.
     ///
-    ///\note The <tt>EdgeIt</tt>s referencing the changed edge remain
-    ///valid, however <tt>ArcIt</tt>s and if the changed node is the
-    ///base node of an iterator then this iterator is invalidated.
+    ///\note \c EdgeIt iterators referencing the changed edge remain
+    ///valid, but \c ArcIt iterators referencing the changed edge and
+    ///all other iterators whose base node is the changed node are also
+    ///invalidated.
     ///
     ///\warning This functionality cannot be used together with the
     ///Snapshot feature.
     void changeV(Edge e, Node n) {
       Parent::changeV(e,n);
     }
+
     /// \brief Contract two nodes.
     ///
-    /// This function contracts two nodes.
-    /// Node \p b will be removed but instead of deleting
-    /// its neighboring arcs, they will be joined to \p a.
-    /// The last parameter \p r controls whether to remove loops. \c true
-    /// means that loops will be removed.
+    /// This function contracts the given two nodes.
+    /// Node \c b is removed, but instead of deleting
+    /// its incident edges, they are joined to node \c a.
+    /// If the last parameter \c r is \c true (this is the default value),
+    /// then the newly created loops are removed.
     ///
-    /// \note The <tt>ArcIt</tt>s referencing a moved arc remain
-    /// valid.
+    /// \note The moved edges are joined to node \c a using changeU()
+    /// or changeV(), thus all edge and arc iterators whose base node is
+    /// \c b are invalidated.
+    /// Moreover all iterators referencing node \c b or the removed
+    /// loops are also invalidated. Other iterators remain valid.
     ///
     ///\warning This functionality cannot be used together with the
     ///Snapshot feature.
@@ -1313,6 +1327,34 @@ namespace lemon {
       erase(b);
     }
 
+    ///Clear the graph.
+
+    ///This function erases all nodes and arcs from the graph.
+    ///
+    ///\note All iterators of the graph are invalidated, of course.
+    void clear() {
+      Parent::clear();
+    }
+
+    /// Reserve memory for nodes.
+
+    /// Using this function, it is possible to avoid superfluous memory
+    /// allocation: if you know that the graph you want to build will
+    /// be large (e.g. it will contain millions of nodes and/or edges),
+    /// then it is worth reserving space for this amount before starting
+    /// to build the graph.
+    /// \sa reserveEdge()
+    void reserveNode(int n) { _nodes.reserve(n); };
+
+    /// Reserve memory for edges.
+
+    /// Using this function, it is possible to avoid superfluous memory
+    /// allocation: if you know that the graph you want to build will
+    /// be large (e.g. it will contain millions of nodes and/or edges),
+    /// then it is worth reserving space for this amount before starting
+    /// to build the graph.
+    /// \sa reserveNode()
+    void reserveEdge(int m) { _arcs.reserve(2 * m); };
 
     /// \brief Class to make a snapshot of the graph and restore
     /// it later.
@@ -1322,9 +1364,15 @@ namespace lemon {
     /// The newly added nodes and edges can be removed
     /// using the restore() function.
     ///
-    /// \warning Edge and node deletions and other modifications
-    /// (e.g. changing nodes of edges, contracting nodes) cannot be
-    /// restored. These events invalidate the snapshot.
+    /// \note After a state is restored, you cannot restore a later state,
+    /// i.e. you cannot add the removed nodes and edges again using
+    /// another Snapshot instance.
+    ///
+    /// \warning Node and edge deletions and other modifications
+    /// (e.g. changing the end-nodes of edges or contracting nodes)
+    /// cannot be restored. These events invalidate the snapshot.
+    /// However, the edges and nodes that were added to the graph after
+    /// making the current snapshot can be removed without invalidating it.
     class Snapshot {
     protected:
 
@@ -1346,7 +1394,7 @@ namespace lemon {
           snapshot.addNode(node);
         }
         virtual void add(const std::vector<Node>& nodes) {
-          for (int i = nodes.size() - 1; i >= 0; ++i) {
+          for (int i = nodes.size() - 1; i >= 0; --i) {
             snapshot.addNode(nodes[i]);
           }
         }
@@ -1396,7 +1444,7 @@ namespace lemon {
           snapshot.addEdge(edge);
         }
         virtual void add(const std::vector<Edge>& edges) {
-          for (int i = edges.size() - 1; i >= 0; ++i) {
+          for (int i = edges.size() - 1; i >= 0; --i) {
             snapshot.addEdge(edges[i]);
           }
         }
@@ -1494,39 +1542,40 @@ namespace lemon {
       /// \brief Default constructor.
       ///
       /// Default constructor.
-      /// To actually make a snapshot you must call save().
+      /// You have to call save() to actually make a snapshot.
       Snapshot()
         : graph(0), node_observer_proxy(*this),
           edge_observer_proxy(*this) {}
 
       /// \brief Constructor that immediately makes a snapshot.
       ///
-      /// This constructor immediately makes a snapshot of the graph.
-      /// \param _graph The graph we make a snapshot of.
-      Snapshot(ListGraph &_graph)
+      /// This constructor immediately makes a snapshot of the given graph.
+      Snapshot(ListGraph &gr)
         : node_observer_proxy(*this),
           edge_observer_proxy(*this) {
-        attach(_graph);
+        attach(gr);
       }
 
       /// \brief Make a snapshot.
       ///
-      /// Make a snapshot of the graph.
-      ///
-      /// This function can be called more than once. In case of a repeated
+      /// This function makes a snapshot of the given graph.
+      /// It can be called more than once. In case of a repeated
       /// call, the previous snapshot gets lost.
-      /// \param _graph The graph we make the snapshot of.
-      void save(ListGraph &_graph) {
+      void save(ListGraph &gr) {
         if (attached()) {
           detach();
           clear();
         }
-        attach(_graph);
+        attach(gr);
       }
 
       /// \brief Undo the changes until the last snapshot.
-      //
-      /// Undo the changes until the last snapshot created by save().
+      ///
+      /// This function undos the changes until the last snapshot
+      /// created by save() or Snapshot(ListGraph&).
+      ///
+      /// \warning This method invalidates the snapshot, i.e. repeated
+      /// restoring is not supported unless you call save() again.
       void restore() {
         detach();
         for(std::list<Edge>::iterator it = added_edges.begin();
@@ -1540,9 +1589,914 @@ namespace lemon {
         clear();
       }
 
-      /// \brief Gives back true when the snapshot is valid.
+      /// \brief Returns \c true if the snapshot is valid.
       ///
-      /// Gives back true when the snapshot is valid.
+      /// This function returns \c true if the snapshot is valid.
+      bool valid() const {
+        return attached();
+      }
+    };
+  };
+
+  /// @}
+
+  class ListBpGraphBase {
+
+  protected:
+
+    struct NodeT {
+      int first_out;
+      int prev, next;
+      int partition_prev, partition_next;
+      int partition_index;
+      bool red;
+    };
+
+    struct ArcT {
+      int target;
+      int prev_out, next_out;
+    };
+
+    std::vector<NodeT> _nodes;
+
+    int first_node, first_red, first_blue;
+    int max_red, max_blue;
+
+    int first_free_red, first_free_blue;
+
+    std::vector<ArcT> _arcs;
+
+    int first_free_arc;
+
+  public:
+
+    typedef ListBpGraphBase BpGraph;
+
+    class Node {
+      friend class ListBpGraphBase;
+    protected:
+
+      int id;
+      explicit Node(int pid) { id = pid;}
+
+    public:
+      Node() {}
+      Node (Invalid) { id = -1; }
+      bool operator==(const Node& node) const {return id == node.id;}
+      bool operator!=(const Node& node) const {return id != node.id;}
+      bool operator<(const Node& node) const {return id < node.id;}
+    };
+
+    class RedNode : public Node {
+      friend class ListBpGraphBase;
+    protected:
+
+      explicit RedNode(int pid) : Node(pid) {}
+
+    public:
+      RedNode() {}
+      RedNode(const RedNode& node) : Node(node) {}
+      RedNode(Invalid) : Node(INVALID){}
+    };
+
+    class BlueNode : public Node {
+      friend class ListBpGraphBase;
+    protected:
+
+      explicit BlueNode(int pid) : Node(pid) {}
+
+    public:
+      BlueNode() {}
+      BlueNode(const BlueNode& node) : Node(node) {}
+      BlueNode(Invalid) : Node(INVALID){}
+    };
+
+    class Edge {
+      friend class ListBpGraphBase;
+    protected:
+
+      int id;
+      explicit Edge(int pid) { id = pid;}
+
+    public:
+      Edge() {}
+      Edge (Invalid) { id = -1; }
+      bool operator==(const Edge& edge) const {return id == edge.id;}
+      bool operator!=(const Edge& edge) const {return id != edge.id;}
+      bool operator<(const Edge& edge) const {return id < edge.id;}
+    };
+
+    class Arc {
+      friend class ListBpGraphBase;
+    protected:
+
+      int id;
+      explicit Arc(int pid) { id = pid;}
+
+    public:
+      operator Edge() const {
+        return id != -1 ? edgeFromId(id / 2) : INVALID;
+      }
+
+      Arc() {}
+      Arc (Invalid) { id = -1; }
+      bool operator==(const Arc& arc) const {return id == arc.id;}
+      bool operator!=(const Arc& arc) const {return id != arc.id;}
+      bool operator<(const Arc& arc) const {return id < arc.id;}
+    };
+
+    ListBpGraphBase()
+      : _nodes(), first_node(-1),
+        first_red(-1), first_blue(-1),
+        max_red(-1), max_blue(-1),
+        first_free_red(-1), first_free_blue(-1),
+        _arcs(), first_free_arc(-1) {}
+
+
+    bool red(Node n) const { return _nodes[n.id].red; }
+    bool blue(Node n) const { return !_nodes[n.id].red; }
+
+    static RedNode asRedNodeUnsafe(Node n) { return RedNode(n.id); }
+    static BlueNode asBlueNodeUnsafe(Node n) { return BlueNode(n.id); }
+
+    int maxNodeId() const { return _nodes.size()-1; }
+    int maxRedId() const { return max_red; }
+    int maxBlueId() const { return max_blue; }
+    int maxEdgeId() const { return _arcs.size() / 2 - 1; }
+    int maxArcId() const { return _arcs.size()-1; }
+
+    Node source(Arc e) const { return Node(_arcs[e.id ^ 1].target); }
+    Node target(Arc e) const { return Node(_arcs[e.id].target); }
+
+    RedNode redNode(Edge e) const {
+      return RedNode(_arcs[2 * e.id].target);
+    }
+    BlueNode blueNode(Edge e) const {
+      return BlueNode(_arcs[2 * e.id + 1].target);
+    }
+
+    static bool direction(Arc e) {
+      return (e.id & 1) == 1;
+    }
+
+    static Arc direct(Edge e, bool d) {
+      return Arc(e.id * 2 + (d ? 1 : 0));
+    }
+
+    void first(Node& node) const {
+      node.id = first_node;
+    }
+
+    void next(Node& node) const {
+      node.id = _nodes[node.id].next;
+    }
+
+    void first(RedNode& node) const {
+      node.id = first_red;
+    }
+
+    void next(RedNode& node) const {
+      node.id = _nodes[node.id].partition_next;
+    }
+
+    void first(BlueNode& node) const {
+      node.id = first_blue;
+    }
+
+    void next(BlueNode& node) const {
+      node.id = _nodes[node.id].partition_next;
+    }
+
+    void first(Arc& e) const {
+      int n = first_node;
+      while (n != -1 && _nodes[n].first_out == -1) {
+        n = _nodes[n].next;
+      }
+      e.id = (n == -1) ? -1 : _nodes[n].first_out;
+    }
+
+    void next(Arc& e) const {
+      if (_arcs[e.id].next_out != -1) {
+        e.id = _arcs[e.id].next_out;
+      } else {
+        int n = _nodes[_arcs[e.id ^ 1].target].next;
+        while(n != -1 && _nodes[n].first_out == -1) {
+          n = _nodes[n].next;
+        }
+        e.id = (n == -1) ? -1 : _nodes[n].first_out;
+      }
+    }
+
+    void first(Edge& e) const {
+      int n = first_node;
+      while (n != -1) {
+        e.id = _nodes[n].first_out;
+        while ((e.id & 1) != 1) {
+          e.id = _arcs[e.id].next_out;
+        }
+        if (e.id != -1) {
+          e.id /= 2;
+          return;
+        }
+        n = _nodes[n].next;
+      }
+      e.id = -1;
+    }
+
+    void next(Edge& e) const {
+      int n = _arcs[e.id * 2].target;
+      e.id = _arcs[(e.id * 2) | 1].next_out;
+      while ((e.id & 1) != 1) {
+        e.id = _arcs[e.id].next_out;
+      }
+      if (e.id != -1) {
+        e.id /= 2;
+        return;
+      }
+      n = _nodes[n].next;
+      while (n != -1) {
+        e.id = _nodes[n].first_out;
+        while ((e.id & 1) != 1) {
+          e.id = _arcs[e.id].next_out;
+        }
+        if (e.id != -1) {
+          e.id /= 2;
+          return;
+        }
+        n = _nodes[n].next;
+      }
+      e.id = -1;
+    }
+
+    void firstOut(Arc &e, const Node& v) const {
+      e.id = _nodes[v.id].first_out;
+    }
+    void nextOut(Arc &e) const {
+      e.id = _arcs[e.id].next_out;
+    }
+
+    void firstIn(Arc &e, const Node& v) const {
+      e.id = ((_nodes[v.id].first_out) ^ 1);
+      if (e.id == -2) e.id = -1;
+    }
+    void nextIn(Arc &e) const {
+      e.id = ((_arcs[e.id ^ 1].next_out) ^ 1);
+      if (e.id == -2) e.id = -1;
+    }
+
+    void firstInc(Edge &e, bool& d, const Node& v) const {
+      int a = _nodes[v.id].first_out;
+      if (a != -1 ) {
+        e.id = a / 2;
+        d = ((a & 1) == 1);
+      } else {
+        e.id = -1;
+        d = true;
+      }
+    }
+    void nextInc(Edge &e, bool& d) const {
+      int a = (_arcs[(e.id * 2) | (d ? 1 : 0)].next_out);
+      if (a != -1 ) {
+        e.id = a / 2;
+        d = ((a & 1) == 1);
+      } else {
+        e.id = -1;
+        d = true;
+      }
+    }
+
+    static int id(Node v) { return v.id; }
+    int id(RedNode v) const { return _nodes[v.id].partition_index; }
+    int id(BlueNode v) const { return _nodes[v.id].partition_index; }
+    static int id(Arc e) { return e.id; }
+    static int id(Edge e) { return e.id; }
+
+    static Node nodeFromId(int id) { return Node(id);}
+    static Arc arcFromId(int id) { return Arc(id);}
+    static Edge edgeFromId(int id) { return Edge(id);}
+
+    bool valid(Node n) const {
+      return n.id >= 0 && n.id < static_cast<int>(_nodes.size()) &&
+        _nodes[n.id].prev != -2;
+    }
+
+    bool valid(Arc a) const {
+      return a.id >= 0 && a.id < static_cast<int>(_arcs.size()) &&
+        _arcs[a.id].prev_out != -2;
+    }
+
+    bool valid(Edge e) const {
+      return e.id >= 0 && 2 * e.id < static_cast<int>(_arcs.size()) &&
+        _arcs[2 * e.id].prev_out != -2;
+    }
+
+    RedNode addRedNode() {
+      int n;
+
+      if(first_free_red==-1) {
+        n = _nodes.size();
+        _nodes.push_back(NodeT());
+        _nodes[n].partition_index = ++max_red;
+        _nodes[n].red = true;
+      } else {
+        n = first_free_red;
+        first_free_red = _nodes[n].next;
+      }
+
+      _nodes[n].next = first_node;
+      if (first_node != -1) _nodes[first_node].prev = n;
+      first_node = n;
+      _nodes[n].prev = -1;
+
+      _nodes[n].partition_next = first_red;
+      if (first_red != -1) _nodes[first_red].partition_prev = n;
+      first_red = n;
+      _nodes[n].partition_prev = -1;
+
+      _nodes[n].first_out = -1;
+
+      return RedNode(n);
+    }
+
+    BlueNode addBlueNode() {
+      int n;
+
+      if(first_free_blue==-1) {
+        n = _nodes.size();
+        _nodes.push_back(NodeT());
+        _nodes[n].partition_index = ++max_blue;
+        _nodes[n].red = false;
+      } else {
+        n = first_free_blue;
+        first_free_blue = _nodes[n].next;
+      }
+
+      _nodes[n].next = first_node;
+      if (first_node != -1) _nodes[first_node].prev = n;
+      first_node = n;
+      _nodes[n].prev = -1;
+
+      _nodes[n].partition_next = first_blue;
+      if (first_blue != -1) _nodes[first_blue].partition_prev = n;
+      first_blue = n;
+      _nodes[n].partition_prev = -1;
+
+      _nodes[n].first_out = -1;
+
+      return BlueNode(n);
+    }
+
+    Edge addEdge(Node u, Node v) {
+      int n;
+
+      if (first_free_arc == -1) {
+        n = _arcs.size();
+        _arcs.push_back(ArcT());
+        _arcs.push_back(ArcT());
+      } else {
+        n = first_free_arc;
+        first_free_arc = _arcs[n].next_out;
+      }
+
+      _arcs[n].target = u.id;
+      _arcs[n | 1].target = v.id;
+
+      _arcs[n].next_out = _nodes[v.id].first_out;
+      if (_nodes[v.id].first_out != -1) {
+        _arcs[_nodes[v.id].first_out].prev_out = n;
+      }
+      _arcs[n].prev_out = -1;
+      _nodes[v.id].first_out = n;
+
+      _arcs[n | 1].next_out = _nodes[u.id].first_out;
+      if (_nodes[u.id].first_out != -1) {
+        _arcs[_nodes[u.id].first_out].prev_out = (n | 1);
+      }
+      _arcs[n | 1].prev_out = -1;
+      _nodes[u.id].first_out = (n | 1);
+
+      return Edge(n / 2);
+    }
+
+    void erase(const Node& node) {
+      int n = node.id;
+
+      if(_nodes[n].next != -1) {
+        _nodes[_nodes[n].next].prev = _nodes[n].prev;
+      }
+
+      if(_nodes[n].prev != -1) {
+        _nodes[_nodes[n].prev].next = _nodes[n].next;
+      } else {
+        first_node = _nodes[n].next;
+      }
+
+      if (_nodes[n].partition_next != -1) {
+        _nodes[_nodes[n].partition_next].partition_prev = _nodes[n].partition_prev;
+      }
+
+      if (_nodes[n].partition_prev != -1) {
+        _nodes[_nodes[n].partition_prev].partition_next = _nodes[n].partition_next;
+      } else {
+        if (_nodes[n].red) {
+          first_red = _nodes[n].partition_next;
+        } else {
+          first_blue = _nodes[n].partition_next;
+        }
+      }
+
+      if (_nodes[n].red) {
+        _nodes[n].next = first_free_red;
+        first_free_red = n;
+      } else {
+        _nodes[n].next = first_free_blue;
+        first_free_blue = n;
+      }
+      _nodes[n].prev = -2;
+    }
+
+    void erase(const Edge& edge) {
+      int n = edge.id * 2;
+
+      if (_arcs[n].next_out != -1) {
+        _arcs[_arcs[n].next_out].prev_out = _arcs[n].prev_out;
+      }
+
+      if (_arcs[n].prev_out != -1) {
+        _arcs[_arcs[n].prev_out].next_out = _arcs[n].next_out;
+      } else {
+        _nodes[_arcs[n | 1].target].first_out = _arcs[n].next_out;
+      }
+
+      if (_arcs[n | 1].next_out != -1) {
+        _arcs[_arcs[n | 1].next_out].prev_out = _arcs[n | 1].prev_out;
+      }
+
+      if (_arcs[n | 1].prev_out != -1) {
+        _arcs[_arcs[n | 1].prev_out].next_out = _arcs[n | 1].next_out;
+      } else {
+        _nodes[_arcs[n].target].first_out = _arcs[n | 1].next_out;
+      }
+
+      _arcs[n].next_out = first_free_arc;
+      first_free_arc = n;
+      _arcs[n].prev_out = -2;
+      _arcs[n | 1].prev_out = -2;
+
+    }
+
+    void clear() {
+      _arcs.clear();
+      _nodes.clear();
+      first_node = first_free_arc = first_red = first_blue =
+        max_red = max_blue = first_free_red = first_free_blue = -1;
+    }
+
+  protected:
+
+    void changeRed(Edge e, RedNode n) {
+      if(_arcs[(2 * e.id) | 1].next_out != -1) {
+        _arcs[_arcs[(2 * e.id) | 1].next_out].prev_out =
+          _arcs[(2 * e.id) | 1].prev_out;
+      }
+      if(_arcs[(2 * e.id) | 1].prev_out != -1) {
+        _arcs[_arcs[(2 * e.id) | 1].prev_out].next_out =
+          _arcs[(2 * e.id) | 1].next_out;
+      } else {
+        _nodes[_arcs[2 * e.id].target].first_out =
+          _arcs[(2 * e.id) | 1].next_out;
+      }
+
+      if (_nodes[n.id].first_out != -1) {
+        _arcs[_nodes[n.id].first_out].prev_out = ((2 * e.id) | 1);
+      }
+      _arcs[2 * e.id].target = n.id;
+      _arcs[(2 * e.id) | 1].prev_out = -1;
+      _arcs[(2 * e.id) | 1].next_out = _nodes[n.id].first_out;
+      _nodes[n.id].first_out = ((2 * e.id) | 1);
+    }
+
+    void changeBlue(Edge e, BlueNode n) {
+       if(_arcs[2 * e.id].next_out != -1) {
+        _arcs[_arcs[2 * e.id].next_out].prev_out = _arcs[2 * e.id].prev_out;
+      }
+      if(_arcs[2 * e.id].prev_out != -1) {
+        _arcs[_arcs[2 * e.id].prev_out].next_out =
+          _arcs[2 * e.id].next_out;
+      } else {
+        _nodes[_arcs[(2 * e.id) | 1].target].first_out =
+          _arcs[2 * e.id].next_out;
+      }
+
+      if (_nodes[n.id].first_out != -1) {
+        _arcs[_nodes[n.id].first_out].prev_out = 2 * e.id;
+      }
+      _arcs[(2 * e.id) | 1].target = n.id;
+      _arcs[2 * e.id].prev_out = -1;
+      _arcs[2 * e.id].next_out = _nodes[n.id].first_out;
+      _nodes[n.id].first_out = 2 * e.id;
+    }
+
+  };
+
+  typedef BpGraphExtender<ListBpGraphBase> ExtendedListBpGraphBase;
+
+
+  /// \addtogroup graphs
+  /// @{
+
+  ///A general undirected graph structure.
+
+  ///\ref ListBpGraph is a versatile and fast undirected graph
+  ///implementation based on linked lists that are stored in
+  ///\c std::vector structures.
+  ///
+  ///This type fully conforms to the \ref concepts::BpGraph "BpGraph concept"
+  ///and it also provides several useful additional functionalities.
+  ///Most of its member functions and nested classes are documented
+  ///only in the concept class.
+  ///
+  ///This class provides only linear time counting for nodes, edges and arcs.
+  ///
+  ///\sa concepts::BpGraph
+  ///\sa ListDigraph
+  class ListBpGraph : public ExtendedListBpGraphBase {
+    typedef ExtendedListBpGraphBase Parent;
+
+  private:
+    /// BpGraphs are \e not copy constructible. Use BpGraphCopy instead.
+    ListBpGraph(const ListBpGraph &) :ExtendedListBpGraphBase()  {};
+    /// \brief Assignment of a graph to another one is \e not allowed.
+    /// Use BpGraphCopy instead.
+    void operator=(const ListBpGraph &) {}
+  public:
+    /// Constructor
+
+    /// Constructor.
+    ///
+    ListBpGraph() {}
+
+    typedef Parent::IncEdgeIt IncEdgeIt;
+
+    /// \brief Add a new red node to the graph.
+    ///
+    /// This function adds a red new node to the graph.
+    /// \return The new node.
+    RedNode addRedNode() { return Parent::addRedNode(); }
+
+    /// \brief Add a new blue node to the graph.
+    ///
+    /// This function adds a blue new node to the graph.
+    /// \return The new node.
+    BlueNode addBlueNode() { return Parent::addBlueNode(); }
+
+    /// \brief Add a new edge to the graph.
+    ///
+    /// This function adds a new edge to the graph between nodes
+    /// \c u and \c v with inherent orientation from node \c u to
+    /// node \c v.
+    /// \return The new edge.
+    Edge addEdge(RedNode u, BlueNode v) {
+      return Parent::addEdge(u, v);
+    }
+    Edge addEdge(BlueNode v, RedNode u) {
+      return Parent::addEdge(u, v);
+    }
+
+    ///\brief Erase a node from the graph.
+    ///
+    /// This function erases the given node along with its incident arcs
+    /// from the graph.
+    ///
+    /// \note All iterators referencing the removed node or the incident
+    /// edges are invalidated, of course.
+    void erase(Node n) { Parent::erase(n); }
+
+    ///\brief Erase an edge from the graph.
+    ///
+    /// This function erases the given edge from the graph.
+    ///
+    /// \note All iterators referencing the removed edge are invalidated,
+    /// of course.
+    void erase(Edge e) { Parent::erase(e); }
+    /// Node validity check
+
+    /// This function gives back \c true if the given node is valid,
+    /// i.e. it is a real node of the graph.
+    ///
+    /// \warning A removed node could become valid again if new nodes are
+    /// added to the graph.
+    bool valid(Node n) const { return Parent::valid(n); }
+    /// Edge validity check
+
+    /// This function gives back \c true if the given edge is valid,
+    /// i.e. it is a real edge of the graph.
+    ///
+    /// \warning A removed edge could become valid again if new edges are
+    /// added to the graph.
+    bool valid(Edge e) const { return Parent::valid(e); }
+    /// Arc validity check
+
+    /// This function gives back \c true if the given arc is valid,
+    /// i.e. it is a real arc of the graph.
+    ///
+    /// \warning A removed arc could become valid again if new edges are
+    /// added to the graph.
+    bool valid(Arc a) const { return Parent::valid(a); }
+
+    /// \brief Change the red node of an edge.
+    ///
+    /// This function changes the red node of the given edge \c e to \c n.
+    ///
+    ///\note \c EdgeIt and \c ArcIt iterators referencing the
+    ///changed edge are invalidated and all other iterators whose
+    ///base node is the changed node are also invalidated.
+    ///
+    ///\warning This functionality cannot be used together with the
+    ///Snapshot feature.
+    void changeRed(Edge e, RedNode n) {
+      Parent::changeRed(e, n);
+    }
+    /// \brief Change the blue node of an edge.
+    ///
+    /// This function changes the blue node of the given edge \c e to \c n.
+    ///
+    ///\note \c EdgeIt iterators referencing the changed edge remain
+    ///valid, but \c ArcIt iterators referencing the changed edge and
+    ///all other iterators whose base node is the changed node are also
+    ///invalidated.
+    ///
+    ///\warning This functionality cannot be used together with the
+    ///Snapshot feature.
+    void changeBlue(Edge e, BlueNode n) {
+      Parent::changeBlue(e, n);
+    }
+
+    ///Clear the graph.
+
+    ///This function erases all nodes and arcs from the graph.
+    ///
+    ///\note All iterators of the graph are invalidated, of course.
+    void clear() {
+      Parent::clear();
+    }
+
+    /// Reserve memory for nodes.
+
+    /// Using this function, it is possible to avoid superfluous memory
+    /// allocation: if you know that the graph you want to build will
+    /// be large (e.g. it will contain millions of nodes and/or edges),
+    /// then it is worth reserving space for this amount before starting
+    /// to build the graph.
+    /// \sa reserveEdge()
+    void reserveNode(int n) { _nodes.reserve(n); };
+
+    /// Reserve memory for edges.
+
+    /// Using this function, it is possible to avoid superfluous memory
+    /// allocation: if you know that the graph you want to build will
+    /// be large (e.g. it will contain millions of nodes and/or edges),
+    /// then it is worth reserving space for this amount before starting
+    /// to build the graph.
+    /// \sa reserveNode()
+    void reserveEdge(int m) { _arcs.reserve(2 * m); };
+
+    /// \brief Class to make a snapshot of the graph and restore
+    /// it later.
+    ///
+    /// Class to make a snapshot of the graph and restore it later.
+    ///
+    /// The newly added nodes and edges can be removed
+    /// using the restore() function.
+    ///
+    /// \note After a state is restored, you cannot restore a later state,
+    /// i.e. you cannot add the removed nodes and edges again using
+    /// another Snapshot instance.
+    ///
+    /// \warning Node and edge deletions and other modifications
+    /// (e.g. changing the end-nodes of edges or contracting nodes)
+    /// cannot be restored. These events invalidate the snapshot.
+    /// However, the edges and nodes that were added to the graph after
+    /// making the current snapshot can be removed without invalidating it.
+    class Snapshot {
+    protected:
+
+      typedef Parent::NodeNotifier NodeNotifier;
+
+      class NodeObserverProxy : public NodeNotifier::ObserverBase {
+      public:
+
+        NodeObserverProxy(Snapshot& _snapshot)
+          : snapshot(_snapshot) {}
+
+        using NodeNotifier::ObserverBase::attach;
+        using NodeNotifier::ObserverBase::detach;
+        using NodeNotifier::ObserverBase::attached;
+
+      protected:
+
+        virtual void add(const Node& node) {
+          snapshot.addNode(node);
+        }
+        virtual void add(const std::vector<Node>& nodes) {
+          for (int i = nodes.size() - 1; i >= 0; --i) {
+            snapshot.addNode(nodes[i]);
+          }
+        }
+        virtual void erase(const Node& node) {
+          snapshot.eraseNode(node);
+        }
+        virtual void erase(const std::vector<Node>& nodes) {
+          for (int i = 0; i < int(nodes.size()); ++i) {
+            snapshot.eraseNode(nodes[i]);
+          }
+        }
+        virtual void build() {
+          Node node;
+          std::vector<Node> nodes;
+          for (notifier()->first(node); node != INVALID;
+               notifier()->next(node)) {
+            nodes.push_back(node);
+          }
+          for (int i = nodes.size() - 1; i >= 0; --i) {
+            snapshot.addNode(nodes[i]);
+          }
+        }
+        virtual void clear() {
+          Node node;
+          for (notifier()->first(node); node != INVALID;
+               notifier()->next(node)) {
+            snapshot.eraseNode(node);
+          }
+        }
+
+        Snapshot& snapshot;
+      };
+
+      class EdgeObserverProxy : public EdgeNotifier::ObserverBase {
+      public:
+
+        EdgeObserverProxy(Snapshot& _snapshot)
+          : snapshot(_snapshot) {}
+
+        using EdgeNotifier::ObserverBase::attach;
+        using EdgeNotifier::ObserverBase::detach;
+        using EdgeNotifier::ObserverBase::attached;
+
+      protected:
+
+        virtual void add(const Edge& edge) {
+          snapshot.addEdge(edge);
+        }
+        virtual void add(const std::vector<Edge>& edges) {
+          for (int i = edges.size() - 1; i >= 0; --i) {
+            snapshot.addEdge(edges[i]);
+          }
+        }
+        virtual void erase(const Edge& edge) {
+          snapshot.eraseEdge(edge);
+        }
+        virtual void erase(const std::vector<Edge>& edges) {
+          for (int i = 0; i < int(edges.size()); ++i) {
+            snapshot.eraseEdge(edges[i]);
+          }
+        }
+        virtual void build() {
+          Edge edge;
+          std::vector<Edge> edges;
+          for (notifier()->first(edge); edge != INVALID;
+               notifier()->next(edge)) {
+            edges.push_back(edge);
+          }
+          for (int i = edges.size() - 1; i >= 0; --i) {
+            snapshot.addEdge(edges[i]);
+          }
+        }
+        virtual void clear() {
+          Edge edge;
+          for (notifier()->first(edge); edge != INVALID;
+               notifier()->next(edge)) {
+            snapshot.eraseEdge(edge);
+          }
+        }
+
+        Snapshot& snapshot;
+      };
+
+      ListBpGraph *graph;
+
+      NodeObserverProxy node_observer_proxy;
+      EdgeObserverProxy edge_observer_proxy;
+
+      std::list<Node> added_nodes;
+      std::list<Edge> added_edges;
+
+
+      void addNode(const Node& node) {
+        added_nodes.push_front(node);
+      }
+      void eraseNode(const Node& node) {
+        std::list<Node>::iterator it =
+          std::find(added_nodes.begin(), added_nodes.end(), node);
+        if (it == added_nodes.end()) {
+          clear();
+          edge_observer_proxy.detach();
+          throw NodeNotifier::ImmediateDetach();
+        } else {
+          added_nodes.erase(it);
+        }
+      }
+
+      void addEdge(const Edge& edge) {
+        added_edges.push_front(edge);
+      }
+      void eraseEdge(const Edge& edge) {
+        std::list<Edge>::iterator it =
+          std::find(added_edges.begin(), added_edges.end(), edge);
+        if (it == added_edges.end()) {
+          clear();
+          node_observer_proxy.detach();
+          throw EdgeNotifier::ImmediateDetach();
+        } else {
+          added_edges.erase(it);
+        }
+      }
+
+      void attach(ListBpGraph &_graph) {
+        graph = &_graph;
+        node_observer_proxy.attach(graph->notifier(Node()));
+        edge_observer_proxy.attach(graph->notifier(Edge()));
+      }
+
+      void detach() {
+        node_observer_proxy.detach();
+        edge_observer_proxy.detach();
+      }
+
+      bool attached() const {
+        return node_observer_proxy.attached();
+      }
+
+      void clear() {
+        added_nodes.clear();
+        added_edges.clear();
+      }
+
+    public:
+
+      /// \brief Default constructor.
+      ///
+      /// Default constructor.
+      /// You have to call save() to actually make a snapshot.
+      Snapshot()
+        : graph(0), node_observer_proxy(*this),
+          edge_observer_proxy(*this) {}
+
+      /// \brief Constructor that immediately makes a snapshot.
+      ///
+      /// This constructor immediately makes a snapshot of the given graph.
+      Snapshot(ListBpGraph &gr)
+        : node_observer_proxy(*this),
+          edge_observer_proxy(*this) {
+        attach(gr);
+      }
+
+      /// \brief Make a snapshot.
+      ///
+      /// This function makes a snapshot of the given graph.
+      /// It can be called more than once. In case of a repeated
+      /// call, the previous snapshot gets lost.
+      void save(ListBpGraph &gr) {
+        if (attached()) {
+          detach();
+          clear();
+        }
+        attach(gr);
+      }
+
+      /// \brief Undo the changes until the last snapshot.
+      ///
+      /// This function undos the changes until the last snapshot
+      /// created by save() or Snapshot(ListBpGraph&).
+      ///
+      /// \warning This method invalidates the snapshot, i.e. repeated
+      /// restoring is not supported unless you call save() again.
+      void restore() {
+        detach();
+        for(std::list<Edge>::iterator it = added_edges.begin();
+            it != added_edges.end(); ++it) {
+          graph->erase(*it);
+        }
+        for(std::list<Node>::iterator it = added_nodes.begin();
+            it != added_nodes.end(); ++it) {
+          graph->erase(*it);
+        }
+        clear();
+      }
+
+      /// \brief Returns \c true if the snapshot is valid.
+      ///
+      /// This function returns \c true if the snapshot is valid.
       bool valid() const {
         return attached();
       }

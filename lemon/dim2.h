@@ -20,17 +20,11 @@
 #define LEMON_DIM2_H
 
 #include <iostream>
+#include <algorithm>
 
-///\ingroup misc
+///\ingroup geomdat
 ///\file
 ///\brief A simple two dimensional vector and a bounding box implementation
-///
-/// The class \ref lemon::dim2::Point "dim2::Point" implements
-/// a two dimensional vector with the usual operations.
-///
-/// The class \ref lemon::dim2::Box "dim2::Box" can be used to determine
-/// the rectangular bounding box of a set of
-/// \ref lemon::dim2::Point "dim2::Point"'s.
 
 namespace lemon {
 
@@ -40,7 +34,7 @@ namespace lemon {
   ///tools for handling two dimensional coordinates
   namespace dim2 {
 
-  /// \addtogroup misc
+  /// \addtogroup geomdat
   /// @{
 
   /// Two dimensional vector (plain vector)

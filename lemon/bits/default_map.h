@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2009
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -97,7 +97,7 @@ namespace lemon {
   };
 
 
-#if defined HAVE_LONG_LONG
+#if defined LEMON_HAVE_LONG_LONG
 
   // long long
   template <typename _Graph, typename _Item>
@@ -153,15 +153,16 @@ namespace lemon {
   template <typename _Graph, typename _Item, typename _Value>
   class DefaultMap
     : public DefaultMapSelector<_Graph, _Item, _Value>::Map {
-  public:
     typedef typename DefaultMapSelector<_Graph, _Item, _Value>::Map Parent;
+
+  public:
     typedef DefaultMap<_Graph, _Item, _Value> Map;
 
-    typedef typename Parent::Graph Graph;
+    typedef typename Parent::GraphType GraphType;
     typedef typename Parent::Value Value;
 
-    explicit DefaultMap(const Graph& graph) : Parent(graph) {}
-    DefaultMap(const Graph& graph, const Value& value)
+    explicit DefaultMap(const GraphType& graph) : Parent(graph) {}
+    DefaultMap(const GraphType& graph, const Value& value)
       : Parent(graph, value) {}
 
     DefaultMap& operator=(const DefaultMap& cmap) {

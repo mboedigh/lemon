@@ -18,20 +18,19 @@
 
 /// \ingroup tools
 /// \file
-/// \brief Special plane digraph generator.
+/// \brief Special plane graph generator.
 ///
 /// Graph generator application for various types of plane graphs.
 ///
 /// See
-/// \verbatim
-///  lgf-gen --help
-/// \endverbatim
-/// for more info on the usage.
-///
-
+/// \code
+///   lgf-gen --help
+/// \endcode
+/// for more information on the usage.
 
 #include <algorithm>
 #include <set>
+#include <ctime>
 #include <lemon/list_graph.h>
 #include <lemon/random.h>
 #include <lemon/dim2.h>
@@ -66,7 +65,7 @@ ListGraph::NodeMap<Point> coords(g);
 double totalLen(){
   double tlen=0;
   for(EdgeIt e(g);e!=INVALID;++e)
-    tlen+=sqrt((coords[g.v(e)]-coords[g.u(e)]).normSquare());
+    tlen+=std::sqrt((coords[g.v(e)]-coords[g.u(e)]).normSquare());
   return tlen;
 }
 
@@ -189,7 +188,7 @@ namespace _delaunay_bits {
       (q.x * q.x + q.y * q.y) * (r.x * p.y - p.x * r.y) +
       (r.x * r.x + r.y * r.y) * (p.x * q.y - q.x * p.y);
 
-    return d / (2 * a) + sqrt((d * d + e * e) / (4 * a * a) + f / a);
+    return d / (2 * a) + std::sqrt((d * d + e * e) / (4 * a * a) + f / a);
   }
 
   inline bool circle_form(const Point& p, const Point& q, const Point& r) {
@@ -207,7 +206,7 @@ namespace _delaunay_bits {
     double a = q.x - p.x;
     double b = (q.x - sx) * p.y - (p.x - sx) * q.y;
     double d = (q.x - sx) * (p.x - sx) * (p - q).normSquare();
-    return (b - sqrt(d)) / a;
+    return (b - std::sqrt(d)) / a;
   }
 
   struct YLess {
@@ -247,7 +246,7 @@ namespace _delaunay_bits {
 
   struct BeachIt;
 
-  typedef std::multimap<double, BeachIt> SpikeHeap;
+  typedef std::multimap<double, BeachIt*> SpikeHeap;
 
   typedef std::multimap<Part, SpikeHeap::iterator, YLess> Beach;
 
@@ -330,6 +329,7 @@ inline void delaunay() {
       Beach::iterator bit = beach.upper_bound(Part(site, site, site));
 
       if (bit->second != spikeheap.end()) {
+        delete bit->second->second;
         spikeheap.erase(bit->second);
       }
 
@@ -343,8 +343,8 @@ inline void delaunay() {
       if (prev != -1 &&
           circle_form(points[prev], points[curr], points[site])) {
         double x = circle_point(points[prev], points[curr], points[site]);
-        pit = spikeheap.insert(std::make_pair(x, BeachIt(beach.end())));
-        pit->second.it =
+        pit = spikeheap.insert(std::make_pair(x, new BeachIt(beach.end())));
+        pit->second->it =
           beach.insert(std::make_pair(Part(prev, curr, site), pit));
       } else {
         beach.insert(std::make_pair(Part(prev, curr, site), pit));
@@ -356,8 +356,8 @@ inline void delaunay() {
       if (next != -1 &&
           circle_form(points[site], points[curr],points[next])) {
         double x = circle_point(points[site], points[curr], points[next]);
-        nit = spikeheap.insert(std::make_pair(x, BeachIt(beach.end())));
-        nit->second.it =
+        nit = spikeheap.insert(std::make_pair(x, new BeachIt(beach.end())));
+        nit->second->it =
           beach.insert(std::make_pair(Part(site, curr, next), nit));
       } else {
         beach.insert(std::make_pair(Part(site, curr, next), nit));
@@ -367,7 +367,7 @@ inline void delaunay() {
     } else {
       sweep = spit->first;
 
-      Beach::iterator bit = spit->second.it;
+      Beach::iterator bit = spit->second->it;
 
       int prev = bit->first.prev;
       int curr = bit->first.curr;
@@ -400,10 +400,22 @@ inline void delaunay() {
       Beach::iterator nbit = bit; ++nbit;
       int nnt = nbit->first.next;
 
-      if (bit->second != spikeheap.end()) spikeheap.erase(bit->second);
-      if (pbit->second != spikeheap.end()) spikeheap.erase(pbit->second);
-      if (nbit->second != spikeheap.end()) spikeheap.erase(nbit->second);
-
+      if (bit->second != spikeheap.end())
+        {
+          delete bit->second->second;
+          spikeheap.erase(bit->second);
+        }
+      if (pbit->second != spikeheap.end())
+        {
+          delete pbit->second->second;
+          spikeheap.erase(pbit->second);
+        }
+      if (nbit->second != spikeheap.end())
+        {
+          delete nbit->second->second;
+          spikeheap.erase(nbit->second);
+        }
+      
       beach.erase(nbit);
       beach.erase(bit);
       beach.erase(pbit);
@@ -413,8 +425,8 @@ inline void delaunay() {
           circle_form(points[ppv], points[prev], points[next])) {
         double x = circle_point(points[ppv], points[prev], points[next]);
         if (x < sweep) x = sweep;
-        pit = spikeheap.insert(std::make_pair(x, BeachIt(beach.end())));
-        pit->second.it =
+        pit = spikeheap.insert(std::make_pair(x, new BeachIt(beach.end())));
+        pit->second->it =
           beach.insert(std::make_pair(Part(ppv, prev, next), pit));
       } else {
         beach.insert(std::make_pair(Part(ppv, prev, next), pit));
@@ -425,8 +437,8 @@ inline void delaunay() {
           circle_form(points[prev], points[next], points[nnt])) {
         double x = circle_point(points[prev], points[next], points[nnt]);
         if (x < sweep) x = sweep;
-        nit = spikeheap.insert(std::make_pair(x, BeachIt(beach.end())));
-        nit->second.it =
+        nit = spikeheap.insert(std::make_pair(x, new BeachIt(beach.end())));
+        nit->second->it =
           beach.insert(std::make_pair(Part(prev, next, nnt), nit));
       } else {
         beach.insert(std::make_pair(Part(prev, next, nnt), nit));
@@ -481,8 +493,8 @@ void sparse2(int d)
       Node b=g.v(*ei);
       g.erase(*ei);
       ConstMap<Arc,int> cegy(1);
-      Suurballe<ListGraph,ConstMap<Arc,int> > sur(g,cegy,a,b);
-      int k=sur.run(2);
+      Suurballe<ListGraph,ConstMap<Arc,int> > sur(g,cegy);
+      int k=sur.run(a,b,2);
       if(k<2 || sur.totalLength()>d)
         g.addEdge(a,b);
       else cnt++;
@@ -512,9 +524,8 @@ void sparseTriangle(int d)
       Edge ne;
       if(e==INVALID) {
         ConstMap<Arc,int> cegy(1);
-        Suurballe<ListGraph,ConstMap<Arc,int> >
-          sur(g,cegy,pi->a,pi->b);
-        int k=sur.run(2);
+        Suurballe<ListGraph,ConstMap<Arc,int> > sur(g,cegy);
+        int k=sur.run(pi->a,pi->b,2);
         if(k<2 || sur.totalLength()>d)
           {
             ne=g.addEdge(pi->a,pi->b);
@@ -688,20 +699,21 @@ int main(int argc,const char **argv)
     .intOption("g", "Girth parameter (default is 10)", 10)
     .refOption("cities", "Number of cities (default is 1)", num_of_cities)
     .refOption("area", "Full relative area of the cities (default is 1)", area)
-    .refOption("disc", "Nodes are evenly distributed on a unit disc (default)",disc_d)
+    .refOption("disc", "Nodes are evenly distributed on a unit disc (default)",
+               disc_d)
     .optionGroup("dist", "disc")
-    .refOption("square", "Nodes are evenly distributed on a unit square", square_d)
+    .refOption("square", "Nodes are evenly distributed on a unit square",
+               square_d)
     .optionGroup("dist", "square")
-    .refOption("gauss",
-            "Nodes are located according to a two-dim gauss distribution",
-            gauss_d)
+    .refOption("gauss", "Nodes are located according to a two-dim Gauss "
+               "distribution", gauss_d)
     .optionGroup("dist", "gauss")
-//     .mandatoryGroup("dist")
     .onlyOneGroup("dist")
-    .boolOption("eps", "Also generate .eps output (prefix.eps)")
-    .boolOption("nonodes", "Draw the edges only in the generated .eps")
-    .boolOption("dir", "Directed digraph is generated (each arcs are replaced by two directed ones)")
-    .boolOption("2con", "Create a two connected planar digraph")
+    .boolOption("eps", "Also generate .eps output (<prefix>.eps)")
+    .boolOption("nonodes", "Draw only the edges in the generated .eps output")
+    .boolOption("dir", "Directed graph is generated (each edge is replaced by "
+                "two directed arcs)")
+    .boolOption("2con", "Create a two connected planar graph")
     .optionGroup("alg","2con")
     .boolOption("tree", "Create a min. cost spanning tree")
     .optionGroup("alg","tree")
@@ -709,7 +721,7 @@ int main(int argc,const char **argv)
     .optionGroup("alg","tsp")
     .boolOption("tsp2", "Create a TSP tour (tree based)")
     .optionGroup("alg","tsp2")
-    .boolOption("dela", "Delaunay triangulation digraph")
+    .boolOption("dela", "Delaunay triangulation graph")
     .optionGroup("alg","dela")
     .onlyOneGroup("alg")
     .boolOption("rand", "Use time seed for random number generator")
@@ -721,7 +733,7 @@ int main(int argc,const char **argv)
     .run();
 
   if (ap["rand"]) {
-    int seed = time(0);
+    int seed = int(time(0));
     std::cout << "Random number seed: " << seed << std::endl;
     rnd = Random(seed);
   }
@@ -814,7 +826,7 @@ int main(int argc,const char **argv)
   std::cout << "Number of arcs    : " << countEdges(g) << std::endl;
   double tlen=0;
   for(EdgeIt e(g);e!=INVALID;++e)
-    tlen+=sqrt((coords[g.v(e)]-coords[g.u(e)]).normSquare());
+    tlen+=std::sqrt((coords[g.v(e)]-coords[g.u(e)]).normSquare());
   std::cout << "Total arc length  : " << tlen << std::endl;
 
   if(ap["eps"])

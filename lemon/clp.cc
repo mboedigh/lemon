@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2008
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -24,15 +24,15 @@ namespace lemon {
   ClpLp::ClpLp() {
     _prob = new ClpSimplex();
     _init_temporals();
-    messageLevel(MESSAGE_NO_OUTPUT);
+    messageLevel(MESSAGE_NOTHING);
   }
 
   ClpLp::ClpLp(const ClpLp& other) {
     _prob = new ClpSimplex(*other._prob);
-    rows = other.rows;
-    cols = other.cols;
+    _rows = other._rows;
+    _cols = other._cols;
     _init_temporals();
-    messageLevel(MESSAGE_NO_OUTPUT);
+    messageLevel(MESSAGE_NOTHING);
   }
 
   ClpLp::~ClpLp() {
@@ -78,6 +78,19 @@ namespace lemon {
     return _prob->numberRows() - 1;
   }
 
+  int ClpLp::_addRow(Value l, ExprIterator b, ExprIterator e, Value u) {
+    std::vector<int> indexes;
+    std::vector<Value> values;
+
+    for(ExprIterator it = b; it != e; ++it) {
+      indexes.push_back(it->first);
+      values.push_back(it->second);
+    }
+
+    _prob->addRow(values.size(), &indexes.front(), &values.front(), l, u);
+    return _prob->numberRows() - 1;
+  }
+
 
   void ClpLp::_eraseCol(int c) {
     _col_names_ref.erase(_prob->getColumnName(c));
@@ -90,13 +103,13 @@ namespace lemon {
   }
 
   void ClpLp::_eraseColId(int i) {
-    cols.eraseIndex(i);
-    cols.shiftIndices(i);
+    _cols.eraseIndex(i);
+    _cols.shiftIndices(i);
   }
 
   void ClpLp::_eraseRowId(int i) {
-    rows.eraseIndex(i);
-    rows.shiftIndices(i);
+    _rows.eraseIndex(i);
+    _rows.shiftIndices(i);
   }
 
   void ClpLp::_getColName(int c, std::string& name) const {
@@ -424,14 +437,28 @@ namespace lemon {
   void ClpLp::_clear() {
     delete _prob;
     _prob = new ClpSimplex();
-    rows.clear();
-    cols.clear();
     _col_names_ref.clear();
     _clear_temporals();
   }
 
-  void ClpLp::messageLevel(MessageLevel m) {
-    _prob->setLogLevel(static_cast<int>(m));
+  void ClpLp::_messageLevel(MessageLevel level) {
+    switch (level) {
+    case MESSAGE_NOTHING:
+      _prob->setLogLevel(0);
+      break;
+    case MESSAGE_ERROR:
+      _prob->setLogLevel(1);
+      break;
+    case MESSAGE_WARNING:
+      _prob->setLogLevel(2);
+      break;
+    case MESSAGE_NORMAL:
+      _prob->setLogLevel(3);
+      break;
+    case MESSAGE_VERBOSE:
+      _prob->setLogLevel(4);
+      break;
+    }
   }
 
 } //END OF NAMESPACE LEMON

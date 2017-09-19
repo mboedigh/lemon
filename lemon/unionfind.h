@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2009
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -43,7 +43,7 @@ namespace lemon {
   /// the find operation uses path compression.
   /// This is a very simple but efficient implementation, providing
   /// only four methods: join (union), find, insert and size.
-  /// For more features see the \ref UnionFindEnum class.
+  /// For more features, see the \ref UnionFindEnum class.
   ///
   /// It is primarily used in Kruskal algorithm for finding minimal
   /// cost spanning tree in a graph.
@@ -739,7 +739,7 @@ namespace lemon {
     /// Erase each item from the data structure.
     void clear() {
       items.clear();
-      classes.clear;
+      classes.clear();
       firstClass = firstFreeClass = firstFreeItem = -1;
     }
 
@@ -1287,6 +1287,15 @@ namespace lemon {
     HeapUnionFind(ItemIntMap& _index)
       : index(_index), first_class(-1),
         first_free_class(-1), first_free_node(-1) {}
+
+    /// \brief Clears the union-find data structure
+    ///
+    /// Erase each item from the data structure.
+    void clear() {
+      nodes.clear();
+      classes.clear();
+      first_free_node = first_free_class = first_class = -1;
+    }
 
     /// \brief Insert a new node into a new component.
     ///

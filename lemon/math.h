@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2009
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -56,7 +56,7 @@ namespace lemon {
   const long double SQRT1_2 = 0.7071067811865475244008443621048490L;
 
   ///Check whether the parameter is NaN or not
-  
+
   ///This function checks whether the parameter is NaN or not.
   ///Is should be equivalent with std::isnan(), but it is not
   ///provided by all compilers.
@@ -65,8 +65,13 @@ namespace lemon {
       return v!=v;
     }
 
+  ///Round a value to its closest integer
+  inline double round(double r) {
+    return (r > 0.0) ? std::floor(r + 0.5) : std::ceil(r - 0.5);
+  }
+
   /// @}
 
 } //namespace lemon
 
-#endif //LEMON_TOLERANCE_H
+#endif //LEMON_MATH_H

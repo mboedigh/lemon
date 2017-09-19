@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2008
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -22,7 +22,7 @@
 #include <lemon/core.h>
 #include <lemon/bits/edge_set_extender.h>
 
-/// \ingroup semi_adaptors
+/// \ingroup graphs
 /// \file
 /// \brief ArcSet and EdgeSet classes.
 ///
@@ -33,7 +33,6 @@ namespace lemon {
   class ListArcSetBase {
   public:
 
-    typedef GR Graph;
     typedef typename GR::Node Node;
     typedef typename GR::NodeIt NodeIt;
 
@@ -84,6 +83,12 @@ namespace lemon {
     };
 
     ListArcSetBase() : first_arc(-1), first_free_arc(-1) {}
+
+    Node addNode() {
+      LEMON_ASSERT(false,
+        "This graph structure does not support node insertion");
+      return INVALID; // avoid warning
+    }
 
     Arc addArc(const Node& u, const Node& v) {
       int n;
@@ -208,9 +213,9 @@ namespace lemon {
 
     template <typename V>
     class NodeMap : public GR::template NodeMap<V> {
-    public:
-
       typedef typename GR::template NodeMap<V> Parent;
+
+    public:
 
       explicit NodeMap(const ListArcSetBase<GR>& arcset)
         : Parent(*arcset._graph) {}
@@ -231,7 +236,7 @@ namespace lemon {
 
   };
 
-  /// \ingroup semi_adaptors
+  /// \ingroup graphs
   ///
   /// \brief Digraph using a node set of another digraph or graph and
   /// an own arc set.
@@ -250,25 +255,22 @@ namespace lemon {
   /// that node can be removed from the underlying graph, in this case
   /// all arcs incident to the given node is erased from the arc set.
   ///
+  /// This class fully conforms to the \ref concepts::Digraph
+  /// "Digraph" concept.
+  /// It provides only linear time counting for nodes and arcs.
+  ///
   /// \param GR The type of the graph which shares its node set with
   /// this class. Its interface must conform to the
   /// \ref concepts::Digraph "Digraph" or \ref concepts::Graph "Graph"
   /// concept.
-  ///
-  /// This class fully conforms to the \ref concepts::Digraph
-  /// "Digraph" concept.
   template <typename GR>
   class ListArcSet : public ArcSetExtender<ListArcSetBase<GR> > {
+    typedef ArcSetExtender<ListArcSetBase<GR> > Parent;
 
   public:
 
-    typedef ArcSetExtender<ListArcSetBase<GR> > Parent;
-
     typedef typename Parent::Node Node;
     typedef typename Parent::Arc Arc;
-
-    typedef GR Graph;
-
 
     typedef typename Parent::NodesImplBase NodesImplBase;
 
@@ -292,9 +294,9 @@ namespace lemon {
     }
 
     class NodesImpl : public NodesImplBase {
-    public:
       typedef NodesImplBase Parent;
 
+    public:
       NodesImpl(const GR& graph, ListArcSet& arcset)
         : Parent(graph), _arcset(arcset) {}
 
@@ -354,7 +356,6 @@ namespace lemon {
   class ListEdgeSetBase {
   public:
 
-    typedef GR Graph;
     typedef typename GR::Node Node;
     typedef typename GR::NodeIt NodeIt;
 
@@ -421,6 +422,12 @@ namespace lemon {
     };
 
     ListEdgeSetBase() : first_arc(-1), first_free_arc(-1) {}
+
+    Node addNode() {
+      LEMON_ASSERT(false,
+        "This graph structure does not support node insertion");
+      return INVALID; // avoid warning
+    }
 
     Edge addEdge(const Node& u, const Node& v) {
       int n;
@@ -637,9 +644,9 @@ namespace lemon {
 
     template <typename V>
     class NodeMap : public GR::template NodeMap<V> {
-    public:
-
       typedef typename GR::template NodeMap<V> Parent;
+
+    public:
 
       explicit NodeMap(const ListEdgeSetBase<GR>& arcset)
         : Parent(*arcset._graph) {}
@@ -660,7 +667,7 @@ namespace lemon {
 
   };
 
-  /// \ingroup semi_adaptors
+  /// \ingroup graphs
   ///
   /// \brief Graph using a node set of another digraph or graph and an
   /// own edge set.
@@ -679,26 +686,23 @@ namespace lemon {
   /// be removed from the underlying graph, in this case all edges
   /// incident to the given node is erased from the arc set.
   ///
+  /// This class fully conforms to the \ref concepts::Graph "Graph"
+  /// concept.
+  /// It provides only linear time counting for nodes, edges and arcs.
+  ///
   /// \param GR The type of the graph which shares its node set
   /// with this class. Its interface must conform to the
   /// \ref concepts::Digraph "Digraph" or \ref concepts::Graph "Graph"
   /// concept.
-  ///
-  /// This class fully conforms to the \ref concepts::Graph "Graph"
-  /// concept.
   template <typename GR>
   class ListEdgeSet : public EdgeSetExtender<ListEdgeSetBase<GR> > {
+    typedef EdgeSetExtender<ListEdgeSetBase<GR> > Parent;
 
   public:
-
-    typedef EdgeSetExtender<ListEdgeSetBase<GR> > Parent;
 
     typedef typename Parent::Node Node;
     typedef typename Parent::Arc Arc;
     typedef typename Parent::Edge Edge;
-
-    typedef GR Graph;
-
 
     typedef typename Parent::NodesImplBase NodesImplBase;
 
@@ -717,9 +721,9 @@ namespace lemon {
     }
 
     class NodesImpl : public NodesImplBase {
-    public:
       typedef NodesImplBase Parent;
 
+    public:
       NodesImpl(const GR& graph, ListEdgeSet& arcset)
         : Parent(graph), _arcset(arcset) {}
 
@@ -779,9 +783,8 @@ namespace lemon {
   class SmartArcSetBase {
   public:
 
-    typedef GR Graph;
-    typedef typename Graph::Node Node;
-    typedef typename Graph::NodeIt NodeIt;
+    typedef typename GR::Node Node;
+    typedef typename GR::NodeIt NodeIt;
 
   protected:
 
@@ -827,6 +830,12 @@ namespace lemon {
 
     SmartArcSetBase() {}
 
+    Node addNode() {
+      LEMON_ASSERT(false,
+        "This graph structure does not support node insertion");
+      return INVALID; // avoid warning
+    }
+
     Arc addArc(const Node& u, const Node& v) {
       int n = arcs.size();
       arcs.push_back(ArcT());
@@ -860,7 +869,7 @@ namespace lemon {
       arc.id = arcs.size() - 1;
     }
 
-    void next(Arc& arc) const {
+    static void next(Arc& arc) {
       --arc.id;
     }
 
@@ -900,9 +909,9 @@ namespace lemon {
 
     template <typename V>
     class NodeMap : public GR::template NodeMap<V> {
-    public:
-
       typedef typename GR::template NodeMap<V> Parent;
+
+    public:
 
       explicit NodeMap(const SmartArcSetBase<GR>& arcset)
         : Parent(*arcset._graph) { }
@@ -924,7 +933,7 @@ namespace lemon {
   };
 
 
-  /// \ingroup semi_adaptors
+  /// \ingroup graphs
   ///
   /// \brief Digraph using a node set of another digraph or graph and
   /// an own arc set.
@@ -947,24 +956,22 @@ namespace lemon {
   /// single-linked lists for enumerate outgoing and incoming
   /// arcs. Therefore the arcs cannot be erased from the arc sets.
   ///
+  /// This class fully conforms to the \ref concepts::Digraph "Digraph"
+  /// concept.
+  /// It provides only linear time counting for nodes and arcs.
+  ///
   /// \warning If a node is erased from the underlying graph and this
   /// node is the source or target of one arc in the arc set, then
   /// the arc set is invalidated, and it cannot be used anymore. The
   /// validity can be checked with the \c valid() member function.
-  ///
-  /// This class fully conforms to the \ref concepts::Digraph
-  /// "Digraph" concept.
   template <typename GR>
   class SmartArcSet : public ArcSetExtender<SmartArcSetBase<GR> > {
+    typedef ArcSetExtender<SmartArcSetBase<GR> > Parent;
 
   public:
 
-    typedef ArcSetExtender<SmartArcSetBase<GR> > Parent;
-
     typedef typename Parent::Node Node;
     typedef typename Parent::Arc Arc;
-
-    typedef GR Graph;
 
   protected:
 
@@ -983,9 +990,9 @@ namespace lemon {
     }
 
     class NodesImpl : public NodesImplBase {
-    public:
       typedef NodesImplBase Parent;
 
+    public:
       NodesImpl(const GR& graph, SmartArcSet& arcset)
         : Parent(graph), _arcset(arcset) {}
 
@@ -1062,7 +1069,6 @@ namespace lemon {
   class SmartEdgeSetBase {
   public:
 
-    typedef GR Graph;
     typedef typename GR::Node Node;
     typedef typename GR::NodeIt NodeIt;
 
@@ -1127,6 +1133,12 @@ namespace lemon {
 
     SmartEdgeSetBase() {}
 
+    Node addNode() {
+      LEMON_ASSERT(false,
+        "This graph structure does not support node insertion");
+      return INVALID; // avoid warning
+    }
+
     Edge addEdge(const Node& u, const Node& v) {
       int n = arcs.size();
       arcs.push_back(ArcT());
@@ -1164,7 +1176,7 @@ namespace lemon {
       arc.id = arcs.size() - 1;
     }
 
-    void next(Arc& arc) const {
+    static void next(Arc& arc) {
       --arc.id;
     }
 
@@ -1172,7 +1184,7 @@ namespace lemon {
       arc.id = arcs.size() / 2 - 1;
     }
 
-    void next(Edge& arc) const {
+    static void next(Edge& arc) {
       --arc.id;
     }
 
@@ -1249,9 +1261,9 @@ namespace lemon {
 
     template <typename V>
     class NodeMap : public GR::template NodeMap<V> {
-    public:
-
       typedef typename GR::template NodeMap<V> Parent;
+
+    public:
 
       explicit NodeMap(const SmartEdgeSetBase<GR>& arcset)
         : Parent(*arcset._graph) { }
@@ -1272,7 +1284,7 @@ namespace lemon {
 
   };
 
-  /// \ingroup semi_adaptors
+  /// \ingroup graphs
   ///
   /// \brief Graph using a node set of another digraph or graph and an
   /// own edge set.
@@ -1295,25 +1307,23 @@ namespace lemon {
   /// single-linked lists for enumerate incident edges. Therefore the
   /// edges cannot be erased from the edge sets.
   ///
+  /// This class fully conforms to the \ref concepts::Graph "Graph"
+  /// concept.
+  /// It provides only linear time counting for nodes, edges and arcs.
+  ///
   /// \warning If a node is erased from the underlying graph and this
   /// node is incident to one edge in the edge set, then the edge set
   /// is invalidated, and it cannot be used anymore. The validity can
   /// be checked with the \c valid() member function.
-  ///
-  /// This class fully conforms to the \ref concepts::Graph
-  /// "Graph" concept.
   template <typename GR>
   class SmartEdgeSet : public EdgeSetExtender<SmartEdgeSetBase<GR> > {
+    typedef EdgeSetExtender<SmartEdgeSetBase<GR> > Parent;
 
   public:
-
-    typedef EdgeSetExtender<SmartEdgeSetBase<GR> > Parent;
 
     typedef typename Parent::Node Node;
     typedef typename Parent::Arc Arc;
     typedef typename Parent::Edge Edge;
-
-    typedef GR Graph;
 
   protected:
 
@@ -1331,9 +1341,9 @@ namespace lemon {
     }
 
     class NodesImpl : public NodesImplBase {
-    public:
       typedef NodesImplBase Parent;
 
+    public:
       NodesImpl(const GR& graph, SmartEdgeSet& arcset)
         : Parent(graph), _arcset(arcset) {}
 

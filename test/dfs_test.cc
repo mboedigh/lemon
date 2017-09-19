@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2009
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -50,7 +50,10 @@ char test_lgf[] =
   "6 3  7\n"
   "@attributes\n"
   "source 0\n"
-  "target 5\n";
+  "target 5\n"
+  "source1 6\n"
+  "target1 3\n";
+
 
 void checkDfsCompile()
 {
@@ -62,39 +65,76 @@ void checkDfsCompile()
   Digraph G;
   Node s, t;
   Arc e;
-  int l;
+  int l, i;
   bool b;
+  ::lemon::ignore_unused_variable_warning(l,i,b);
+
   DType::DistMap d(G);
   DType::PredMap p(G);
   Path<Digraph> pp;
+  concepts::ReadMap<Arc,bool> am;
 
   {
     DType dfs_test(G);
+    const DType& const_dfs_test = dfs_test;
 
     dfs_test.run(s);
     dfs_test.run(s,t);
     dfs_test.run();
 
-    l  = dfs_test.dist(t);
-    e  = dfs_test.predArc(t);
-    s  = dfs_test.predNode(t);
-    b  = dfs_test.reached(t);
-    d  = dfs_test.distMap();
-    p  = dfs_test.predMap();
-    pp = dfs_test.path(t);
+    dfs_test.init();
+    dfs_test.addSource(s);
+    e = dfs_test.processNextArc();
+    e = const_dfs_test.nextArc();
+    b = const_dfs_test.emptyQueue();
+    i = const_dfs_test.queueSize();
+
+    dfs_test.start();
+    dfs_test.start(t);
+    dfs_test.start(am);
+
+    l  = const_dfs_test.dist(t);
+    e  = const_dfs_test.predArc(t);
+    s  = const_dfs_test.predNode(t);
+    b  = const_dfs_test.reached(t);
+    d  = const_dfs_test.distMap();
+    p  = const_dfs_test.predMap();
+    pp = const_dfs_test.path(t);
   }
   {
     DType
       ::SetPredMap<concepts::ReadWriteMap<Node,Arc> >
       ::SetDistMap<concepts::ReadWriteMap<Node,int> >
       ::SetReachedMap<concepts::ReadWriteMap<Node,bool> >
-      ::SetProcessedMap<concepts::WriteMap<Node,bool> >
       ::SetStandardProcessedMap
+      ::SetProcessedMap<concepts::WriteMap<Node,bool> >
       ::Create dfs_test(G);
+
+    concepts::ReadWriteMap<Node,Arc> pred_map;
+    concepts::ReadWriteMap<Node,int> dist_map;
+    concepts::ReadWriteMap<Node,bool> reached_map;
+    concepts::WriteMap<Node,bool> processed_map;
+
+    dfs_test
+      .predMap(pred_map)
+      .distMap(dist_map)
+      .reachedMap(reached_map)
+      .processedMap(processed_map);
 
     dfs_test.run(s);
     dfs_test.run(s,t);
     dfs_test.run();
+    dfs_test.init();
+
+    dfs_test.addSource(s);
+    e = dfs_test.processNextArc();
+    e = dfs_test.nextArc();
+    b = dfs_test.emptyQueue();
+    i = dfs_test.queueSize();
+
+    dfs_test.start();
+    dfs_test.start(t);
+    dfs_test.start(am);
 
     l  = dfs_test.dist(t);
     e  = dfs_test.predArc(t);
@@ -113,6 +153,8 @@ void checkDfsFunctionCompile()
 
   Digraph g;
   bool b;
+  ::lemon::ignore_unused_variable_warning(b);
+
   dfs(g).run(Node());
   b=dfs(g).run(Node(),Node());
   dfs(g).run();
@@ -144,11 +186,14 @@ void checkDfs() {
 
   Digraph G;
   Node s, t;
+  Node s1, t1;
 
   std::istringstream input(test_lgf);
   digraphReader(G, input).
     node("source", s).
     node("target", t).
+    node("source1", s1).
+    node("target1", t1).
     run();
 
   Dfs<Digraph> dfs_test(G);
@@ -172,6 +217,11 @@ void checkDfs() {
               << dfs_test.dist(v) << ")");
       }
     }
+  }
+
+  {
+  Dfs<Digraph> dfs(G);
+  check(dfs.run(s1,t1) && dfs.reached(t1),"Node 3 is reachable from Node 6.");
   }
 
   {

@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2009
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -22,15 +22,14 @@
 #include <lemon/core.h>
 #include <lemon/error.h>
 
-#include <lemon/bits/default_map.h>
-
 namespace lemon {
 
   template <typename _Digraph>
   class DigraphAdaptorExtender : public _Digraph {
+    typedef _Digraph Parent;
+
   public:
 
-    typedef _Digraph Parent;
     typedef _Digraph Digraph;
     typedef DigraphAdaptorExtender Adaptor;
 
@@ -86,6 +85,9 @@ namespace lemon {
 
     };
 
+    LemonRangeWrapper1<NodeIt, Adaptor> nodes() const {
+      return LemonRangeWrapper1<NodeIt, Adaptor>(*this);
+    }
 
     class ArcIt : public Arc {
       const Adaptor* _adaptor;
@@ -108,6 +110,10 @@ namespace lemon {
       }
 
     };
+
+    LemonRangeWrapper1<ArcIt, Adaptor> arcs() const {
+      return LemonRangeWrapper1<ArcIt, Adaptor>(*this);
+    }
 
 
     class OutArcIt : public Arc {
@@ -133,6 +139,10 @@ namespace lemon {
 
     };
 
+    LemonRangeWrapper2<OutArcIt, Adaptor, Node> outArcs(const Node& u) const {
+      return LemonRangeWrapper2<OutArcIt, Adaptor, Node>(*this, u);
+    }
+
 
     class InArcIt : public Arc {
       const Adaptor* _adaptor;
@@ -157,6 +167,10 @@ namespace lemon {
 
     };
 
+    LemonRangeWrapper2<InArcIt, Adaptor, Node> inArcs(const Node& u) const {
+      return LemonRangeWrapper2<InArcIt, Adaptor, Node>(*this, u);
+    }
+
     Node baseNode(const OutArcIt &e) const {
       return Parent::source(e);
     }
@@ -175,11 +189,14 @@ namespace lemon {
 
   template <typename _Graph>
   class GraphAdaptorExtender : public _Graph {
+    typedef _Graph Parent;
+
   public:
 
-    typedef _Graph Parent;
     typedef _Graph Graph;
     typedef GraphAdaptorExtender Adaptor;
+
+    typedef True UndirectedTag;
 
     typedef typename Parent::Node Node;
     typedef typename Parent::Arc Arc;
@@ -252,6 +269,10 @@ namespace lemon {
 
     };
 
+    LemonRangeWrapper1<NodeIt, Adaptor> nodes() const {
+      return LemonRangeWrapper1<NodeIt, Adaptor>(*this);
+    }
+
 
     class ArcIt : public Arc {
       const Adaptor* _adaptor;
@@ -274,6 +295,10 @@ namespace lemon {
       }
 
     };
+
+    LemonRangeWrapper1<ArcIt, Adaptor> arcs() const {
+      return LemonRangeWrapper1<ArcIt, Adaptor>(*this);
+    }
 
 
     class OutArcIt : public Arc {
@@ -299,6 +324,10 @@ namespace lemon {
 
     };
 
+    LemonRangeWrapper2<OutArcIt, Adaptor, Node> outArcs(const Node& u) const {
+      return LemonRangeWrapper2<OutArcIt, Adaptor, Node>(*this, u);
+    }
+
 
     class InArcIt : public Arc {
       const Adaptor* _adaptor;
@@ -323,6 +352,10 @@ namespace lemon {
 
     };
 
+    LemonRangeWrapper2<InArcIt, Adaptor, Node> inArcs(const Node& u) const {
+      return LemonRangeWrapper2<InArcIt, Adaptor, Node>(*this, u);
+    }
+
     class EdgeIt : public Parent::Edge {
       const Adaptor* _adaptor;
     public:
@@ -344,6 +377,11 @@ namespace lemon {
       }
 
     };
+
+    LemonRangeWrapper1<EdgeIt, Adaptor> edges() const {
+      return LemonRangeWrapper1<EdgeIt, Adaptor>(*this);
+    }
+
 
     class IncEdgeIt : public Edge {
       friend class GraphAdaptorExtender;
@@ -369,6 +407,11 @@ namespace lemon {
         return *this;
       }
     };
+
+    LemonRangeWrapper2<IncEdgeIt, Adaptor, Node> incEdges(const Node& u) const {
+      return LemonRangeWrapper2<IncEdgeIt, Adaptor, Node>(*this, u);
+    }
+
 
     Node baseNode(const OutArcIt &a) const {
       return Parent::source(a);

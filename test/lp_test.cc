@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2009
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -20,33 +20,71 @@
 #include <lemon/lp_skeleton.h>
 #include "test_tools.h"
 #include <lemon/tolerance.h>
-
-#ifdef HAVE_CONFIG_H
+#include <lemon/concept_check.h>
 #include <lemon/config.h>
-#endif
 
-#ifdef HAVE_GLPK
+#ifdef LEMON_HAVE_GLPK
 #include <lemon/glpk.h>
 #endif
 
-#ifdef HAVE_CPLEX
+#ifdef LEMON_HAVE_CPLEX
 #include <lemon/cplex.h>
 #endif
 
-#ifdef HAVE_SOPLEX
+#ifdef LEMON_HAVE_SOPLEX
 #include <lemon/soplex.h>
 #endif
 
-#ifdef HAVE_CLP
+#ifdef LEMON_HAVE_CLP
 #include <lemon/clp.h>
 #endif
 
+#ifdef LEMON_HAVE_LP
+#include <lemon/lp.h>
+#endif
 using namespace lemon;
+
+int countCols(LpBase & lp) {
+  int count=0;
+  for (LpBase::ColIt c(lp); c!=INVALID; ++c) ++count;
+#ifdef LEMON_CXX11
+  int cnt = 0;
+  for(auto c: lp.cols()) { cnt++; ::lemon::ignore_unused_variable_warning(c); }
+  check(count == cnt, "Wrong STL iterator");
+#endif
+  return count;
+}
+
+int countRows(LpBase & lp) {
+  int count=0;
+  for (LpBase::RowIt r(lp); r!=INVALID; ++r) ++count;
+#ifdef LEMON_CXX11
+  int cnt = 0;
+  for(auto r: lp.rows()) { cnt++; ::lemon::ignore_unused_variable_warning(r); }
+  check(count == cnt, "Wrong STL iterator");
+#endif
+  return count;
+}
+
 
 void lpTest(LpSolver& lp)
 {
 
   typedef LpSolver LP;
+
+  // Test LpBase::clear()
+  check(countRows(lp)==0, "Wrong number of rows");
+  check(countCols(lp)==0, "Wrong number of cols");
+  lp.addCol(); lp.addRow(); lp.addRow();
+  check(countRows(lp)==2, "Wrong number of rows");
+  check(countCols(lp)==1, "Wrong number of cols");
+  lp.clear();
+  check(countRows(lp)==0, "Wrong number of rows");
+  check(countCols(lp)==0, "Wrong number of cols");
+  lp.addCol(); lp.addCol(); lp.addCol(); lp.addRow();
+  check(countRows(lp)==1, "Wrong number of rows");
+  check(countCols(lp)==3, "Wrong number of cols");
+  lp.clear();
 
   std::vector<LP::Col> x(10);
   //  for(int i=0;i<10;i++) x.push_back(lp.addCol());
@@ -168,6 +206,19 @@ void lpTest(LpSolver& lp)
     c = ((2 >= e) >= 3);
     c = ((2 >= p1) >= 3);
 
+    { //Tests for #430
+      LP::Col v=lp.addCol();
+      LP::Constr c = v >= -3;
+      c = c <= 4;
+      LP::Constr c2;
+#if ( __GNUC__ == 4 ) && ( __GNUC_MINOR__ == 3 )
+      c2 = ( -3 <= v ) <= 4;
+#else
+      c2 = -3 <= v <= 4;
+#endif
+
+    }
+
     e[x[3]]=2;
     e[x[3]]=4;
     e[x[3]]=1;
@@ -207,8 +258,7 @@ void lpTest(LpSolver& lp)
 
   {
     LP::DualExpr e,f,g;
-    LP::Row p1 = INVALID, p2 = INVALID, p3 = INVALID,
-      p4 = INVALID, p5 = INVALID;
+    LP::Row p1 = INVALID, p2 = INVALID;
 
     e[p1]=2;
     e[p1]+=2;
@@ -379,7 +429,16 @@ int main()
   LpSkeleton lp_skel;
   lpTest(lp_skel);
 
-#ifdef HAVE_GLPK
+#ifdef LEMON_HAVE_LP
+  {
+    Lp lp,lp2;
+    lpTest(lp);
+    aTest(lp2);
+    cloneTest<Lp>();
+  }
+#endif
+
+#ifdef LEMON_HAVE_GLPK
   {
     GlpkLp lp_glpk1,lp_glpk2;
     lpTest(lp_glpk1);
@@ -388,23 +447,18 @@ int main()
   }
 #endif
 
-#ifdef HAVE_CPLEX
+#ifdef LEMON_HAVE_CPLEX
   try {
     CplexLp lp_cplex1,lp_cplex2;
     lpTest(lp_cplex1);
     aTest(lp_cplex2);
     cloneTest<CplexLp>();
   } catch (CplexEnv::LicenseError& error) {
-#ifdef LEMON_FORCE_CPLEX_CHECK
     check(false, error.what());
-#else
-    std::cerr << error.what() << std::endl;
-    std::cerr << "Cplex license check failed, lp check skipped" << std::endl;
-#endif
   }
 #endif
 
-#ifdef HAVE_SOPLEX
+#ifdef LEMON_HAVE_SOPLEX
   {
     SoplexLp lp_soplex1,lp_soplex2;
     lpTest(lp_soplex1);
@@ -413,7 +467,7 @@ int main()
   }
 #endif
 
-#ifdef HAVE_CLP
+#ifdef LEMON_HAVE_CLP
   {
     ClpLp lp_clp1,lp_clp2;
     lpTest(lp_clp1);

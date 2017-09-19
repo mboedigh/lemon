@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2009
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -49,7 +49,7 @@ namespace lemon {
     }
 
     bool empty() const {
-      return predMap[target] != INVALID;
+      return predMap[target] == INVALID;
     }
 
     class RevArcIt {
@@ -61,7 +61,7 @@ namespace lemon {
         if (path->predMap[current] == INVALID) current = INVALID;
       }
 
-      operator const typename Digraph::Arc() const {
+      operator typename Digraph::Arc() const {
         return path->predMap[current];
       }
 
@@ -123,7 +123,7 @@ namespace lemon {
     }
 
     bool empty() const {
-      return source != target;
+      return predMatrixMap(source, target) == INVALID;
     }
 
     class RevArcIt {

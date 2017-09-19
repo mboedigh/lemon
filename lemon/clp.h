@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2008
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -75,6 +75,7 @@ namespace lemon {
 
     virtual int _addCol();
     virtual int _addRow();
+    virtual int _addRow(Value l, ExprIterator b, ExprIterator e, Value u);
 
     virtual void _eraseCol(int i);
     virtual void _eraseRow(int i);
@@ -136,6 +137,8 @@ namespace lemon {
 
     virtual void _clear();
 
+    virtual void _messageLevel(MessageLevel);
+
   public:
 
     ///Solves LP with primal simplex method.
@@ -148,30 +151,10 @@ namespace lemon {
     SolveExitStatus solveBarrier();
 
     ///Returns the constraint identifier understood by CLP.
-    int clpRow(Row r) const { return rows(id(r)); }
+    int clpRow(Row r) const { return _rows(id(r)); }
 
     ///Returns the variable identifier understood by CLP.
-    int clpCol(Col c) const { return cols(id(c)); }
-
-    ///Enum for \c messageLevel() parameter
-    enum MessageLevel {
-      /// no output (default value)
-      MESSAGE_NO_OUTPUT = 0,
-      /// print final solution
-      MESSAGE_FINAL_SOLUTION = 1,
-      /// print factorization
-      MESSAGE_FACTORIZATION = 2,
-      /// normal output
-      MESSAGE_NORMAL_OUTPUT = 3,
-      /// verbose output
-      MESSAGE_VERBOSE_OUTPUT = 4
-    };
-    ///Set the verbosity of the messages
-
-    ///Set the verbosity of the messages
-    ///
-    ///\param m is the level of the messages output by the solver routines.
-    void messageLevel(MessageLevel m);
+    int clpCol(Col c) const { return _cols(id(c)); }
 
   };
 

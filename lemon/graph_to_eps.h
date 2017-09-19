@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2009
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -25,7 +25,7 @@
 #include<algorithm>
 #include<vector>
 
-#ifndef WIN32
+#ifndef LEMON_WIN32
 #include<sys/time.h>
 #include<ctime>
 #else
@@ -69,6 +69,7 @@ template<class GR>
 struct DefaultGraphToEpsTraits
 {
   typedef GR Graph;
+  typedef GR Digraph;
   typedef typename Graph::Node Node;
   typedef typename Graph::NodeIt NodeIt;
   typedef typename Graph::Arc Arc;
@@ -141,7 +142,7 @@ struct DefaultGraphToEpsTraits
   ///Constructor
   ///\param gr  Reference to the graph to be printed.
   ///\param ost Reference to the output stream.
-  ///By default it is <tt>std::cout</tt>.
+  ///By default, it is <tt>std::cout</tt>.
   ///\param pros If it is \c true, then the \c ostream referenced by \c os
   ///will be explicitly deallocated by the destructor.
   DefaultGraphToEpsTraits(const GR &gr, std::ostream& ost = std::cout,
@@ -221,7 +222,6 @@ template<class T> class GraphToEps : public T
   using T::_title;
   using T::_copyright;
 
-  using T::NodeTextColorType;
   using T::CUST_COL;
   using T::DIST_COL;
   using T::DIST_BW;
@@ -241,6 +241,7 @@ template<class T> class GraphToEps : public T
   // dradnats ++C eht yb deriuqer si ti eveileb t'naC
 
   typedef typename T::Graph Graph;
+  typedef typename T::Digraph Digraph;
   typedef typename Graph::Node Node;
   typedef typename Graph::NodeIt NodeIt;
   typedef typename Graph::Arc Arc;
@@ -268,22 +269,18 @@ public:
     /// = 1
     ///\image html nodeshape_1.png
     ///\image latex nodeshape_1.eps "SQUARE shape (1)" width=2cm
-    ///
     SQUARE=1,
     /// = 2
     ///\image html nodeshape_2.png
     ///\image latex nodeshape_2.eps "DIAMOND shape (2)" width=2cm
-    ///
     DIAMOND=2,
     /// = 3
     ///\image html nodeshape_3.png
-    ///\image latex nodeshape_2.eps "MALE shape (4)" width=2cm
-    ///
+    ///\image latex nodeshape_3.eps "MALE shape (3)" width=2cm
     MALE=3,
     /// = 4
     ///\image html nodeshape_4.png
-    ///\image latex nodeshape_2.eps "FEMALE shape (4)" width=2cm
-    ///
+    ///\image latex nodeshape_4.eps "FEMALE shape (4)" width=2cm
     FEMALE=4
   };
 
@@ -514,7 +511,7 @@ public:
 
   ///Turn on/off pre-scaling
 
-  ///By default graphToEps() rescales the whole image in order to avoid
+  ///By default, graphToEps() rescales the whole image in order to avoid
   ///very big or very small bounding boxes.
   ///
   ///This (p)rescaling can be turned off with this function.
@@ -677,7 +674,7 @@ public:
 
     {
       os << "%%CreationDate: ";
-#ifndef WIN32
+#ifndef LEMON_WIN32
       timeval tv;
       gettimeofday(&tv, 0);
 
@@ -686,9 +683,9 @@ public:
       os << cbuf;
 #else
       os << bits::getWinFormattedDate();
+      os << std::endl;
 #endif
     }
-    os << std::endl;
 
     if (_autoArcWidthScale) {
       double max_w=0;
@@ -1116,7 +1113,7 @@ const double GraphToEps<T>::A4BORDER = 15;
 ///Generates an EPS file from a graph.
 ///\param g Reference to the graph to be printed.
 ///\param os Reference to the output stream.
-///By default it is <tt>std::cout</tt>.
+///By default, it is <tt>std::cout</tt>.
 ///
 ///This function also has a lot of
 ///\ref named-templ-func-param "named parameters",
@@ -1128,7 +1125,7 @@ const double GraphToEps<T>::A4BORDER = 15;
 ///              .arcWidthScale(.4).run();
 ///\endcode
 ///
-///For more detailed examples see the \ref graph_to_eps_demo.cc demo file.
+///For more detailed examples, see the \ref graph_to_eps_demo.cc demo file.
 ///
 ///\warning Don't forget to put the \ref GraphToEps::run() "run()"
 ///to the end of the parameter list.

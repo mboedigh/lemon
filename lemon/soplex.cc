@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2008
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -20,6 +20,7 @@
 #include <lemon/soplex.h>
 
 #include <soplex.h>
+#include <spxout.h>
 
 
 ///\file
@@ -28,6 +29,7 @@ namespace lemon {
 
   SoplexLp::SoplexLp() {
     soplex = new soplex::SoPlex;
+    messageLevel(MESSAGE_NOTHING);
   }
 
   SoplexLp::~SoplexLp() {
@@ -35,8 +37,8 @@ namespace lemon {
   }
 
   SoplexLp::SoplexLp(const SoplexLp& lp) {
-    rows = lp.rows;
-    cols = lp.cols;
+    _rows = lp._rows;
+    _cols = lp._cols;
 
     soplex = new soplex::SoPlex;
     (*static_cast<soplex::SPxLP*>(soplex)) = *(lp.soplex);
@@ -47,6 +49,7 @@ namespace lemon {
     _row_names = lp._row_names;
     _row_names_ref = lp._row_names_ref;
 
+    messageLevel(MESSAGE_NOTHING);
   }
 
   void SoplexLp::_clear_temporals() {
@@ -88,6 +91,19 @@ namespace lemon {
     return soplex->nRows() - 1;
   }
 
+  int SoplexLp::_addRow(Value l, ExprIterator b, ExprIterator e, Value u) {
+    soplex::DSVector v;
+    for (ExprIterator it = b; it != e; ++it) {
+      v.add(it->first, it->second);
+    }
+    soplex::LPRow r(l, v, u);
+    soplex->addRow(r);
+
+    _row_names.push_back(std::string());
+
+    return soplex->nRows() - 1;
+  }
+
 
   void SoplexLp::_eraseCol(int i) {
     soplex->removeCol(i);
@@ -106,12 +122,12 @@ namespace lemon {
   }
 
   void SoplexLp::_eraseColId(int i) {
-    cols.eraseIndex(i);
-    cols.relocateIndex(i, cols.maxIndex());
+    _cols.eraseIndex(i);
+    _cols.relocateIndex(i, _cols.maxIndex());
   }
   void SoplexLp::_eraseRowId(int i) {
-    rows.eraseIndex(i);
-    rows.relocateIndex(i, rows.maxIndex());
+    _rows.eraseIndex(i);
+    _rows.relocateIndex(i, _rows.maxIndex());
   }
 
   void SoplexLp::_getColName(int c, std::string &name) const {
@@ -272,6 +288,8 @@ namespace lemon {
 
     _clear_temporals();
 
+    _applyMessageLevel();
+
     soplex::SPxSolver::Status status = soplex->solve();
 
     switch (status) {
@@ -414,9 +432,33 @@ namespace lemon {
     _col_names_ref.clear();
     _row_names.clear();
     _row_names_ref.clear();
-    cols.clear();
-    rows.clear();
+    _cols.clear();
+    _rows.clear();
     _clear_temporals();
+  }
+
+  void SoplexLp::_messageLevel(MessageLevel level) {
+    switch (level) {
+    case MESSAGE_NOTHING:
+      _message_level = -1;
+      break;
+    case MESSAGE_ERROR:
+      _message_level = soplex::SPxOut::ERROR;
+      break;
+    case MESSAGE_WARNING:
+      _message_level = soplex::SPxOut::WARNING;
+      break;
+    case MESSAGE_NORMAL:
+      _message_level = soplex::SPxOut::INFO2;
+      break;
+    case MESSAGE_VERBOSE:
+      _message_level = soplex::SPxOut::DEBUG;
+      break;
+    }
+  }
+
+  void SoplexLp::_applyMessageLevel() {
+    soplex::Param::setVerbose(_message_level);
   }
 
 } //namespace lemon

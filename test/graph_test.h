@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2009
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -38,6 +38,104 @@ namespace lemon {
     }
     check(n==INVALID,"Wrong Node list linking.");
     check(countNodes(G)==cnt,"Wrong Node number.");
+
+#ifdef LEMON_CXX11
+    {
+      typename Graph::NodeIt n(G);
+      for(auto u: G.nodes())
+        {
+          check(n==u,"Wrong STL Node iterator.");
+          ++n;
+        }
+      check(n==INVALID,"Wrong STL Node iterator.");
+    }
+    {
+      typename Graph::NodeIt n(G);
+      for(typename Graph::Node u: G.nodes())
+        {
+          check(n==u,"Wrong STL Node iterator.");
+          ++n;
+        }
+      check(n==INVALID,"Wrong STL Node iterator.");
+    }
+#endif
+  }
+
+  template<class Graph>
+  void checkGraphRedNodeList(const Graph &G, int cnt)
+  {
+    typename Graph::RedNodeIt n(G);
+    for(int i=0;i<cnt;i++) {
+      check(n!=INVALID,"Wrong red Node list linking.");
+      check(G.red(n),"Wrong node set check.");
+      check(!G.blue(n),"Wrong node set check.");
+      typename Graph::Node nn = n;
+      check(G.asRedNodeUnsafe(nn) == n,"Wrong node conversion.");
+      check(G.asRedNode(nn) == n,"Wrong node conversion.");
+      check(G.asBlueNode(nn) == INVALID,"Wrong node conversion.");
+      ++n;
+    }
+    check(n==INVALID,"Wrong red Node list linking.");
+    check(countRedNodes(G)==cnt,"Wrong red Node number.");
+#ifdef LEMON_CXX11
+    {
+      typename Graph::RedNodeIt n(G);
+      for(auto u: G.redNodes())
+        {
+          check(n==u,"Wrong STL RedNode iterator.");
+          ++n;
+        }
+      check(n==INVALID,"Wrong STL RedNode iterator.");
+    }
+    {
+      typename Graph::RedNodeIt n(G);
+      for(typename Graph::RedNode u: G.redNodes())
+        {
+          check(n==u,"Wrong STL RedNode iterator.");
+          ++n;
+        }
+      check(n==INVALID,"Wrong STL RedNode iterator.");
+    }
+#endif
+  }
+
+  template<class Graph>
+  void checkGraphBlueNodeList(const Graph &G, int cnt)
+  {
+    typename Graph::BlueNodeIt n(G);
+    for(int i=0;i<cnt;i++) {
+      check(n!=INVALID,"Wrong blue Node list linking.");
+      check(G.blue(n),"Wrong node set check.");
+      check(!G.red(n),"Wrong node set check.");
+      typename Graph::Node nn = n;
+      check(G.asBlueNodeUnsafe(nn) == n,"Wrong node conversion.");
+      check(G.asBlueNode(nn) == n,"Wrong node conversion.");
+      check(G.asRedNode(nn) == INVALID,"Wrong node conversion.");
+      ++n;
+    }
+    check(n==INVALID,"Wrong blue Node list linking.");
+    check(countBlueNodes(G)==cnt,"Wrong blue Node number.");
+#ifdef LEMON_CXX11
+    {
+      typename Graph::BlueNodeIt n(G);
+      for(auto u: G.blueNodes())
+        {
+          check(n==u,"Wrong STL BlueNode iterator.");
+          ++n;
+        }
+      check(n==INVALID,"Wrong STL BlueNode iterator.");
+    }
+    {
+      typename Graph::BlueNodeIt n(G);
+      for(typename Graph::BlueNode u: G.blueNodes())
+        {
+          check(n==u,"Wrong STL BlueNode iterator.");
+          ++n;
+        }
+      check(n==INVALID,"Wrong STL BlueNode iterator.");
+    }
+#endif
+
   }
 
   template<class Graph>
@@ -54,6 +152,27 @@ namespace lemon {
     }
     check(e==INVALID,"Wrong Arc list linking.");
     check(countArcs(G)==cnt,"Wrong Arc number.");
+#ifdef LEMON_CXX11
+    {
+      typename Graph::ArcIt a(G);
+      for(auto e: G.arcs())
+        {
+          check(a==e,"Wrong STL Arc iterator.");
+          ++a;
+        }
+      check(a==INVALID,"Wrong STL Arc iterator.");
+    }
+    {
+      typename Graph::ArcIt a(G);
+      for(typename Graph::Arc e: G.arcs())
+        {
+          check(a==e,"Wrong STL Arc iterator.");
+          ++a;
+        }
+      check(a==INVALID,"Wrong STL Arc iterator.");
+    }
+#endif
+
   }
 
   template<class Graph>
@@ -69,6 +188,27 @@ namespace lemon {
     }
     check(e==INVALID,"Wrong OutArc list linking.");
     check(countOutArcs(G,n)==cnt,"Wrong OutArc number.");
+#ifdef LEMON_CXX11
+    {
+      typename Graph::OutArcIt a(G,n);
+      for(auto e: G.outArcs(n))
+        {
+          check(a==e,"Wrong STL OutArc iterator.");
+          ++a;
+        }
+      check(a==INVALID,"Wrong STL OutArc iterator.");
+    }
+    {
+      typename Graph::OutArcIt a(G,n);
+      for(typename Graph::Arc e: G.outArcs(n))
+        {
+          check(a==e,"Wrong STL OutArc iterator.");
+          ++a;
+        }
+      check(a==INVALID,"Wrong STL OutArc iterator.");
+    }
+#endif
+
   }
 
   template<class Graph>
@@ -84,6 +224,26 @@ namespace lemon {
     }
     check(e==INVALID,"Wrong InArc list linking.");
     check(countInArcs(G,n)==cnt,"Wrong InArc number.");
+#ifdef LEMON_CXX11
+    {
+      typename Graph::InArcIt a(G,n);
+      for(auto e: G.inArcs(n))
+        {
+          check(a==e,"Wrong STL InArc iterator.");
+          ++a;
+        }
+      check(a==INVALID,"Wrong STL InArc iterator.");
+    }
+    {
+      typename Graph::InArcIt a(G,n);
+      for(typename Graph::Arc e: G.inArcs(n))
+        {
+          check(a==e,"Wrong STL InArc iterator.");
+          ++a;
+        }
+      check(a==INVALID,"Wrong STL InArc iterator.");
+    }
+#endif
   }
 
   template<class Graph>
@@ -98,6 +258,27 @@ namespace lemon {
     }
     check(e==INVALID,"Wrong Edge list linking.");
     check(countEdges(G)==cnt,"Wrong Edge number.");
+#ifdef LEMON_CXX11
+    {
+      typename Graph::EdgeIt a(G);
+      for(auto e: G.edges())
+        {
+          check(a==e,"Wrong STL Edge iterator.");
+          ++a;
+        }
+      check(a==INVALID,"Wrong STL Edge iterator.");
+    }
+    {
+      typename Graph::EdgeIt a(G);
+      for(typename Graph::Edge e: G.edges())
+        {
+          check(a==e,"Wrong STL Edge iterator.");
+          ++a;
+        }
+      check(a==INVALID,"Wrong STL Edge iterator.");
+    }
+#endif
+
   }
 
   template<class Graph>
@@ -114,6 +295,27 @@ namespace lemon {
     }
     check(e==INVALID,"Wrong IncEdge list linking.");
     check(countIncEdges(G,n)==cnt,"Wrong IncEdge number.");
+#ifdef LEMON_CXX11
+    {
+      typename Graph::IncEdgeIt a(G,n);
+      for(auto e: G.incEdges(n))
+        {
+          check(a==e,"Wrong STL IncEdge iterator.");
+          ++a;
+        }
+      check(a==INVALID,"Wrong STL IncEdge iterator.");
+    }
+    {
+      typename Graph::IncEdgeIt a(G,n);
+      for(typename Graph::Edge e: G.incEdges(n))
+        {
+          check(a==e,"Wrong STL IncEdge iterator.");
+          ++a;
+        }
+      check(a==INVALID,"Wrong STL IncEdge iterator.");
+    }
+#endif
+
   }
 
   template <class Graph>
@@ -166,6 +368,7 @@ namespace lemon {
 
   template <typename Graph>
   void checkNodeIds(const Graph& G) {
+    typedef typename Graph::Node Node;
     std::set<int> values;
     for (typename Graph::NodeIt n(G); n != INVALID; ++n) {
       check(G.nodeFromId(G.id(n)) == n, "Wrong id");
@@ -173,10 +376,38 @@ namespace lemon {
       check(G.id(n) <= G.maxNodeId(), "Wrong maximum id");
       values.insert(G.id(n));
     }
+    check(G.maxId(Node()) <= G.maxNodeId(), "Wrong maximum id");
+  }
+
+  template <typename Graph>
+  void checkRedNodeIds(const Graph& G) {
+    typedef typename Graph::RedNode RedNode;
+    std::set<int> values;
+    for (typename Graph::RedNodeIt n(G); n != INVALID; ++n) {
+      check(G.red(n), "Wrong partition");
+      check(values.find(G.id(n)) == values.end(), "Wrong id");
+      check(G.id(n) <= G.maxRedId(), "Wrong maximum id");
+      values.insert(G.id(n));
+    }
+    check(G.maxId(RedNode()) == G.maxRedId(), "Wrong maximum id");
+  }
+
+  template <typename Graph>
+  void checkBlueNodeIds(const Graph& G) {
+    typedef typename Graph::BlueNode BlueNode;
+    std::set<int> values;
+    for (typename Graph::BlueNodeIt n(G); n != INVALID; ++n) {
+      check(G.blue(n), "Wrong partition");
+      check(values.find(G.id(n)) == values.end(), "Wrong id");
+      check(G.id(n) <= G.maxBlueId(), "Wrong maximum id");
+      values.insert(G.id(n));
+    }
+    check(G.maxId(BlueNode()) == G.maxBlueId(), "Wrong maximum id");
   }
 
   template <typename Graph>
   void checkArcIds(const Graph& G) {
+    typedef typename Graph::Arc Arc;
     std::set<int> values;
     for (typename Graph::ArcIt a(G); a != INVALID; ++a) {
       check(G.arcFromId(G.id(a)) == a, "Wrong id");
@@ -184,10 +415,12 @@ namespace lemon {
       check(G.id(a) <= G.maxArcId(), "Wrong maximum id");
       values.insert(G.id(a));
     }
+    check(G.maxId(Arc()) <= G.maxArcId(), "Wrong maximum id");
   }
 
   template <typename Graph>
   void checkEdgeIds(const Graph& G) {
+    typedef typename Graph::Edge Edge;
     std::set<int> values;
     for (typename Graph::EdgeIt e(G); e != INVALID; ++e) {
       check(G.edgeFromId(G.id(e)) == e, "Wrong id");
@@ -195,6 +428,7 @@ namespace lemon {
       check(G.id(e) <= G.maxEdgeId(), "Wrong maximum id");
       values.insert(G.id(e));
     }
+    check(G.maxId(Edge()) <= G.maxEdgeId(), "Wrong maximum id");
   }
 
   template <typename Graph>
@@ -217,6 +451,66 @@ namespace lemon {
     }
     s = s * (s - 1) / 2;
     for (NodeIt it(G); it != INVALID; ++it) {
+      s -= map[it];
+    }
+    check(s == 0, "Wrong sum.");
+
+    // map = constMap<Node>(12);
+    // for (NodeIt it(G); it != INVALID; ++it) {
+    //   check(map[it] == 12, "Wrong operator[].");
+    // }
+  }
+
+  template <typename Graph>
+  void checkGraphRedNodeMap(const Graph& G) {
+    typedef typename Graph::Node Node;
+    typedef typename Graph::RedNodeIt RedNodeIt;
+
+    typedef typename Graph::template RedNodeMap<int> IntRedNodeMap;
+    IntRedNodeMap map(G, 42);
+    for (RedNodeIt it(G); it != INVALID; ++it) {
+      check(map[it] == 42, "Wrong map constructor.");
+    }
+    int s = 0;
+    for (RedNodeIt it(G); it != INVALID; ++it) {
+      map[it] = 0;
+      check(map[it] == 0, "Wrong operator[].");
+      map.set(it, s);
+      check(map[it] == s, "Wrong set.");
+      ++s;
+    }
+    s = s * (s - 1) / 2;
+    for (RedNodeIt it(G); it != INVALID; ++it) {
+      s -= map[it];
+    }
+    check(s == 0, "Wrong sum.");
+
+    // map = constMap<Node>(12);
+    // for (NodeIt it(G); it != INVALID; ++it) {
+    //   check(map[it] == 12, "Wrong operator[].");
+    // }
+  }
+
+  template <typename Graph>
+  void checkGraphBlueNodeMap(const Graph& G) {
+    typedef typename Graph::Node Node;
+    typedef typename Graph::BlueNodeIt BlueNodeIt;
+
+    typedef typename Graph::template BlueNodeMap<int> IntBlueNodeMap;
+    IntBlueNodeMap map(G, 42);
+    for (BlueNodeIt it(G); it != INVALID; ++it) {
+      check(map[it] == 42, "Wrong map constructor.");
+    }
+    int s = 0;
+    for (BlueNodeIt it(G); it != INVALID; ++it) {
+      map[it] = 0;
+      check(map[it] == 0, "Wrong operator[].");
+      map.set(it, s);
+      check(map[it] == s, "Wrong set.");
+      ++s;
+    }
+    s = s * (s - 1) / 2;
+    for (BlueNodeIt it(G); it != INVALID; ++it) {
       s -= map[it];
     }
     check(s == 0, "Wrong sum.");

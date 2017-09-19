@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2009
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -17,6 +17,7 @@
  */
 
 #include <lemon/time_measure.h>
+#include <lemon/concept_check.h>
 
 using namespace lemon;
 
@@ -32,7 +33,10 @@ void g()
   static Timer T;
 
   for(int i=0;i<1000;i++)
-    TimeStamp x(T);
+    {
+      TimeStamp x(T);
+      ::lemon::ignore_unused_variable_warning(x);
+    }
 }
 
 int main()

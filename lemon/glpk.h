@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2008
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -25,15 +25,28 @@
 
 #include <lemon/lp_base.h>
 
-// forward declaration
-#ifndef _GLP_PROB
-#define _GLP_PROB
-typedef struct { double _prob; } glp_prob;
-/* LP/MIP problem object */
-#endif
-
 namespace lemon {
 
+  namespace _solver_bits {
+    class VoidPtr {
+    private:
+      void *_ptr;
+    public:
+      VoidPtr() : _ptr(0) {}
+
+      template <typename T>
+      VoidPtr(T* ptr) : _ptr(reinterpret_cast<void*>(ptr)) {}
+
+      template <typename T>
+      VoidPtr& operator=(T* ptr) {
+        _ptr = reinterpret_cast<void*>(ptr);
+        return *this;
+      }
+
+      template <typename T>
+      operator T*() const { return reinterpret_cast<T*>(_ptr); }
+    };
+  }
 
   /// \brief Base interface for the GLPK LP and MIP solver
   ///
@@ -42,8 +55,7 @@ namespace lemon {
   class GlpkBase : virtual public LpBase {
   protected:
 
-    typedef glp_prob LPX;
-    glp_prob* lp;
+    _solver_bits::VoidPtr lp;
 
     GlpkBase();
     GlpkBase(const GlpkBase&);
@@ -53,6 +65,7 @@ namespace lemon {
 
     virtual int _addCol();
     virtual int _addRow();
+    virtual int _addRow(Value l, ExprIterator b, ExprIterator e, Value u);
 
     virtual void _eraseCol(int i);
     virtual void _eraseRow(int i);
@@ -100,6 +113,10 @@ namespace lemon {
 
     virtual void _clear();
 
+    virtual void _messageLevel(MessageLevel level);
+
+    virtual void _write(std::string file, std::string format) const;
+
   private:
 
     static void freeEnv();
@@ -109,21 +126,38 @@ namespace lemon {
         freeEnv();
       }
     };
-    
+
     static FreeEnvHelper freeEnvHelper;
-    
+
+  protected:
+
+    int _message_level;
+
   public:
 
     ///Pointer to the underlying GLPK data structure.
-    LPX *lpx() {return lp;}
+    _solver_bits::VoidPtr lpx() {return lp;}
     ///Const pointer to the underlying GLPK data structure.
-    const LPX *lpx() const {return lp;}
+    _solver_bits::VoidPtr lpx() const {return lp;}
 
     ///Returns the constraint identifier understood by GLPK.
-    int lpxRow(Row r) const { return rows(id(r)); }
+    int lpxRow(Row r) const { return _rows(id(r)); }
 
     ///Returns the variable identifier understood by GLPK.
-    int lpxCol(Col c) const { return cols(id(c)); }
+    int lpxCol(Col c) const { return _cols(id(c)); }
+
+#ifdef DOXYGEN
+    /// Write the problem or the solution to a file in the given format
+
+    /// This function writes the problem or the solution
+    /// to a file in the given format.
+    /// Trying to write in an unsupported format will trigger
+    /// \ref LpBase::UnsupportedFormatError.
+    /// \param file The file path
+    /// \param format The output file format.
+    /// Supportted formats are "MPS" and "LP".
+    void write(std::string file, std::string format = "MPS") const {}
+#endif
 
   };
 
@@ -178,37 +212,19 @@ namespace lemon {
     ///Solve with dual simplex
     SolveExitStatus solveDual();
 
+  private:
+
+    bool _presolve;
+
+  public:
+
     ///Turns on or off the presolver
 
     ///Turns on (\c b is \c true) or off (\c b is \c false) the presolver
     ///
     ///The presolver is off by default.
-    void presolver(bool b);
+    void presolver(bool presolve);
 
-    ///Enum for \c messageLevel() parameter
-    enum MessageLevel {
-      /// no output (default value)
-      MESSAGE_NO_OUTPUT = 0,
-      /// error messages only
-      MESSAGE_ERROR_MESSAGE = 1,
-      /// normal output
-      MESSAGE_NORMAL_OUTPUT = 2,
-      /// full output (includes informational messages)
-      MESSAGE_FULL_OUTPUT = 3
-    };
-
-  private:
-
-    MessageLevel _message_level;
-
-  public:
-
-    ///Set the verbosity of the messages
-
-    ///Set the verbosity of the messages
-    ///
-    ///\param m is the level of the messages output by the solver routines.
-    void messageLevel(MessageLevel m);
   };
 
   /// \brief Interface for the GLPK MIP solver
@@ -238,30 +254,6 @@ namespace lemon {
     virtual Value _getSol(int i) const;
     virtual Value _getSolValue() const;
 
-    ///Enum for \c messageLevel() parameter
-    enum MessageLevel {
-      /// no output (default value)
-      MESSAGE_NO_OUTPUT = 0,
-      /// error messages only
-      MESSAGE_ERROR_MESSAGE = 1,
-      /// normal output
-      MESSAGE_NORMAL_OUTPUT = 2,
-      /// full output (includes informational messages)
-      MESSAGE_FULL_OUTPUT = 3
-    };
-
-  private:
-
-    MessageLevel _message_level;
-
-  public:
-
-    ///Set the verbosity of the messages
-
-    ///Set the verbosity of the messages
-    ///
-    ///\param m is the level of the messages output by the solver routines.
-    void messageLevel(MessageLevel m);
   };
 
 

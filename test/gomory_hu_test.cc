@@ -1,7 +1,27 @@
+/* -*- mode: C++; indent-tabs-mode: nil; -*-
+ *
+ * This file is a part of LEMON, a generic C++ optimization library.
+ *
+ * Copyright (C) 2003-2013
+ * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
+ * (Egervary Research Group on Combinatorial Optimization, EGRES).
+ *
+ * Permission to use, modify and distribute this software is granted
+ * provided that this copyright notice appears in all copies. For
+ * precise terms see the accompanying LICENSE file.
+ *
+ * This software is provided "AS IS" with no warranty of any kind,
+ * express or implied, and with no claim as to its suitability for any
+ * purpose.
+ *
+ */
+
 #include <iostream>
 
 #include "test_tools.h"
 #include <lemon/smart_graph.h>
+#include <lemon/concepts/graph.h>
+#include <lemon/concepts/maps.h>
 #include <lemon/lgf_reader.h>
 #include <lemon/gomory_hu.h>
 #include <cstdlib>
@@ -31,13 +51,44 @@ char test_lgf[] =
   "@attributes\n"
   "source 0\n"
   "target 3\n";
-  
+
+void checkGomoryHuCompile()
+{
+  typedef int Value;
+  typedef concepts::Graph Graph;
+
+  typedef Graph::Node Node;
+  typedef Graph::Edge Edge;
+  typedef concepts::ReadMap<Edge, Value> CapMap;
+  typedef concepts::ReadWriteMap<Node, bool> CutMap;
+
+  Graph g;
+  Node n;
+  CapMap cap;
+  CutMap cut;
+  Value v;
+  int d;
+  ::lemon::ignore_unused_variable_warning(v,d);
+
+  GomoryHu<Graph, CapMap> gh_test(g, cap);
+  const GomoryHu<Graph, CapMap>&
+    const_gh_test = gh_test;
+
+  gh_test.run();
+
+  n = const_gh_test.predNode(n);
+  v = const_gh_test.predValue(n);
+  d = const_gh_test.rootDist(n);
+  v = const_gh_test.minCutValue(n, n);
+  v = const_gh_test.minCutMap(n, n, cut);
+}
+
 GRAPH_TYPEDEFS(Graph);
 typedef Graph::EdgeMap<int> IntEdgeMap;
 typedef Graph::NodeMap<bool> BoolNodeMap;
 
 int cutValue(const Graph& graph, const BoolNodeMap& cut,
-	     const IntEdgeMap& capacity) {
+             const IntEdgeMap& capacity) {
 
   int sum = 0;
   for (EdgeIt e(graph); e != INVALID; ++e) {
@@ -70,12 +121,12 @@ int main() {
       BoolNodeMap cm(graph);
       ght.minCutMap(u, v, cm);
       check(pf.flowValue() == ght.minCutValue(u, v), "Wrong cut 1");
-      check(cm[u] != cm[v], "Wrong cut 3");
-      check(pf.flowValue() == cutValue(graph, cm, capacity), "Wrong cut 2");
+      check(cm[u] != cm[v], "Wrong cut 2");
+      check(pf.flowValue() == cutValue(graph, cm, capacity), "Wrong cut 3");
 
       int sum=0;
       for(GomoryHu<Graph>::MinCutEdgeIt a(ght, u, v);a!=INVALID;++a)
-        sum+=capacity[a]; 
+        sum+=capacity[a];
       check(sum == ght.minCutValue(u, v), "Problem with MinCutEdgeIt");
 
       sum=0;
@@ -84,9 +135,8 @@ int main() {
       for(GomoryHu<Graph>::MinCutNodeIt n(ght, u, v,false);n!=INVALID;++n)
         sum++;
       check(sum == countNodes(graph), "Problem with MinCutNodeIt");
-      
     }
   }
-  
+
   return 0;
 }

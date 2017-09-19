@@ -1,8 +1,8 @@
-/* -*- C++ -*-
+/* -*- mode: C++; indent-tabs-mode: nil; -*-
  *
- * This file is a part of LEMON, a generic C++ optimization library
+ * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2008
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -27,7 +27,7 @@
 #include <lemon/concepts/maps.h>
 
 /// \ingroup min_cut
-/// \file 
+/// \file
 /// \brief Gomory-Hu cut tree in graphs.
 
 namespace lemon {
@@ -38,45 +38,43 @@ namespace lemon {
   ///
   /// The Gomory-Hu tree is a tree on the node set of a given graph, but it
   /// may contain edges which are not in the original graph. It has the
-  /// property that the minimum capacity edge of the path between two nodes 
+  /// property that the minimum capacity edge of the path between two nodes
   /// in this tree has the same weight as the minimum cut in the graph
   /// between these nodes. Moreover the components obtained by removing
   /// this edge from the tree determine the corresponding minimum cut.
-  ///
   /// Therefore once this tree is computed, the minimum cut between any pair
   /// of nodes can easily be obtained.
-  /// 
+  ///
   /// The algorithm calculates \e n-1 distinct minimum cuts (currently with
-  /// the \ref Preflow algorithm), therefore the algorithm has
-  /// \f$(O(n^3\sqrt{e})\f$ overall time complexity. It calculates a
-  /// rooted Gomory-Hu tree, its structure and the weights can be obtained
-  /// by \c predNode(), \c predValue() and \c rootDist().
-  /// 
-  /// The members \c minCutMap() and \c minCutValue() calculate
+  /// the \ref Preflow algorithm), thus it has \f$O(n^3\sqrt{m})\f$ overall
+  /// time complexity. It calculates a rooted Gomory-Hu tree.
+  /// The structure of the tree and the edge weights can be
+  /// obtained using \c predNode(), \c predValue() and \c rootDist().
+  /// The functions \c minCutMap() and \c minCutValue() calculate
   /// the minimum cut and the minimum cut value between any two nodes
   /// in the graph. You can also list (iterate on) the nodes and the
   /// edges of the cuts using \c MinCutNodeIt and \c MinCutEdgeIt.
   ///
   /// \tparam GR The type of the undirected graph the algorithm runs on.
-  /// \tparam CAP The type of the edge map describing the edge capacities.
-  /// It is \ref concepts::Graph::EdgeMap "GR::EdgeMap<int>" by default.
+  /// \tparam CAP The type of the edge map containing the capacities.
+  /// The default map type is \ref concepts::Graph::EdgeMap "GR::EdgeMap<int>".
 #ifdef DOXYGEN
   template <typename GR,
-	    typename CAP>
+            typename CAP>
 #else
   template <typename GR,
-	    typename CAP = typename GR::template EdgeMap<int> >
+            typename CAP = typename GR::template EdgeMap<int> >
 #endif
   class GomoryHu {
   public:
 
-    /// The graph type
+    /// The graph type of the algorithm
     typedef GR Graph;
-    /// The type of the edge capacity map
+    /// The capacity map type of the algorithm
     typedef CAP Capacity;
     /// The value type of capacities
     typedef typename Capacity::Value Value;
-    
+
   private:
 
     TEMPLATE_GRAPH_TYPEDEFS(Graph);
@@ -91,38 +89,38 @@ namespace lemon {
 
     void createStructures() {
       if (!_pred) {
-	_pred = new typename Graph::template NodeMap<Node>(_graph);
+        _pred = new typename Graph::template NodeMap<Node>(_graph);
       }
       if (!_weight) {
-	_weight = new typename Graph::template NodeMap<Value>(_graph);
+        _weight = new typename Graph::template NodeMap<Value>(_graph);
       }
       if (!_order) {
-	_order = new typename Graph::template NodeMap<int>(_graph);
+        _order = new typename Graph::template NodeMap<int>(_graph);
       }
     }
 
     void destroyStructures() {
       if (_pred) {
-	delete _pred;
+        delete _pred;
       }
       if (_weight) {
-	delete _weight;
+        delete _weight;
       }
       if (_order) {
-	delete _order;
+        delete _order;
       }
     }
-  
+
   public:
 
     /// \brief Constructor
     ///
-    /// Constructor
+    /// Constructor.
     /// \param graph The undirected graph the algorithm runs on.
     /// \param capacity The edge capacity map.
-    GomoryHu(const Graph& graph, const Capacity& capacity) 
+    GomoryHu(const Graph& graph, const Capacity& capacity)
       : _graph(graph), _capacity(capacity),
-	_pred(0), _weight(0), _order(0) 
+        _pred(0), _weight(0), _order(0)
     {
       checkConcept<concepts::ReadMap<Edge, Value>, Capacity>();
     }
@@ -130,24 +128,24 @@ namespace lemon {
 
     /// \brief Destructor
     ///
-    /// Destructor
+    /// Destructor.
     ~GomoryHu() {
       destroyStructures();
     }
 
   private:
-  
+
     // Initialize the internal data structures
     void init() {
       createStructures();
 
       _root = NodeIt(_graph);
       for (NodeIt n(_graph); n != INVALID; ++n) {
-	_pred->set(n, _root);
-	_order->set(n, -1);
+        (*_pred)[n] = _root;
+        (*_order)[n] = -1;
       }
-      _pred->set(_root, INVALID);
-      _weight->set(_root, std::numeric_limits<Value>::max()); 
+      (*_pred)[_root] = INVALID;
+      (*_weight)[_root] = std::numeric_limits<Value>::max();
     }
 
 
@@ -156,50 +154,50 @@ namespace lemon {
       Preflow<Graph, Capacity> fa(_graph, _capacity, _root, INVALID);
 
       for (NodeIt n(_graph); n != INVALID; ++n) {
-	if (n == _root) continue;
+        if (n == _root) continue;
 
-	Node pn = (*_pred)[n];
-	fa.source(n);
-	fa.target(pn);
+        Node pn = (*_pred)[n];
+        fa.source(n);
+        fa.target(pn);
 
-	fa.runMinCut();
+        fa.runMinCut();
 
-	_weight->set(n, fa.flowValue());
+        (*_weight)[n] = fa.flowValue();
 
-	for (NodeIt nn(_graph); nn != INVALID; ++nn) {
-	  if (nn != n && fa.minCut(nn) && (*_pred)[nn] == pn) {
-	    _pred->set(nn, n);
-	  }
-	}
-	if ((*_pred)[pn] != INVALID && fa.minCut((*_pred)[pn])) {
-	  _pred->set(n, (*_pred)[pn]);
-	  _pred->set(pn, n);
-	  _weight->set(n, (*_weight)[pn]);
-	  _weight->set(pn, fa.flowValue());	
-	}
+        for (NodeIt nn(_graph); nn != INVALID; ++nn) {
+          if (nn != n && fa.minCut(nn) && (*_pred)[nn] == pn) {
+            (*_pred)[nn] = n;
+          }
+        }
+        if ((*_pred)[pn] != INVALID && fa.minCut((*_pred)[pn])) {
+          (*_pred)[n] = (*_pred)[pn];
+          (*_pred)[pn] = n;
+          (*_weight)[n] = (*_weight)[pn];
+          (*_weight)[pn] = fa.flowValue();
+        }
       }
 
-      _order->set(_root, 0);
+      (*_order)[_root] = 0;
       int index = 1;
 
       for (NodeIt n(_graph); n != INVALID; ++n) {
-	std::vector<Node> st;
-	Node nn = n;
-	while ((*_order)[nn] == -1) {
-	  st.push_back(nn);
-	  nn = (*_pred)[nn];
-	}
-	while (!st.empty()) {
-	  _order->set(st.back(), index++);
-	  st.pop_back();
-	}
+        std::vector<Node> st;
+        Node nn = n;
+        while ((*_order)[nn] == -1) {
+          st.push_back(nn);
+          nn = (*_pred)[nn];
+        }
+        while (!st.empty()) {
+          (*_order)[st.back()] = index++;
+          st.pop_back();
+        }
       }
     }
 
   public:
 
     ///\name Execution Control
- 
+
     ///@{
 
     /// \brief Run the Gomory-Hu algorithm.
@@ -209,61 +207,71 @@ namespace lemon {
       init();
       start();
     }
-    
+
     /// @}
 
     ///\name Query Functions
     ///The results of the algorithm can be obtained using these
     ///functions.\n
-    ///\ref run() "run()" should be called before using them.\n
+    ///\ref run() should be called before using them.\n
     ///See also \ref MinCutNodeIt and \ref MinCutEdgeIt.
 
     ///@{
 
     /// \brief Return the predecessor node in the Gomory-Hu tree.
     ///
-    /// This function returns the predecessor node in the Gomory-Hu tree.
-    /// If the node is
-    /// the root of the Gomory-Hu tree, then it returns \c INVALID.
-    Node predNode(const Node& node) {
-      return (*_pred)[node];
-    }
-
-    /// \brief Return the distance from the root node in the Gomory-Hu tree.
-    ///
-    /// This function returns the distance of \c node from the root node
+    /// This function returns the predecessor node of the given node
     /// in the Gomory-Hu tree.
-    int rootDist(const Node& node) {
-      return (*_order)[node];
+    /// If \c node is the root of the tree, then it returns \c INVALID.
+    ///
+    /// \pre \ref run() must be called before using this function.
+    Node predNode(const Node& node) const {
+      return (*_pred)[node];
     }
 
     /// \brief Return the weight of the predecessor edge in the
     /// Gomory-Hu tree.
     ///
-    /// This function returns the weight of the predecessor edge in the
-    /// Gomory-Hu tree.  If the node is the root, the result is undefined.
-    Value predValue(const Node& node) {
+    /// This function returns the weight of the predecessor edge of the
+    /// given node in the Gomory-Hu tree.
+    /// If \c node is the root of the tree, the result is undefined.
+    ///
+    /// \pre \ref run() must be called before using this function.
+    Value predValue(const Node& node) const {
       return (*_weight)[node];
+    }
+
+    /// \brief Return the distance from the root node in the Gomory-Hu tree.
+    ///
+    /// This function returns the distance of the given node from the root
+    /// node in the Gomory-Hu tree.
+    ///
+    /// \pre \ref run() must be called before using this function.
+    int rootDist(const Node& node) const {
+      return (*_order)[node];
     }
 
     /// \brief Return the minimum cut value between two nodes
     ///
-    /// This function returns the minimum cut value between two nodes. The
-    /// algorithm finds the nearest common ancestor in the Gomory-Hu
-    /// tree and calculates the minimum weight edge on the paths to
-    /// the ancestor.
+    /// This function returns the minimum cut value between the nodes
+    /// \c s and \c t.
+    /// It finds the nearest common ancestor of the given nodes in the
+    /// Gomory-Hu tree and calculates the minimum weight edge on the
+    /// paths to the ancestor.
+    ///
+    /// \pre \ref run() must be called before using this function.
     Value minCutValue(const Node& s, const Node& t) const {
       Node sn = s, tn = t;
       Value value = std::numeric_limits<Value>::max();
-      
+
       while (sn != tn) {
-	if ((*_order)[sn] < (*_order)[tn]) {
-	  if ((*_weight)[tn] <= value) value = (*_weight)[tn];
-	  tn = (*_pred)[tn];
-	} else {
-	  if ((*_weight)[sn] <= value) value = (*_weight)[sn];
-	  sn = (*_pred)[sn];
-	}
+        if ((*_order)[sn] < (*_order)[tn]) {
+          if ((*_weight)[tn] <= value) value = (*_weight)[tn];
+          tn = (*_pred)[tn];
+        } else {
+          if ((*_weight)[sn] <= value) value = (*_weight)[sn];
+          sn = (*_pred)[sn];
+        }
       }
       return value;
     }
@@ -274,60 +282,65 @@ namespace lemon {
     /// in the \c cutMap parameter by setting the nodes in the component of
     /// \c s to \c true and the other nodes to \c false.
     ///
-    /// For higher level interfaces, see MinCutNodeIt and MinCutEdgeIt.
+    /// For higher level interfaces see MinCutNodeIt and MinCutEdgeIt.
+    ///
+    /// \param s The base node.
+    /// \param t The node you want to separate from node \c s.
+    /// \param cutMap The cut will be returned in this map.
+    /// It must be a \c bool (or convertible) \ref concepts::ReadWriteMap
+    /// "ReadWriteMap" on the graph nodes.
+    ///
+    /// \return The value of the minimum cut between \c s and \c t.
+    ///
+    /// \pre \ref run() must be called before using this function.
     template <typename CutMap>
-    Value minCutMap(const Node& s, ///< The base node.
+    Value minCutMap(const Node& s,
                     const Node& t,
-                    ///< The node you want to separate from node \c s.
                     CutMap& cutMap
-                    ///< The cut will be returned in this map.
-                    /// It must be a \c bool (or convertible) 
-                    /// \ref concepts::ReadWriteMap "ReadWriteMap"
-                    /// on the graph nodes.
                     ) const {
       Node sn = s, tn = t;
       bool s_root=false;
       Node rn = INVALID;
       Value value = std::numeric_limits<Value>::max();
-      
+
       while (sn != tn) {
-	if ((*_order)[sn] < (*_order)[tn]) {
-	  if ((*_weight)[tn] <= value) {
-	    rn = tn;
+        if ((*_order)[sn] < (*_order)[tn]) {
+          if ((*_weight)[tn] <= value) {
+            rn = tn;
             s_root = false;
-	    value = (*_weight)[tn];
-	  }
-	  tn = (*_pred)[tn];
-	} else {
-	  if ((*_weight)[sn] <= value) {
-	    rn = sn;
+            value = (*_weight)[tn];
+          }
+          tn = (*_pred)[tn];
+        } else {
+          if ((*_weight)[sn] <= value) {
+            rn = sn;
             s_root = true;
-	    value = (*_weight)[sn];
-	  }
-	  sn = (*_pred)[sn];
-	}
+            value = (*_weight)[sn];
+          }
+          sn = (*_pred)[sn];
+        }
       }
 
       typename Graph::template NodeMap<bool> reached(_graph, false);
-      reached.set(_root, true);
+      reached[_root] = true;
       cutMap.set(_root, !s_root);
-      reached.set(rn, true);
+      reached[rn] = true;
       cutMap.set(rn, s_root);
 
       std::vector<Node> st;
       for (NodeIt n(_graph); n != INVALID; ++n) {
-	st.clear();
+        st.clear();
         Node nn = n;
-	while (!reached[nn]) {
-	  st.push_back(nn);
-	  nn = (*_pred)[nn];
-	}
-	while (!st.empty()) {
-	  cutMap.set(st.back(), cutMap[nn]);
-	  st.pop_back();
-	}
+        while (!reached[nn]) {
+          st.push_back(nn);
+          nn = (*_pred)[nn];
+        }
+        while (!st.empty()) {
+          cutMap.set(st.back(), cutMap[nn]);
+          st.pop_back();
+        }
       }
-      
+
       return value;
     }
 
@@ -336,18 +349,18 @@ namespace lemon {
     friend class MinCutNodeIt;
 
     /// Iterate on the nodes of a minimum cut
-    
+
     /// This iterator class lists the nodes of a minimum cut found by
-    /// GomoryHu. Before using it, you must allocate a GomoryHu class,
+    /// GomoryHu. Before using it, you must allocate a GomoryHu class
     /// and call its \ref GomoryHu::run() "run()" method.
     ///
     /// This example counts the nodes in the minimum cut separating \c s from
     /// \c t.
     /// \code
-    /// GomoruHu<Graph> gom(g, capacities);
+    /// GomoryHu<Graph> gom(g, capacities);
     /// gom.run();
     /// int cnt=0;
-    /// for(GomoruHu<Graph>::MinCutNodeIt n(gom,s,t); n!=INVALID; ++n) ++cnt;
+    /// for(GomoryHu<Graph>::MinCutNodeIt n(gom,s,t); n!=INVALID; ++n) ++cnt;
     /// \endcode
     class MinCutNodeIt
     {
@@ -379,7 +392,7 @@ namespace lemon {
                    /// MinCutNodeIt(gomory, t, s, false);
                    /// \endcode
                    /// does not necessarily give the same set of nodes.
-                   /// However it is ensured that
+                   /// However, it is ensured that
                    /// \code
                    /// MinCutNodeIt(gomory, s, t, true);
                    /// \endcode
@@ -429,26 +442,26 @@ namespace lemon {
         return n;
       }
     };
-    
+
     friend class MinCutEdgeIt;
-    
+
     /// Iterate on the edges of a minimum cut
-    
+
     /// This iterator class lists the edges of a minimum cut found by
-    /// GomoryHu. Before using it, you must allocate a GomoryHu class,
+    /// GomoryHu. Before using it, you must allocate a GomoryHu class
     /// and call its \ref GomoryHu::run() "run()" method.
     ///
     /// This example computes the value of the minimum cut separating \c s from
     /// \c t.
     /// \code
-    /// GomoruHu<Graph> gom(g, capacities);
+    /// GomoryHu<Graph> gom(g, capacities);
     /// gom.run();
     /// int value=0;
-    /// for(GomoruHu<Graph>::MinCutEdgeIt e(gom,s,t); e!=INVALID; ++e)
+    /// for(GomoryHu<Graph>::MinCutEdgeIt e(gom,s,t); e!=INVALID; ++e)
     ///   value+=capacities[e];
     /// \endcode
-    /// the result will be the same as it is returned by
-    /// \ref GomoryHu::minCutValue() "gom.minCutValue(s,t)"
+    /// The result will be the same as the value returned by
+    /// \ref GomoryHu::minCutValue() "gom.minCutValue(s,t)".
     class MinCutEdgeIt
     {
       bool _side;
@@ -466,8 +479,12 @@ namespace lemon {
               _arc_it=typename Graph::OutArcIt(_graph,_node_it);
           }
       }
-      
+
     public:
+      /// Constructor
+
+      /// Constructor.
+      ///
       MinCutEdgeIt(GomoryHu const &gomory,
                    ///< The GomoryHu class. You must call its
                    ///  run() method
@@ -478,7 +495,7 @@ namespace lemon {
                    bool side=true
                    ///< If it is \c true (default) then the listed arcs
                    ///  will be oriented from the
-                   ///  the nodes of the component containing \c s,
+                   ///  nodes of the component containing \c s,
                    ///  otherwise they will be oriented in the opposite
                    ///  direction.
                    )
@@ -531,7 +548,7 @@ namespace lemon {
         return *this;
       }
       /// Postfix incrementation
-      
+
       /// Postfix incrementation.
       ///
       /// \warning This incrementation

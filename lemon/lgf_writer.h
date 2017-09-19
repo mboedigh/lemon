@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2009
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -191,20 +191,49 @@ namespace lemon {
       }
     };
 
-    template <typename Value>
+    template <typename Value,
+              typename Map = std::map<Value, std::string> >
     struct MapLookUpConverter {
-      const std::map<Value, std::string>& _map;
+      const Map& _map;
 
-      MapLookUpConverter(const std::map<Value, std::string>& map)
+      MapLookUpConverter(const Map& map)
         : _map(map) {}
 
-      std::string operator()(const Value& str) {
-        typename std::map<Value, std::string>::const_iterator it =
-          _map.find(str);
+      std::string operator()(const Value& value) {
+        typename Map::const_iterator it = _map.find(value);
         if (it == _map.end()) {
           throw FormatError("Item not found");
         }
         return it->second;
+      }
+    };
+
+    template <typename Value,
+              typename Map1 = std::map<Value, std::string>,
+              typename Map2 = std::map<Value, std::string> >
+    struct DoubleMapLookUpConverter {
+      const Map1& _map1;
+      const Map2& _map2;
+
+      DoubleMapLookUpConverter(const Map1& map1, const Map2& map2)
+        : _map1(map1), _map2(map2) {}
+
+      std::string operator()(const Value& value) {
+        typename Map1::const_iterator it1 = _map1.find(value);
+        typename Map1::const_iterator it2 = _map2.find(value);
+        if (it1 == _map1.end()) {
+          if (it2 == _map2.end()) {
+            throw FormatError("Item not found");
+          } else {
+            return it2->second;
+          }
+        } else {
+          if (it2 == _map2.end()) {
+            return it1->second;
+          } else {
+            throw FormatError("Item is ambigous");
+          }
+        }
       }
     };
 
@@ -347,19 +376,17 @@ namespace lemon {
 
   }
 
-  template <typename Digraph>
+  template <typename DGR>
   class DigraphWriter;
 
-  template <typename Digraph>
-  DigraphWriter<Digraph> digraphWriter(const Digraph& digraph,
-                                       std::ostream& os = std::cout);
-  template <typename Digraph>
-  DigraphWriter<Digraph> digraphWriter(const Digraph& digraph,
-                                       const std::string& fn);
+  template <typename TDGR>
+  DigraphWriter<TDGR> digraphWriter(const TDGR& digraph,
+                                   std::ostream& os = std::cout);
+  template <typename TDGR>
+  DigraphWriter<TDGR> digraphWriter(const TDGR& digraph, const std::string& fn);
 
-  template <typename Digraph>
-  DigraphWriter<Digraph> digraphWriter(const Digraph& digraph,
-                                       const char* fn);
+  template <typename TDGR>
+  DigraphWriter<TDGR> digraphWriter(const TDGR& digraph, const char* fn);
 
 
   /// \ingroup lemon_io
@@ -381,7 +408,7 @@ namespace lemon {
   /// arc() functions are used to add attribute writing rules.
   ///
   ///\code
-  /// DigraphWriter<Digraph>(digraph, std::cout).
+  /// DigraphWriter<DGR>(digraph, std::cout).
   ///   nodeMap("coordinates", coord_map).
   ///   nodeMap("size", size).
   ///   nodeMap("title", title).
@@ -406,12 +433,12 @@ namespace lemon {
   /// section to the stream. The output stream can be retrieved with
   /// the \c ostream() function, hence the second pass can append its
   /// output to the output of the first pass.
-  template <typename GR>
+  template <typename DGR>
   class DigraphWriter {
   public:
 
-    typedef GR Digraph;
-    TEMPLATE_DIGRAPH_TYPEDEFS(Digraph);
+    typedef DGR Digraph;
+    TEMPLATE_DIGRAPH_TYPEDEFS(DGR);
 
   private:
 
@@ -419,7 +446,7 @@ namespace lemon {
     std::ostream* _os;
     bool local_os;
 
-    const Digraph& _digraph;
+    const DGR& _digraph;
 
     std::string _nodes_caption;
     std::string _arcs_caption;
@@ -451,7 +478,7 @@ namespace lemon {
     ///
     /// Construct a directed graph writer, which writes to the given
     /// output stream.
-    DigraphWriter(const Digraph& digraph, std::ostream& os = std::cout)
+    DigraphWriter(const DGR& digraph, std::ostream& os = std::cout)
       : _os(&os), local_os(false), _digraph(digraph),
         _skip_nodes(false), _skip_arcs(false) {}
 
@@ -459,7 +486,7 @@ namespace lemon {
     ///
     /// Construct a directed graph writer, which writes to the given
     /// output file.
-    DigraphWriter(const Digraph& digraph, const std::string& fn)
+    DigraphWriter(const DGR& digraph, const std::string& fn)
       : _os(new std::ofstream(fn.c_str())), local_os(true), _digraph(digraph),
         _skip_nodes(false), _skip_arcs(false) {
       if (!(*_os)) {
@@ -472,7 +499,7 @@ namespace lemon {
     ///
     /// Construct a directed graph writer, which writes to the given
     /// output file.
-    DigraphWriter(const Digraph& digraph, const char* fn)
+    DigraphWriter(const DGR& digraph, const char* fn)
       : _os(new std::ofstream(fn)), local_os(true), _digraph(digraph),
         _skip_nodes(false), _skip_arcs(false) {
       if (!(*_os)) {
@@ -505,15 +532,15 @@ namespace lemon {
 
   private:
 
-    template <typename DGR>
-    friend DigraphWriter<DGR> digraphWriter(const DGR& digraph, 
-                                            std::ostream& os);
-    template <typename DGR>
-    friend DigraphWriter<DGR> digraphWriter(const DGR& digraph,
-                                            const std::string& fn);
-    template <typename DGR>
-    friend DigraphWriter<DGR> digraphWriter(const DGR& digraph,
-                                            const char *fn);
+    template <typename TDGR>
+    friend DigraphWriter<TDGR> digraphWriter(const TDGR& digraph,
+                                             std::ostream& os);
+    template <typename TDGR>
+    friend DigraphWriter<TDGR> digraphWriter(const TDGR& digraph,
+                                             const std::string& fn);
+    template <typename TDGR>
+    friend DigraphWriter<TDGR> digraphWriter(const TDGR& digraph,
+                                             const char *fn);
 
     DigraphWriter(DigraphWriter& other)
       : _os(other._os), local_os(other.local_os), _digraph(other._digraph),
@@ -538,7 +565,7 @@ namespace lemon {
 
   public:
 
-    /// \name Writing rules
+    /// \name Writing Rules
     /// @{
 
     /// \brief Node map writing rule
@@ -641,7 +668,7 @@ namespace lemon {
       return *this;
     }
 
-    /// \name Section captions
+    /// \name Section Captions
     /// @{
 
     /// \brief Add an additional caption to the \c \@nodes section
@@ -668,7 +695,7 @@ namespace lemon {
       return *this;
     }
 
-    /// \name Skipping section
+    /// \name Skipping Section
     /// @{
 
     /// \brief Skip writing the node set
@@ -724,8 +751,8 @@ namespace lemon {
       }
 
       if (label == 0) {
-        IdMap<Digraph, Node> id_map(_digraph);
-        _writer_bits::MapLess<IdMap<Digraph, Node> > id_less(id_map);
+        IdMap<DGR, Node> id_map(_digraph);
+        _writer_bits::MapLess<IdMap<DGR, Node> > id_less(id_map);
         std::sort(nodes.begin(), nodes.end(), id_less);
       } else {
         label->sort(nodes);
@@ -809,8 +836,8 @@ namespace lemon {
       }
 
       if (label == 0) {
-        IdMap<Digraph, Arc> id_map(_digraph);
-        _writer_bits::MapLess<IdMap<Digraph, Arc> > id_less(id_map);
+        IdMap<DGR, Arc> id_map(_digraph);
+        _writer_bits::MapLess<IdMap<DGR, Arc> > id_less(id_map);
         std::sort(arcs.begin(), arcs.end(), id_less);
       } else {
         label->sort(arcs);
@@ -885,7 +912,7 @@ namespace lemon {
 
   public:
 
-    /// \name Execution of the writer
+    /// \name Execution of the Writer
     /// @{
 
     /// \brief Start the batch processing
@@ -915,14 +942,43 @@ namespace lemon {
     /// @}
   };
 
-  /// \brief Return a \ref DigraphWriter class
+  /// \ingroup lemon_io
   ///
-  /// This function just returns a \ref DigraphWriter class.
+  /// \brief Return a \ref lemon::DigraphWriter "DigraphWriter" class
+  ///
+  /// This function just returns a \ref lemon::DigraphWriter
+  /// "DigraphWriter" class.
+  ///
+  /// With this function a digraph can be write to a file or output
+  /// stream in \ref lgf-format "LGF" format with several maps and
+  /// attributes. For example, with the following code a network flow
+  /// problem can be written to the standard output, i.e. a digraph
+  /// with a \e capacity map on the arcs and \e source and \e target
+  /// nodes:
+  ///
+  ///\code
+  ///ListDigraph digraph;
+  ///ListDigraph::ArcMap<int> cap(digraph);
+  ///ListDigraph::Node src, trg;
+  ///  // Setting the capacity map and source and target nodes
+  ///digraphWriter(digraph, std::cout).
+  ///  arcMap("capacity", cap).
+  ///  node("source", src).
+  ///  node("target", trg).
+  ///  run();
+  ///\endcode
+  ///
+  /// For a complete documentation, please see the
+  /// \ref lemon::DigraphWriter "DigraphWriter"
+  /// class documentation.
+  /// \warning Don't forget to put the \ref lemon::DigraphWriter::run() "run()"
+  /// to the end of the parameter list.
   /// \relates DigraphWriter
-  template <typename Digraph>
-  DigraphWriter<Digraph> digraphWriter(const Digraph& digraph,
-                                       std::ostream& os) {
-    DigraphWriter<Digraph> tmp(digraph, os);
+  /// \sa digraphWriter(const TDGR& digraph, const std::string& fn)
+  /// \sa digraphWriter(const TDGR& digraph, const char* fn)
+  template <typename TDGR>
+  DigraphWriter<TDGR> digraphWriter(const TDGR& digraph, std::ostream& os) {
+    DigraphWriter<TDGR> tmp(digraph, os);
     return tmp;
   }
 
@@ -930,10 +986,11 @@ namespace lemon {
   ///
   /// This function just returns a \ref DigraphWriter class.
   /// \relates DigraphWriter
-  template <typename Digraph>
-  DigraphWriter<Digraph> digraphWriter(const Digraph& digraph,
-                                       const std::string& fn) {
-    DigraphWriter<Digraph> tmp(digraph, fn);
+  /// \sa digraphWriter(const TDGR& digraph, std::ostream& os)
+  template <typename TDGR>
+  DigraphWriter<TDGR> digraphWriter(const TDGR& digraph,
+                                    const std::string& fn) {
+    DigraphWriter<TDGR> tmp(digraph, fn);
     return tmp;
   }
 
@@ -941,27 +998,26 @@ namespace lemon {
   ///
   /// This function just returns a \ref DigraphWriter class.
   /// \relates DigraphWriter
-  template <typename Digraph>
-  DigraphWriter<Digraph> digraphWriter(const Digraph& digraph,
-                                       const char* fn) {
-    DigraphWriter<Digraph> tmp(digraph, fn);
+  /// \sa digraphWriter(const TDGR& digraph, std::ostream& os)
+  template <typename TDGR>
+  DigraphWriter<TDGR> digraphWriter(const TDGR& digraph, const char* fn) {
+    DigraphWriter<TDGR> tmp(digraph, fn);
     return tmp;
   }
 
-  template <typename Graph>
+  template <typename GR>
   class GraphWriter;
 
-  template <typename Graph>
-  GraphWriter<Graph> graphWriter(const Graph& graph,
-                                 std::ostream& os = std::cout);
-  template <typename Graph>
-  GraphWriter<Graph> graphWriter(const Graph& graph, const std::string& fn);
-  template <typename Graph>
-  GraphWriter<Graph> graphWriter(const Graph& graph, const char* fn);
+  template <typename TGR>
+  GraphWriter<TGR> graphWriter(const TGR& graph, std::ostream& os = std::cout);
+  template <typename TGR>
+  GraphWriter<TGR> graphWriter(const TGR& graph, const std::string& fn);
+  template <typename TGR>
+  GraphWriter<TGR> graphWriter(const TGR& graph, const char* fn);
 
   /// \ingroup lemon_io
   ///
-  /// \brief \ref lgf-format "LGF" writer for directed graphs
+  /// \brief \ref lgf-format "LGF" writer for undirected graphs
   ///
   /// This utility writes an \ref lgf-format "LGF" file.
   ///
@@ -979,7 +1035,7 @@ namespace lemon {
   public:
 
     typedef GR Graph;
-    TEMPLATE_GRAPH_TYPEDEFS(Graph);
+    TEMPLATE_GRAPH_TYPEDEFS(GR);
 
   private:
 
@@ -987,7 +1043,7 @@ namespace lemon {
     std::ostream* _os;
     bool local_os;
 
-    const Graph& _graph;
+    const GR& _graph;
 
     std::string _nodes_caption;
     std::string _edges_caption;
@@ -1017,17 +1073,17 @@ namespace lemon {
 
     /// \brief Constructor
     ///
-    /// Construct a directed graph writer, which writes to the given
-    /// output stream.
-    GraphWriter(const Graph& graph, std::ostream& os = std::cout)
+    /// Construct an undirected graph writer, which writes to the
+    /// given output stream.
+    GraphWriter(const GR& graph, std::ostream& os = std::cout)
       : _os(&os), local_os(false), _graph(graph),
         _skip_nodes(false), _skip_edges(false) {}
 
     /// \brief Constructor
     ///
-    /// Construct a directed graph writer, which writes to the given
+    /// Construct a undirected graph writer, which writes to the given
     /// output file.
-    GraphWriter(const Graph& graph, const std::string& fn)
+    GraphWriter(const GR& graph, const std::string& fn)
       : _os(new std::ofstream(fn.c_str())), local_os(true), _graph(graph),
         _skip_nodes(false), _skip_edges(false) {
       if (!(*_os)) {
@@ -1038,9 +1094,9 @@ namespace lemon {
 
     /// \brief Constructor
     ///
-    /// Construct a directed graph writer, which writes to the given
+    /// Construct a undirected graph writer, which writes to the given
     /// output file.
-    GraphWriter(const Graph& graph, const char* fn)
+    GraphWriter(const GR& graph, const char* fn)
       : _os(new std::ofstream(fn)), local_os(true), _graph(graph),
         _skip_nodes(false), _skip_edges(false) {
       if (!(*_os)) {
@@ -1073,16 +1129,14 @@ namespace lemon {
 
   private:
 
-    template <typename Graph>
-    friend GraphWriter<Graph> graphWriter(const Graph& graph,
-                                          std::ostream& os);
-    template <typename Graph>
-    friend GraphWriter<Graph> graphWriter(const Graph& graph,
-                                          const std::string& fn);
-    template <typename Graph>
-    friend GraphWriter<Graph> graphWriter(const Graph& graph,
-                                          const char *fn);
-    
+    template <typename TGR>
+    friend GraphWriter<TGR> graphWriter(const TGR& graph, std::ostream& os);
+    template <typename TGR>
+    friend GraphWriter<TGR> graphWriter(const TGR& graph,
+                                        const std::string& fn);
+    template <typename TGR>
+    friend GraphWriter<TGR> graphWriter(const TGR& graph, const char *fn);
+
     GraphWriter(GraphWriter& other)
       : _os(other._os), local_os(other.local_os), _graph(other._graph),
         _skip_nodes(other._skip_nodes), _skip_edges(other._skip_edges) {
@@ -1106,7 +1160,7 @@ namespace lemon {
 
   public:
 
-    /// \name Writing rules
+    /// \name Writing Rules
     /// @{
 
     /// \brief Node map writing rule
@@ -1168,10 +1222,10 @@ namespace lemon {
     GraphWriter& arcMap(const std::string& caption, const Map& map) {
       checkConcept<concepts::ReadMap<Arc, typename Map::Value>, Map>();
       _writer_bits::MapStorageBase<Edge>* forward_storage =
-        new _writer_bits::GraphArcMapStorage<Graph, true, Map>(_graph, map);
+        new _writer_bits::GraphArcMapStorage<GR, true, Map>(_graph, map);
       _edge_maps.push_back(std::make_pair('+' + caption, forward_storage));
       _writer_bits::MapStorageBase<Edge>* backward_storage =
-        new _writer_bits::GraphArcMapStorage<Graph, false, Map>(_graph, map);
+        new _writer_bits::GraphArcMapStorage<GR, false, Map>(_graph, map);
       _edge_maps.push_back(std::make_pair('-' + caption, backward_storage));
       return *this;
     }
@@ -1185,11 +1239,11 @@ namespace lemon {
                           const Converter& converter = Converter()) {
       checkConcept<concepts::ReadMap<Arc, typename Map::Value>, Map>();
       _writer_bits::MapStorageBase<Edge>* forward_storage =
-        new _writer_bits::GraphArcMapStorage<Graph, true, Map, Converter>
+        new _writer_bits::GraphArcMapStorage<GR, true, Map, Converter>
         (_graph, map, converter);
       _edge_maps.push_back(std::make_pair('+' + caption, forward_storage));
       _writer_bits::MapStorageBase<Edge>* backward_storage =
-        new _writer_bits::GraphArcMapStorage<Graph, false, Map, Converter>
+        new _writer_bits::GraphArcMapStorage<GR, false, Map, Converter>
         (_graph, map, converter);
       _edge_maps.push_back(std::make_pair('-' + caption, backward_storage));
       return *this;
@@ -1247,7 +1301,7 @@ namespace lemon {
     ///
     /// Add an arc writing rule to writer.
     GraphWriter& arc(const std::string& caption, const Arc& arc) {
-      typedef _writer_bits::GraphArcLookUpConverter<Graph> Converter;
+      typedef _writer_bits::GraphArcLookUpConverter<GR> Converter;
       Converter converter(_graph, _edge_index);
       _writer_bits::ValueStorageBase* storage =
         new _writer_bits::ValueStorage<Arc, Converter>(arc, converter);
@@ -1255,7 +1309,7 @@ namespace lemon {
       return *this;
     }
 
-    /// \name Section captions
+    /// \name Section Captions
     /// @{
 
     /// \brief Add an additional caption to the \c \@nodes section
@@ -1266,9 +1320,9 @@ namespace lemon {
       return *this;
     }
 
-    /// \brief Add an additional caption to the \c \@arcs section
+    /// \brief Add an additional caption to the \c \@edges section
     ///
-    /// Add an additional caption to the \c \@arcs section.
+    /// Add an additional caption to the \c \@edges section.
     GraphWriter& edges(const std::string& caption) {
       _edges_caption = caption;
       return *this;
@@ -1282,7 +1336,7 @@ namespace lemon {
       return *this;
     }
 
-    /// \name Skipping section
+    /// \name Skipping Section
     /// @{
 
     /// \brief Skip writing the node set
@@ -1338,8 +1392,8 @@ namespace lemon {
       }
 
       if (label == 0) {
-        IdMap<Graph, Node> id_map(_graph);
-        _writer_bits::MapLess<IdMap<Graph, Node> > id_less(id_map);
+        IdMap<GR, Node> id_map(_graph);
+        _writer_bits::MapLess<IdMap<GR, Node> > id_less(id_map);
         std::sort(nodes.begin(), nodes.end(), id_less);
       } else {
         label->sort(nodes);
@@ -1423,8 +1477,8 @@ namespace lemon {
       }
 
       if (label == 0) {
-        IdMap<Graph, Edge> id_map(_graph);
-        _writer_bits::MapLess<IdMap<Graph, Edge> > id_less(id_map);
+        IdMap<GR, Edge> id_map(_graph);
+        _writer_bits::MapLess<IdMap<GR, Edge> > id_less(id_map);
         std::sort(edges.begin(), edges.end(), id_less);
       } else {
         label->sort(edges);
@@ -1499,7 +1553,7 @@ namespace lemon {
 
   public:
 
-    /// \name Execution of the writer
+    /// \name Execution of the Writer
     /// @{
 
     /// \brief Start the batch processing
@@ -1529,14 +1583,38 @@ namespace lemon {
     /// @}
   };
 
-  /// \brief Return a \ref GraphWriter class
+  /// \ingroup lemon_io
   ///
-  /// This function just returns a \ref GraphWriter class.
+  /// \brief Return a \ref lemon::GraphWriter "GraphWriter" class
+  ///
+  /// This function just returns a \ref lemon::GraphWriter "GraphWriter" class.
+  ///
+  /// With this function a graph can be write to a file or output
+  /// stream in \ref lgf-format "LGF" format with several maps and
+  /// attributes. For example, with the following code a weighted
+  /// matching problem can be written to the standard output, i.e. a
+  /// graph with a \e weight map on the edges:
+  ///
+  ///\code
+  ///ListGraph graph;
+  ///ListGraph::EdgeMap<int> weight(graph);
+  ///  // Setting the weight map
+  ///graphWriter(graph, std::cout).
+  ///  edgeMap("weight", weight).
+  ///  run();
+  ///\endcode
+  ///
+  /// For a complete documentation, please see the
+  /// \ref lemon::GraphWriter "GraphWriter"
+  /// class documentation.
+  /// \warning Don't forget to put the \ref lemon::GraphWriter::run() "run()"
+  /// to the end of the parameter list.
   /// \relates GraphWriter
-  template <typename Graph>
-  GraphWriter<Graph> graphWriter(const Graph& graph,
-                                 std::ostream& os) {
-    GraphWriter<Graph> tmp(graph, os);
+  /// \sa graphWriter(const TGR& graph, const std::string& fn)
+  /// \sa graphWriter(const TGR& graph, const char* fn)
+  template <typename TGR>
+  GraphWriter<TGR> graphWriter(const TGR& graph, std::ostream& os) {
+    GraphWriter<TGR> tmp(graph, os);
     return tmp;
   }
 
@@ -1544,9 +1622,10 @@ namespace lemon {
   ///
   /// This function just returns a \ref GraphWriter class.
   /// \relates GraphWriter
-  template <typename Graph>
-  GraphWriter<Graph> graphWriter(const Graph& graph, const std::string& fn) {
-    GraphWriter<Graph> tmp(graph, fn);
+  /// \sa graphWriter(const TGR& graph, std::ostream& os)
+  template <typename TGR>
+  GraphWriter<TGR> graphWriter(const TGR& graph, const std::string& fn) {
+    GraphWriter<TGR> tmp(graph, fn);
     return tmp;
   }
 
@@ -1554,9 +1633,830 @@ namespace lemon {
   ///
   /// This function just returns a \ref GraphWriter class.
   /// \relates GraphWriter
-  template <typename Graph>
-  GraphWriter<Graph> graphWriter(const Graph& graph, const char* fn) {
-    GraphWriter<Graph> tmp(graph, fn);
+  /// \sa graphWriter(const TGR& graph, std::ostream& os)
+  template <typename TGR>
+  GraphWriter<TGR> graphWriter(const TGR& graph, const char* fn) {
+    GraphWriter<TGR> tmp(graph, fn);
+    return tmp;
+  }
+
+  template <typename BGR>
+  class BpGraphWriter;
+
+  template <typename TBGR>
+  BpGraphWriter<TBGR> bpGraphWriter(const TBGR& graph,
+                                    std::ostream& os = std::cout);
+  template <typename TBGR>
+  BpGraphWriter<TBGR> bpGraphWriter(const TBGR& graph, const std::string& fn);
+  template <typename TBGR>
+  BpGraphWriter<TBGR> bpGraphWriter(const TBGR& graph, const char* fn);
+
+  /// \ingroup lemon_io
+  ///
+  /// \brief \ref lgf-format "LGF" writer for undirected bipartite graphs
+  ///
+  /// This utility writes an \ref lgf-format "LGF" file.
+  ///
+  /// It can be used almost the same way as \c GraphWriter, but it
+  /// reads the red and blue nodes from separate sections, and these
+  /// sections can contain different set of maps.
+  ///
+  /// The red and blue node maps are written to the corresponding
+  /// sections. The node maps are written to both of these sections
+  /// with the same map name.
+  template <typename BGR>
+  class BpGraphWriter {
+  public:
+
+    typedef BGR BpGraph;
+    TEMPLATE_BPGRAPH_TYPEDEFS(BGR);
+
+  private:
+
+
+    std::ostream* _os;
+    bool local_os;
+
+    const BGR& _graph;
+
+    std::string _nodes_caption;
+    std::string _edges_caption;
+    std::string _attributes_caption;
+
+    typedef std::map<Node, std::string> RedNodeIndex;
+    RedNodeIndex _red_node_index;
+    typedef std::map<Node, std::string> BlueNodeIndex;
+    BlueNodeIndex _blue_node_index;
+    typedef std::map<Edge, std::string> EdgeIndex;
+    EdgeIndex _edge_index;
+
+    typedef std::vector<std::pair<std::string,
+      _writer_bits::MapStorageBase<RedNode>* > > RedNodeMaps;
+    RedNodeMaps _red_node_maps;
+    typedef std::vector<std::pair<std::string,
+      _writer_bits::MapStorageBase<BlueNode>* > > BlueNodeMaps;
+    BlueNodeMaps _blue_node_maps;
+
+    typedef std::vector<std::pair<std::string,
+      _writer_bits::MapStorageBase<Edge>* > >EdgeMaps;
+    EdgeMaps _edge_maps;
+
+    typedef std::vector<std::pair<std::string,
+      _writer_bits::ValueStorageBase*> > Attributes;
+    Attributes _attributes;
+
+    bool _skip_nodes;
+    bool _skip_edges;
+
+  public:
+
+    /// \brief Constructor
+    ///
+    /// Construct a bipartite graph writer, which writes to the given
+    /// output stream.
+    BpGraphWriter(const BGR& graph, std::ostream& os = std::cout)
+      : _os(&os), local_os(false), _graph(graph),
+        _skip_nodes(false), _skip_edges(false) {}
+
+    /// \brief Constructor
+    ///
+    /// Construct a bipartite graph writer, which writes to the given
+    /// output file.
+    BpGraphWriter(const BGR& graph, const std::string& fn)
+      : _os(new std::ofstream(fn.c_str())), local_os(true), _graph(graph),
+        _skip_nodes(false), _skip_edges(false) {
+      if (!(*_os)) {
+        delete _os;
+        throw IoError("Cannot write file", fn);
+      }
+    }
+
+    /// \brief Constructor
+    ///
+    /// Construct a bipartite graph writer, which writes to the given
+    /// output file.
+    BpGraphWriter(const BGR& graph, const char* fn)
+      : _os(new std::ofstream(fn)), local_os(true), _graph(graph),
+        _skip_nodes(false), _skip_edges(false) {
+      if (!(*_os)) {
+        delete _os;
+        throw IoError("Cannot write file", fn);
+      }
+    }
+
+    /// \brief Destructor
+    ~BpGraphWriter() {
+      for (typename RedNodeMaps::iterator it = _red_node_maps.begin();
+           it != _red_node_maps.end(); ++it) {
+        delete it->second;
+      }
+
+      for (typename BlueNodeMaps::iterator it = _blue_node_maps.begin();
+           it != _blue_node_maps.end(); ++it) {
+        delete it->second;
+      }
+
+      for (typename EdgeMaps::iterator it = _edge_maps.begin();
+           it != _edge_maps.end(); ++it) {
+        delete it->second;
+      }
+
+      for (typename Attributes::iterator it = _attributes.begin();
+           it != _attributes.end(); ++it) {
+        delete it->second;
+      }
+
+      if (local_os) {
+        delete _os;
+      }
+    }
+
+  private:
+
+    template <typename TBGR>
+    friend BpGraphWriter<TBGR> bpGraphWriter(const TBGR& graph,
+                                             std::ostream& os);
+    template <typename TBGR>
+    friend BpGraphWriter<TBGR> bpGraphWriter(const TBGR& graph,
+                                             const std::string& fn);
+    template <typename TBGR>
+    friend BpGraphWriter<TBGR> bpGraphWriter(const TBGR& graph, const char *fn);
+
+    BpGraphWriter(BpGraphWriter& other)
+      : _os(other._os), local_os(other.local_os), _graph(other._graph),
+        _skip_nodes(other._skip_nodes), _skip_edges(other._skip_edges) {
+
+      other._os = 0;
+      other.local_os = false;
+
+      _red_node_index.swap(other._red_node_index);
+      _blue_node_index.swap(other._blue_node_index);
+      _edge_index.swap(other._edge_index);
+
+      _red_node_maps.swap(other._red_node_maps);
+      _blue_node_maps.swap(other._blue_node_maps);
+      _edge_maps.swap(other._edge_maps);
+      _attributes.swap(other._attributes);
+
+      _nodes_caption = other._nodes_caption;
+      _edges_caption = other._edges_caption;
+      _attributes_caption = other._attributes_caption;
+    }
+
+    BpGraphWriter& operator=(const BpGraphWriter&);
+
+  public:
+
+    /// \name Writing Rules
+    /// @{
+
+    /// \brief Node map writing rule
+    ///
+    /// Add a node map writing rule to the writer.
+    template <typename Map>
+    BpGraphWriter& nodeMap(const std::string& caption, const Map& map) {
+      checkConcept<concepts::ReadMap<Node, typename Map::Value>, Map>();
+      _writer_bits::MapStorageBase<RedNode>* red_storage =
+        new _writer_bits::MapStorage<RedNode, Map>(map);
+      _red_node_maps.push_back(std::make_pair(caption, red_storage));
+      _writer_bits::MapStorageBase<BlueNode>* blue_storage =
+        new _writer_bits::MapStorage<BlueNode, Map>(map);
+      _blue_node_maps.push_back(std::make_pair(caption, blue_storage));
+      return *this;
+    }
+
+    /// \brief Node map writing rule
+    ///
+    /// Add a node map writing rule with specialized converter to the
+    /// writer.
+    template <typename Map, typename Converter>
+    BpGraphWriter& nodeMap(const std::string& caption, const Map& map,
+                           const Converter& converter = Converter()) {
+      checkConcept<concepts::ReadMap<Node, typename Map::Value>, Map>();
+      _writer_bits::MapStorageBase<RedNode>* red_storage =
+        new _writer_bits::MapStorage<RedNode, Map, Converter>(map, converter);
+      _red_node_maps.push_back(std::make_pair(caption, red_storage));
+      _writer_bits::MapStorageBase<BlueNode>* blue_storage =
+        new _writer_bits::MapStorage<BlueNode, Map, Converter>(map, converter);
+      _blue_node_maps.push_back(std::make_pair(caption, blue_storage));
+      return *this;
+    }
+
+    /// \brief Red node map writing rule
+    ///
+    /// Add a red node map writing rule to the writer.
+    template <typename Map>
+    BpGraphWriter& redNodeMap(const std::string& caption, const Map& map) {
+      checkConcept<concepts::ReadMap<RedNode, typename Map::Value>, Map>();
+      _writer_bits::MapStorageBase<RedNode>* storage =
+        new _writer_bits::MapStorage<RedNode, Map>(map);
+      _red_node_maps.push_back(std::make_pair(caption, storage));
+      return *this;
+    }
+
+    /// \brief Red node map writing rule
+    ///
+    /// Add a red node map writing rule with specialized converter to the
+    /// writer.
+    template <typename Map, typename Converter>
+    BpGraphWriter& redNodeMap(const std::string& caption, const Map& map,
+                              const Converter& converter = Converter()) {
+      checkConcept<concepts::ReadMap<RedNode, typename Map::Value>, Map>();
+      _writer_bits::MapStorageBase<RedNode>* storage =
+        new _writer_bits::MapStorage<RedNode, Map, Converter>(map, converter);
+      _red_node_maps.push_back(std::make_pair(caption, storage));
+      return *this;
+    }
+
+    /// \brief Blue node map writing rule
+    ///
+    /// Add a blue node map writing rule to the writer.
+    template <typename Map>
+    BpGraphWriter& blueNodeMap(const std::string& caption, const Map& map) {
+      checkConcept<concepts::ReadMap<BlueNode, typename Map::Value>, Map>();
+      _writer_bits::MapStorageBase<BlueNode>* storage =
+        new _writer_bits::MapStorage<BlueNode, Map>(map);
+      _blue_node_maps.push_back(std::make_pair(caption, storage));
+      return *this;
+    }
+
+    /// \brief Blue node map writing rule
+    ///
+    /// Add a blue node map writing rule with specialized converter to the
+    /// writer.
+    template <typename Map, typename Converter>
+    BpGraphWriter& blueNodeMap(const std::string& caption, const Map& map,
+                               const Converter& converter = Converter()) {
+      checkConcept<concepts::ReadMap<BlueNode, typename Map::Value>, Map>();
+      _writer_bits::MapStorageBase<BlueNode>* storage =
+        new _writer_bits::MapStorage<BlueNode, Map, Converter>(map, converter);
+      _blue_node_maps.push_back(std::make_pair(caption, storage));
+      return *this;
+    }
+
+    /// \brief Edge map writing rule
+    ///
+    /// Add an edge map writing rule to the writer.
+    template <typename Map>
+    BpGraphWriter& edgeMap(const std::string& caption, const Map& map) {
+      checkConcept<concepts::ReadMap<Edge, typename Map::Value>, Map>();
+      _writer_bits::MapStorageBase<Edge>* storage =
+        new _writer_bits::MapStorage<Edge, Map>(map);
+      _edge_maps.push_back(std::make_pair(caption, storage));
+      return *this;
+    }
+
+    /// \brief Edge map writing rule
+    ///
+    /// Add an edge map writing rule with specialized converter to the
+    /// writer.
+    template <typename Map, typename Converter>
+    BpGraphWriter& edgeMap(const std::string& caption, const Map& map,
+                          const Converter& converter = Converter()) {
+      checkConcept<concepts::ReadMap<Edge, typename Map::Value>, Map>();
+      _writer_bits::MapStorageBase<Edge>* storage =
+        new _writer_bits::MapStorage<Edge, Map, Converter>(map, converter);
+      _edge_maps.push_back(std::make_pair(caption, storage));
+      return *this;
+    }
+
+    /// \brief Arc map writing rule
+    ///
+    /// Add an arc map writing rule to the writer.
+    template <typename Map>
+    BpGraphWriter& arcMap(const std::string& caption, const Map& map) {
+      checkConcept<concepts::ReadMap<Arc, typename Map::Value>, Map>();
+      _writer_bits::MapStorageBase<Edge>* forward_storage =
+        new _writer_bits::GraphArcMapStorage<BGR, true, Map>(_graph, map);
+      _edge_maps.push_back(std::make_pair('+' + caption, forward_storage));
+      _writer_bits::MapStorageBase<Edge>* backward_storage =
+        new _writer_bits::GraphArcMapStorage<BGR, false, Map>(_graph, map);
+      _edge_maps.push_back(std::make_pair('-' + caption, backward_storage));
+      return *this;
+    }
+
+    /// \brief Arc map writing rule
+    ///
+    /// Add an arc map writing rule with specialized converter to the
+    /// writer.
+    template <typename Map, typename Converter>
+    BpGraphWriter& arcMap(const std::string& caption, const Map& map,
+                          const Converter& converter = Converter()) {
+      checkConcept<concepts::ReadMap<Arc, typename Map::Value>, Map>();
+      _writer_bits::MapStorageBase<Edge>* forward_storage =
+        new _writer_bits::GraphArcMapStorage<BGR, true, Map, Converter>
+        (_graph, map, converter);
+      _edge_maps.push_back(std::make_pair('+' + caption, forward_storage));
+      _writer_bits::MapStorageBase<Edge>* backward_storage =
+        new _writer_bits::GraphArcMapStorage<BGR, false, Map, Converter>
+        (_graph, map, converter);
+      _edge_maps.push_back(std::make_pair('-' + caption, backward_storage));
+      return *this;
+    }
+
+    /// \brief Attribute writing rule
+    ///
+    /// Add an attribute writing rule to the writer.
+    template <typename Value>
+    BpGraphWriter& attribute(const std::string& caption, const Value& value) {
+      _writer_bits::ValueStorageBase* storage =
+        new _writer_bits::ValueStorage<Value>(value);
+      _attributes.push_back(std::make_pair(caption, storage));
+      return *this;
+    }
+
+    /// \brief Attribute writing rule
+    ///
+    /// Add an attribute writing rule with specialized converter to the
+    /// writer.
+    template <typename Value, typename Converter>
+    BpGraphWriter& attribute(const std::string& caption, const Value& value,
+                             const Converter& converter = Converter()) {
+      _writer_bits::ValueStorageBase* storage =
+        new _writer_bits::ValueStorage<Value, Converter>(value, converter);
+      _attributes.push_back(std::make_pair(caption, storage));
+      return *this;
+    }
+
+    /// \brief Node writing rule
+    ///
+    /// Add a node writing rule to the writer.
+    BpGraphWriter& node(const std::string& caption, const Node& node) {
+      typedef _writer_bits::DoubleMapLookUpConverter<
+        Node, RedNodeIndex, BlueNodeIndex> Converter;
+      Converter converter(_red_node_index, _blue_node_index);
+      _writer_bits::ValueStorageBase* storage =
+        new _writer_bits::ValueStorage<Node, Converter>(node, converter);
+      _attributes.push_back(std::make_pair(caption, storage));
+      return *this;
+    }
+
+    /// \brief Red node writing rule
+    ///
+    /// Add a red node writing rule to the writer.
+    BpGraphWriter& redNode(const std::string& caption, const RedNode& node) {
+      typedef _writer_bits::MapLookUpConverter<Node> Converter;
+      Converter converter(_red_node_index);
+      _writer_bits::ValueStorageBase* storage =
+        new _writer_bits::ValueStorage<Node, Converter>(node, converter);
+      _attributes.push_back(std::make_pair(caption, storage));
+      return *this;
+    }
+
+    /// \brief Blue node writing rule
+    ///
+    /// Add a blue node writing rule to the writer.
+    BpGraphWriter& blueNode(const std::string& caption, const BlueNode& node) {
+      typedef _writer_bits::MapLookUpConverter<Node> Converter;
+      Converter converter(_blue_node_index);
+      _writer_bits::ValueStorageBase* storage =
+        new _writer_bits::ValueStorage<Node, Converter>(node, converter);
+      _attributes.push_back(std::make_pair(caption, storage));
+      return *this;
+    }
+
+    /// \brief Edge writing rule
+    ///
+    /// Add an edge writing rule to writer.
+    BpGraphWriter& edge(const std::string& caption, const Edge& edge) {
+      typedef _writer_bits::MapLookUpConverter<Edge> Converter;
+      Converter converter(_edge_index);
+      _writer_bits::ValueStorageBase* storage =
+        new _writer_bits::ValueStorage<Edge, Converter>(edge, converter);
+      _attributes.push_back(std::make_pair(caption, storage));
+      return *this;
+    }
+
+    /// \brief Arc writing rule
+    ///
+    /// Add an arc writing rule to writer.
+    BpGraphWriter& arc(const std::string& caption, const Arc& arc) {
+      typedef _writer_bits::GraphArcLookUpConverter<BGR> Converter;
+      Converter converter(_graph, _edge_index);
+      _writer_bits::ValueStorageBase* storage =
+        new _writer_bits::ValueStorage<Arc, Converter>(arc, converter);
+      _attributes.push_back(std::make_pair(caption, storage));
+      return *this;
+    }
+
+    /// \name Section Captions
+    /// @{
+
+    /// \brief Add an additional caption to the \c \@red_nodes and
+    /// \c \@blue_nodes section
+    ///
+    /// Add an additional caption to the \c \@red_nodes and \c
+    /// \@blue_nodes section.
+    BpGraphWriter& nodes(const std::string& caption) {
+      _nodes_caption = caption;
+      return *this;
+    }
+
+    /// \brief Add an additional caption to the \c \@edges section
+    ///
+    /// Add an additional caption to the \c \@edges section.
+    BpGraphWriter& edges(const std::string& caption) {
+      _edges_caption = caption;
+      return *this;
+    }
+
+    /// \brief Add an additional caption to the \c \@attributes section
+    ///
+    /// Add an additional caption to the \c \@attributes section.
+    BpGraphWriter& attributes(const std::string& caption) {
+      _attributes_caption = caption;
+      return *this;
+    }
+
+    /// \name Skipping Section
+    /// @{
+
+    /// \brief Skip writing the node set
+    ///
+    /// The \c \@red_nodes and \c \@blue_nodes section will not be
+    /// written to the stream.
+    BpGraphWriter& skipNodes() {
+      LEMON_ASSERT(!_skip_nodes, "Multiple usage of skipNodes() member");
+      _skip_nodes = true;
+      return *this;
+    }
+
+    /// \brief Skip writing edge set
+    ///
+    /// The \c \@edges section will not be written to the stream.
+    BpGraphWriter& skipEdges() {
+      LEMON_ASSERT(!_skip_edges, "Multiple usage of skipEdges() member");
+      _skip_edges = true;
+      return *this;
+    }
+
+    /// @}
+
+  private:
+
+    void writeRedNodes() {
+      _writer_bits::MapStorageBase<RedNode>* label = 0;
+      for (typename RedNodeMaps::iterator it = _red_node_maps.begin();
+           it != _red_node_maps.end(); ++it) {
+        if (it->first == "label") {
+          label = it->second;
+          break;
+        }
+      }
+
+      *_os << "@red_nodes";
+      if (!_nodes_caption.empty()) {
+        _writer_bits::writeToken(*_os << ' ', _nodes_caption);
+      }
+      *_os << std::endl;
+
+      if (label == 0) {
+        *_os << "label" << '\t';
+      }
+      for (typename RedNodeMaps::iterator it = _red_node_maps.begin();
+           it != _red_node_maps.end(); ++it) {
+        _writer_bits::writeToken(*_os, it->first) << '\t';
+      }
+      *_os << std::endl;
+
+      std::vector<RedNode> nodes;
+      for (RedNodeIt n(_graph); n != INVALID; ++n) {
+        nodes.push_back(n);
+      }
+
+      if (label == 0) {
+        IdMap<BGR, Node> id_map(_graph);
+        _writer_bits::MapLess<IdMap<BGR, Node> > id_less(id_map);
+        std::sort(nodes.begin(), nodes.end(), id_less);
+      } else {
+        label->sort(nodes);
+      }
+
+      for (int i = 0; i < static_cast<int>(nodes.size()); ++i) {
+        RedNode n = nodes[i];
+        if (label == 0) {
+          std::ostringstream os;
+          os << _graph.id(static_cast<Node>(n));
+          _writer_bits::writeToken(*_os, os.str());
+          *_os << '\t';
+          _red_node_index.insert(std::make_pair(n, os.str()));
+        }
+        for (typename RedNodeMaps::iterator it = _red_node_maps.begin();
+             it != _red_node_maps.end(); ++it) {
+          std::string value = it->second->get(n);
+          _writer_bits::writeToken(*_os, value);
+          if (it->first == "label") {
+            _red_node_index.insert(std::make_pair(n, value));
+          }
+          *_os << '\t';
+        }
+        *_os << std::endl;
+      }
+    }
+
+    void writeBlueNodes() {
+      _writer_bits::MapStorageBase<BlueNode>* label = 0;
+      for (typename BlueNodeMaps::iterator it = _blue_node_maps.begin();
+           it != _blue_node_maps.end(); ++it) {
+        if (it->first == "label") {
+          label = it->second;
+          break;
+        }
+      }
+
+      *_os << "@blue_nodes";
+      if (!_nodes_caption.empty()) {
+        _writer_bits::writeToken(*_os << ' ', _nodes_caption);
+      }
+      *_os << std::endl;
+
+      if (label == 0) {
+        *_os << "label" << '\t';
+      }
+      for (typename BlueNodeMaps::iterator it = _blue_node_maps.begin();
+           it != _blue_node_maps.end(); ++it) {
+        _writer_bits::writeToken(*_os, it->first) << '\t';
+      }
+      *_os << std::endl;
+
+      std::vector<BlueNode> nodes;
+      for (BlueNodeIt n(_graph); n != INVALID; ++n) {
+        nodes.push_back(n);
+      }
+
+      if (label == 0) {
+        IdMap<BGR, Node> id_map(_graph);
+        _writer_bits::MapLess<IdMap<BGR, Node> > id_less(id_map);
+        std::sort(nodes.begin(), nodes.end(), id_less);
+      } else {
+        label->sort(nodes);
+      }
+
+      for (int i = 0; i < static_cast<int>(nodes.size()); ++i) {
+        BlueNode n = nodes[i];
+        if (label == 0) {
+          std::ostringstream os;
+          os << _graph.id(static_cast<Node>(n));
+          _writer_bits::writeToken(*_os, os.str());
+          *_os << '\t';
+          _blue_node_index.insert(std::make_pair(n, os.str()));
+        }
+        for (typename BlueNodeMaps::iterator it = _blue_node_maps.begin();
+             it != _blue_node_maps.end(); ++it) {
+          std::string value = it->second->get(n);
+          _writer_bits::writeToken(*_os, value);
+          if (it->first == "label") {
+            _blue_node_index.insert(std::make_pair(n, value));
+          }
+          *_os << '\t';
+        }
+        *_os << std::endl;
+      }
+    }
+
+    void createRedNodeIndex() {
+      _writer_bits::MapStorageBase<RedNode>* label = 0;
+      for (typename RedNodeMaps::iterator it = _red_node_maps.begin();
+           it != _red_node_maps.end(); ++it) {
+        if (it->first == "label") {
+          label = it->second;
+          break;
+        }
+      }
+
+      if (label == 0) {
+        for (RedNodeIt n(_graph); n != INVALID; ++n) {
+          std::ostringstream os;
+          os << _graph.id(n);
+          _red_node_index.insert(std::make_pair(n, os.str()));
+        }
+      } else {
+        for (RedNodeIt n(_graph); n != INVALID; ++n) {
+          std::string value = label->get(n);
+          _red_node_index.insert(std::make_pair(n, value));
+        }
+      }
+    }
+
+    void createBlueNodeIndex() {
+      _writer_bits::MapStorageBase<BlueNode>* label = 0;
+      for (typename BlueNodeMaps::iterator it = _blue_node_maps.begin();
+           it != _blue_node_maps.end(); ++it) {
+        if (it->first == "label") {
+          label = it->second;
+          break;
+        }
+      }
+
+      if (label == 0) {
+        for (BlueNodeIt n(_graph); n != INVALID; ++n) {
+          std::ostringstream os;
+          os << _graph.id(n);
+          _blue_node_index.insert(std::make_pair(n, os.str()));
+        }
+      } else {
+        for (BlueNodeIt n(_graph); n != INVALID; ++n) {
+          std::string value = label->get(n);
+          _blue_node_index.insert(std::make_pair(n, value));
+        }
+      }
+    }
+
+    void writeEdges() {
+      _writer_bits::MapStorageBase<Edge>* label = 0;
+      for (typename EdgeMaps::iterator it = _edge_maps.begin();
+           it != _edge_maps.end(); ++it) {
+        if (it->first == "label") {
+          label = it->second;
+          break;
+        }
+      }
+
+      *_os << "@edges";
+      if (!_edges_caption.empty()) {
+        _writer_bits::writeToken(*_os << ' ', _edges_caption);
+      }
+      *_os << std::endl;
+
+      *_os << '\t' << '\t';
+      if (label == 0) {
+        *_os << "label" << '\t';
+      }
+      for (typename EdgeMaps::iterator it = _edge_maps.begin();
+           it != _edge_maps.end(); ++it) {
+        _writer_bits::writeToken(*_os, it->first) << '\t';
+      }
+      *_os << std::endl;
+
+      std::vector<Edge> edges;
+      for (EdgeIt n(_graph); n != INVALID; ++n) {
+        edges.push_back(n);
+      }
+
+      if (label == 0) {
+        IdMap<BGR, Edge> id_map(_graph);
+        _writer_bits::MapLess<IdMap<BGR, Edge> > id_less(id_map);
+        std::sort(edges.begin(), edges.end(), id_less);
+      } else {
+        label->sort(edges);
+      }
+
+      for (int i = 0; i < static_cast<int>(edges.size()); ++i) {
+        Edge e = edges[i];
+        _writer_bits::writeToken(*_os, _red_node_index.
+                                 find(_graph.redNode(e))->second);
+        *_os << '\t';
+        _writer_bits::writeToken(*_os, _blue_node_index.
+                                 find(_graph.blueNode(e))->second);
+        *_os << '\t';
+        if (label == 0) {
+          std::ostringstream os;
+          os << _graph.id(e);
+          _writer_bits::writeToken(*_os, os.str());
+          *_os << '\t';
+          _edge_index.insert(std::make_pair(e, os.str()));
+        }
+        for (typename EdgeMaps::iterator it = _edge_maps.begin();
+             it != _edge_maps.end(); ++it) {
+          std::string value = it->second->get(e);
+          _writer_bits::writeToken(*_os, value);
+          if (it->first == "label") {
+            _edge_index.insert(std::make_pair(e, value));
+          }
+          *_os << '\t';
+        }
+        *_os << std::endl;
+      }
+    }
+
+    void createEdgeIndex() {
+      _writer_bits::MapStorageBase<Edge>* label = 0;
+      for (typename EdgeMaps::iterator it = _edge_maps.begin();
+           it != _edge_maps.end(); ++it) {
+        if (it->first == "label") {
+          label = it->second;
+          break;
+        }
+      }
+
+      if (label == 0) {
+        for (EdgeIt e(_graph); e != INVALID; ++e) {
+          std::ostringstream os;
+          os << _graph.id(e);
+          _edge_index.insert(std::make_pair(e, os.str()));
+        }
+      } else {
+        for (EdgeIt e(_graph); e != INVALID; ++e) {
+          std::string value = label->get(e);
+          _edge_index.insert(std::make_pair(e, value));
+        }
+      }
+    }
+
+    void writeAttributes() {
+      if (_attributes.empty()) return;
+      *_os << "@attributes";
+      if (!_attributes_caption.empty()) {
+        _writer_bits::writeToken(*_os << ' ', _attributes_caption);
+      }
+      *_os << std::endl;
+      for (typename Attributes::iterator it = _attributes.begin();
+           it != _attributes.end(); ++it) {
+        _writer_bits::writeToken(*_os, it->first) << ' ';
+        _writer_bits::writeToken(*_os, it->second->get());
+        *_os << std::endl;
+      }
+    }
+
+  public:
+
+    /// \name Execution of the Writer
+    /// @{
+
+    /// \brief Start the batch processing
+    ///
+    /// This function starts the batch processing.
+    void run() {
+      if (!_skip_nodes) {
+        writeRedNodes();
+        writeBlueNodes();
+      } else {
+        createRedNodeIndex();
+        createBlueNodeIndex();
+      }
+      if (!_skip_edges) {
+        writeEdges();
+      } else {
+        createEdgeIndex();
+      }
+      writeAttributes();
+    }
+
+    /// \brief Give back the stream of the writer
+    ///
+    /// Give back the stream of the writer
+    std::ostream& ostream() {
+      return *_os;
+    }
+
+    /// @}
+  };
+
+  /// \ingroup lemon_io
+  ///
+  /// \brief Return a \ref lemon::BpGraphWriter "BpGraphWriter" class
+  ///
+  /// This function just returns a \ref lemon::BpGraphWriter
+  /// "BpGraphWriter" class.
+  ///
+  /// With this function a bipartite graph can be write to a file or output
+  /// stream in \ref lgf-format "LGF" format with several maps and
+  /// attributes. For example, with the following code a bipartite
+  /// weighted matching problem can be written to the standard output,
+  /// i.e. a graph with a \e weight map on the edges:
+  ///
+  ///\code
+  ///ListBpGraph graph;
+  ///ListBpGraph::EdgeMap<int> weight(graph);
+  ///  // Setting the weight map
+  ///bpGraphWriter(graph, std::cout).
+  ///  edgeMap("weight", weight).
+  ///  run();
+  ///\endcode
+  ///
+  /// For a complete documentation, please see the
+  /// \ref lemon::BpGraphWriter "BpGraphWriter"
+  /// class documentation.
+  /// \warning Don't forget to put the \ref lemon::BpGraphWriter::run() "run()"
+  /// to the end of the parameter list.
+  /// \relates BpGraphWriter
+  /// \sa bpGraphWriter(const TBGR& graph, const std::string& fn)
+  /// \sa bpGraphWriter(const TBGR& graph, const char* fn)
+  template <typename TBGR>
+  BpGraphWriter<TBGR> bpGraphWriter(const TBGR& graph, std::ostream& os) {
+    BpGraphWriter<TBGR> tmp(graph, os);
+    return tmp;
+  }
+
+  /// \brief Return a \ref BpGraphWriter class
+  ///
+  /// This function just returns a \ref BpGraphWriter class.
+  /// \relates BpGraphWriter
+  /// \sa graphWriter(const TBGR& graph, std::ostream& os)
+  template <typename TBGR>
+  BpGraphWriter<TBGR> bpGraphWriter(const TBGR& graph, const std::string& fn) {
+    BpGraphWriter<TBGR> tmp(graph, fn);
+    return tmp;
+  }
+
+  /// \brief Return a \ref BpGraphWriter class
+  ///
+  /// This function just returns a \ref BpGraphWriter class.
+  /// \relates BpGraphWriter
+  /// \sa graphWriter(const TBGR& graph, std::ostream& os)
+  template <typename TBGR>
+  BpGraphWriter<TBGR> bpGraphWriter(const TBGR& graph, const char* fn) {
+    BpGraphWriter<TBGR> tmp(graph, fn);
     return tmp;
   }
 
@@ -1651,7 +2551,7 @@ namespace lemon {
 
   public:
 
-    /// \name Section writers
+    /// \name Section Writers
     /// @{
 
     /// \brief Add a section writer with line oriented writing
@@ -1718,7 +2618,7 @@ namespace lemon {
   public:
 
 
-    /// \name Execution of the writer
+    /// \name Execution of the Writer
     /// @{
 
     /// \brief Start the batch processing
@@ -1746,10 +2646,18 @@ namespace lemon {
 
   };
 
+  /// \ingroup lemon_io
+  ///
   /// \brief Return a \ref SectionWriter class
   ///
   /// This function just returns a \ref SectionWriter class.
+  ///
+  /// Please see SectionWriter documentation about the custom section
+  /// output.
+  ///
   /// \relates SectionWriter
+  /// \sa sectionWriter(const std::string& fn)
+  /// \sa sectionWriter(const char *fn)
   inline SectionWriter sectionWriter(std::ostream& os) {
     SectionWriter tmp(os);
     return tmp;
@@ -1759,6 +2667,7 @@ namespace lemon {
   ///
   /// This function just returns a \ref SectionWriter class.
   /// \relates SectionWriter
+  /// \sa sectionWriter(std::ostream& os)
   inline SectionWriter sectionWriter(const std::string& fn) {
     SectionWriter tmp(fn);
     return tmp;
@@ -1768,6 +2677,7 @@ namespace lemon {
   ///
   /// This function just returns a \ref SectionWriter class.
   /// \relates SectionWriter
+  /// \sa sectionWriter(std::ostream& os)
   inline SectionWriter sectionWriter(const char* fn) {
     SectionWriter tmp(fn);
     return tmp;

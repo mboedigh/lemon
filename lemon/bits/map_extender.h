@@ -2,7 +2,7 @@
  *
  * This file is a part of LEMON, a generic C++ optimization library.
  *
- * Copyright (C) 2003-2009
+ * Copyright (C) 2003-2013
  * Egervary Jeno Kombinatorikus Optimalizalasi Kutatocsoport
  * (Egervary Research Group on Combinatorial Optimization, EGRES).
  *
@@ -36,17 +36,20 @@ namespace lemon {
   // \brief Extender for maps
   template <typename _Map>
   class MapExtender : public _Map {
+    typedef _Map Parent;
+    typedef typename Parent::GraphType GraphType;
+
   public:
 
-    typedef _Map Parent;
     typedef MapExtender Map;
-
-
-    typedef typename Parent::Graph Graph;
     typedef typename Parent::Key Item;
 
     typedef typename Parent::Key Key;
     typedef typename Parent::Value Value;
+    typedef typename Parent::Reference Reference;
+    typedef typename Parent::ConstReference ConstReference;
+
+    typedef typename Parent::ReferenceMapTag ReferenceMapTag;
 
     class MapIt;
     class ConstMapIt;
@@ -56,10 +59,10 @@ namespace lemon {
 
   public:
 
-    MapExtender(const Graph& graph)
+    MapExtender(const GraphType& graph)
       : Parent(graph) {}
 
-    MapExtender(const Graph& graph, const Value& value)
+    MapExtender(const GraphType& graph, const Value& value)
       : Parent(graph, value) {}
 
   private:
@@ -75,64 +78,65 @@ namespace lemon {
 
   public:
     class MapIt : public Item {
+      typedef Item Parent;
+
     public:
 
-      typedef Item Parent;
       typedef typename Map::Value Value;
 
-      MapIt() {}
+      MapIt() : map(NULL) {}
 
-      MapIt(Invalid i) : Parent(i) { }
+      MapIt(Invalid i) : Parent(i), map(NULL) {}
 
-      explicit MapIt(Map& _map) : map(_map) {
-        map.notifier()->first(*this);
+      explicit MapIt(Map& _map) : map(&_map) {
+        map->notifier()->first(*this);
       }
 
       MapIt(const Map& _map, const Item& item)
-        : Parent(item), map(_map) {}
+        : Parent(item), map(&_map) {}
 
       MapIt& operator++() {
-        map.notifier()->next(*this);
+        map->notifier()->next(*this);
         return *this;
       }
 
       typename MapTraits<Map>::ConstReturnValue operator*() const {
-        return map[*this];
+        return (*map)[*this];
       }
 
       typename MapTraits<Map>::ReturnValue operator*() {
-        return map[*this];
+        return (*map)[*this];
       }
 
       void set(const Value& value) {
-        map.set(*this, value);
+        map->set(*this, value);
       }
 
     protected:
-      Map& map;
+      Map* map;
 
     };
 
     class ConstMapIt : public Item {
-    public:
-
       typedef Item Parent;
+
+    public:
 
       typedef typename Map::Value Value;
 
-      ConstMapIt() {}
+      ConstMapIt() : map(NULL) {}
 
-      ConstMapIt(Invalid i) : Parent(i) { }
+      ConstMapIt(Invalid i) : Parent(i), map(NULL) {}
 
-      explicit ConstMapIt(Map& _map) : map(_map) {
-        map.notifier()->first(*this);
+      explicit ConstMapIt(Map& _map) : map(&_map) {
+        map->notifier()->first(*this);
       }
 
       ConstMapIt(const Map& _map, const Item& item)
         : Parent(item), map(_map) {}
 
       ConstMapIt& operator++() {
-        map.notifier()->next(*this);
+        map->notifier()->next(*this);
         return *this;
       }
 
@@ -141,32 +145,32 @@ namespace lemon {
       }
 
     protected:
-      const Map& map;
+      const Map* map;
     };
 
     class ItemIt : public Item {
-    public:
-
       typedef Item Parent;
 
-      ItemIt() {}
+    public:
+      ItemIt() : map(NULL) {}
 
-      ItemIt(Invalid i) : Parent(i) { }
 
-      explicit ItemIt(Map& _map) : map(_map) {
-        map.notifier()->first(*this);
+      ItemIt(Invalid i) : Parent(i), map(NULL) {}
+
+      explicit ItemIt(Map& _map) : map(&_map) {
+        map->notifier()->first(*this);
       }
 
       ItemIt(const Map& _map, const Item& item)
-        : Parent(item), map(_map) {}
+        : Parent(item), map(&_map) {}
 
       ItemIt& operator++() {
-        map.notifier()->next(*this);
+        map->notifier()->next(*this);
         return *this;
       }
 
     protected:
-      const Map& map;
+      const Map* map;
 
     };
   };
@@ -176,17 +180,20 @@ namespace lemon {
   // \brief Extender for maps which use a subset of the items.
   template <typename _Graph, typename _Map>
   class SubMapExtender : public _Map {
+    typedef _Map Parent;
+    typedef _Graph GraphType;
+
   public:
 
-    typedef _Map Parent;
     typedef SubMapExtender Map;
-
-    typedef _Graph Graph;
-
     typedef typename Parent::Key Item;
 
     typedef typename Parent::Key Key;
     typedef typename Parent::Value Value;
+    typedef typename Parent::Reference Reference;
+    typedef typename Parent::ConstReference ConstReference;
+
+    typedef typename Parent::ReferenceMapTag ReferenceMapTag;
 
     class MapIt;
     class ConstMapIt;
@@ -196,10 +203,10 @@ namespace lemon {
 
   public:
 
-    SubMapExtender(const Graph& _graph)
+    SubMapExtender(const GraphType& _graph)
       : Parent(_graph), graph(_graph) {}
 
-    SubMapExtender(const Graph& _graph, const Value& _value)
+    SubMapExtender(const GraphType& _graph, const Value& _value)
       : Parent(_graph, _value), graph(_graph) {}
 
   private:
@@ -219,104 +226,104 @@ namespace lemon {
 
   public:
     class MapIt : public Item {
-    public:
-
       typedef Item Parent;
+
+    public:
       typedef typename Map::Value Value;
 
-      MapIt() {}
+      MapIt() : map(NULL) {}
 
-      MapIt(Invalid i) : Parent(i) { }
+      MapIt(Invalid i) : Parent(i), map(NULL) { }
 
-      explicit MapIt(Map& _map) : map(_map) {
-        map.graph.first(*this);
+      explicit MapIt(Map& _map) : map(&_map) {
+        map->graph.first(*this);
       }
 
       MapIt(const Map& _map, const Item& item)
-        : Parent(item), map(_map) {}
+        : Parent(item), map(&_map) {}
 
       MapIt& operator++() {
-        map.graph.next(*this);
+        map->graph.next(*this);
         return *this;
       }
 
       typename MapTraits<Map>::ConstReturnValue operator*() const {
-        return map[*this];
+        return (*map)[*this];
       }
 
       typename MapTraits<Map>::ReturnValue operator*() {
-        return map[*this];
+        return (*map)[*this];
       }
 
       void set(const Value& value) {
-        map.set(*this, value);
+        map->set(*this, value);
       }
 
     protected:
-      Map& map;
+      Map* map;
 
     };
 
     class ConstMapIt : public Item {
-    public:
-
       typedef Item Parent;
+
+    public:
 
       typedef typename Map::Value Value;
 
-      ConstMapIt() {}
+      ConstMapIt() : map(NULL) {}
 
-      ConstMapIt(Invalid i) : Parent(i) { }
+      ConstMapIt(Invalid i) : Parent(i), map(NULL) { }
 
-      explicit ConstMapIt(Map& _map) : map(_map) {
-        map.graph.first(*this);
+      explicit ConstMapIt(Map& _map) : map(&_map) {
+        map->graph.first(*this);
       }
 
       ConstMapIt(const Map& _map, const Item& item)
-        : Parent(item), map(_map) {}
+        : Parent(item), map(&_map) {}
 
       ConstMapIt& operator++() {
-        map.graph.next(*this);
+        map->graph.next(*this);
         return *this;
       }
 
       typename MapTraits<Map>::ConstReturnValue operator*() const {
-        return map[*this];
+        return (*map)[*this];
       }
 
     protected:
-      const Map& map;
+      const Map* map;
     };
 
     class ItemIt : public Item {
-    public:
-
       typedef Item Parent;
 
-      ItemIt() {}
+    public:
+      ItemIt() : map(NULL) {}
 
-      ItemIt(Invalid i) : Parent(i) { }
 
-      explicit ItemIt(Map& _map) : map(_map) {
-        map.graph.first(*this);
+      ItemIt(Invalid i) : Parent(i), map(NULL) { }
+
+      explicit ItemIt(Map& _map) : map(&_map) {
+        map->graph.first(*this);
       }
 
       ItemIt(const Map& _map, const Item& item)
-        : Parent(item), map(_map) {}
+        : Parent(item), map(&_map) {}
 
       ItemIt& operator++() {
-        map.graph.next(*this);
+        map->graph.next(*this);
         return *this;
       }
 
     protected:
-      const Map& map;
+      const Map* map;
 
     };
 
   private:
 
-    const Graph& graph;
+    const GraphType& graph;
 
   };
 
