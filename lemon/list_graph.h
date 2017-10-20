@@ -68,14 +68,14 @@ namespace lemon {
     protected:
 
       int id;
-      explicit Node(int pid) { id = pid;}
-
     public:
+	  Node(int pid) { id = pid; }
       Node() {}
       Node (Invalid) { id = -1; }
       bool operator==(const Node& node) const {return id == node.id;}
       bool operator!=(const Node& node) const {return id != node.id;}
       bool operator<(const Node& node) const {return id < node.id;}
+	  operator int() { return id;  }
     };
 
     class Arc {

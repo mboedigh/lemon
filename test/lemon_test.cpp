@@ -27,6 +27,7 @@
 #include <lemon/dfs.h>
 #include <lemon/connectivity.h>
 #include <lemon/dijkstra.h>
+#include <lemon/edge_set.h>
 #include <numeric>
 
 
@@ -46,6 +47,25 @@ struct R {
 class MyOps : public DijkstraDefaultOperationTraits<int> {
 
 
+};
+
+class BuildPlanner : public DfsVisitor<ListDigraph>
+{
+	typedef SmartArcSet<ListDigraph>::Arc Arc;
+public:
+	BuildPlanner( ListDigraph &aGraph): iBuildMap(aGraph)
+	{
+	}
+
+	void discover(const Arc &arc) {
+		iBuildMap.addArc(iBuildMap.target(arc), iBuildMap.source(arc));
+	}
+
+	void examine(const Arc &arc) {
+		iBuildMap.addArc(iBuildMap.target(arc), iBuildMap.source(arc));
+	}
+
+	SmartArcSet<ListDigraph>  iBuildMap;
 };
 
 class MyDfsVisitor : public DfsVisitor<ListDigraph>
@@ -88,11 +108,13 @@ public:
 	vector<R>   &iNodeMap;
 };
 
+
 int main()
 {
 	ListDigraph d;
 
-	int n_nodes = 8;
+	
+	int n_nodes = 12;
 	vector<R>   lNodeMap(n_nodes);
 
 	while (n_nodes--) {
@@ -107,18 +129,36 @@ int main()
 	lNodeMap[5] = R(5, 30, 75, 50);
 	lNodeMap[6] = R(6, 30, 125, 0);
 	lNodeMap[7] = R(7, 60, 350, 1000);
+	lNodeMap[8] = R(8, 10, 50, 0);
+	lNodeMap[9] = R(9, 20, 150, 0);
+	// new
+	
+	lNodeMap[10] = R(10, 20, 75, 75);
+	lNodeMap[11] = R(11, 20, 50, 50);
 					  
 
-	d.addArc(d.nodeFromId(7), d.nodeFromId(1));
-	d.addArc(d.nodeFromId(7), d.nodeFromId(5));
-	d.addArc(d.nodeFromId(1), d.nodeFromId(2));
-	d.addArc(d.nodeFromId(2), d.nodeFromId(3));
-	d.addArc(d.nodeFromId(5), d.nodeFromId(3));
-	d.addArc(d.nodeFromId(3), d.nodeFromId(4));
-	d.addArc(d.nodeFromId(0), d.nodeFromId(6));
+	d.addArc(7,1);
+	d.addArc(7, 5);
+	d.addArc(1,2);
+	d.addArc(2, 3);
+	d.addArc(5, 3);
+	d.addArc(7, 8);
+	d.addArc(8, 4);
+	d.addArc(7, 9);
+
+
+	//BuildPlanner planner(d);
+	//DfsVisit<SmartArcSet<ListDigraph>, BuildPlanner, DfsVisitDefaultTraits<SmartArcSet<ListDigraph>>> bp(d, planner);
+	//bp.init();
+	//bp.run(4);
+	//
+	//for (SmartArcSet<ListDigraph>::ArcIt a(planner.iBuildMap); a != INVALID; ++a) {
+	//	cout << planner.iBuildMap.source(a) << " --> " << planner.iBuildMap.target(a) << '\n';
+	//}
+
+	//
 
 	map<int, int> lTimeMap;
-	
 	DfsVisit<ListDigraph, MyDfsVisitor> v(d, MyDfsVisitor(lTimeMap, d, lNodeMap));
 	v.init();
 	v.run(d.nodeFromId(7));
@@ -138,8 +178,8 @@ int main()
 		std::cout << i.first << tab << total_time - i.second << tab << lNodeMap[i.first].iTime << tab << lNodeMap[i.first].iCostG << tab << lNodeMap[i.first].iCostM << tab << lmin << tab << lgas << '\n';
 	}
 
-
-
 	std::cout << endl;
+
 	return 0;
 }
+
